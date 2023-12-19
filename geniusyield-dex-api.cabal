@@ -1,0 +1,84 @@
+cabal-version:      3.6
+name:               geniusyield-dex-api
+
+-- PVP summary:     +-+------- breaking API changes
+--                  | | +----- non-breaking API additions
+--                  | | | +--- code changes with no API change
+version:            0.1.0.0
+
+synopsis:           API code to interact with GeniusYield DEX.
+description:        API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
+license:            Apache-2.0
+license-file:       LICENSE
+author:             GeniusYield
+maintainer:         support@geniusyield.co
+copyright:          2023 GYELD GMBH
+build-type:         Simple
+category:           Blockchain, Cardano, Validator
+extra-doc-files:    CHANGELOG.md, README.md
+extra-source-files: compiled-scripts/*
+tested-with:        GHC ==9.2.8
+
+source-repository head
+  type:     git
+  location: https://github.com/geniusyield/dex-contracts-api
+
+common common
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    GADTs
+    LambdaCase
+    MultiWayIf
+    OverloadedStrings
+    RecordWildCards
+    RoleAnnotations
+    TemplateHaskell
+    TypeFamilies
+    UndecidableInstances
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:        -Wall -Wincomplete-uni-patterns -Wunused-packages
+
+  -- Speed-ups GHCi considerably.
+  ghc-options:        -fno-show-valid-hole-fits
+
+library
+  import:          common
+  hs-source-dirs:  src
+  exposed-modules:
+    GeniusYield.Api.Dex.PartialOrder
+    GeniusYield.Api.Dex.PartialOrderConfig
+    GeniusYield.Api.Dex.Types
+    GeniusYield.Scripts
+    GeniusYield.Scripts.Common
+    GeniusYield.Scripts.Dex
+    GeniusYield.Scripts.Dex.Nft
+    GeniusYield.Scripts.Dex.PartialOrder
+    GeniusYield.Scripts.Dex.PartialOrderConfig
+    GeniusYield.Scripts.Dex.PartialOrderConfig.Internal
+    GeniusYield.Scripts.Dex.PartialOrderNft
+
+  build-depends:
+    , base                   ^>=4.16.4.0
+    , containers
+    , http-types
+    , mtl
+    , swagger2
+    , text
+
+  -- Dependencies whose version is fixed by @cabal.project@ file.
+  build-depends:
+    , atlas-cardano
+    , ply-core
+
+  -- Cardano libraries which are not on hackage. Their version is pinned in @cabal.project@ file or derived from other related dependencies.
+  build-depends:
+    , cardano-api
+    , plutus-core
+    , plutus-ledger-api
+    , plutus-tx
