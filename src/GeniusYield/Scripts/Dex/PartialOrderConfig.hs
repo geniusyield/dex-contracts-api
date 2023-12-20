@@ -8,6 +8,7 @@ Stability   : develop
 module GeniusYield.Scripts.Dex.PartialOrderConfig (
   -- * Typeclass
   HasPartialOrderConfigScript (..),
+  HasPartialOrderConfigAddr (..),
 
   -- * Datum
   PartialOrderConfigDatum (..),
@@ -43,6 +44,9 @@ import PlutusTx.Builtins.Internal (BuiltinByteString (..))
 
 class HasPartialOrderConfigScript a where
   getPartialOrderConfigValidator ∷ a → PlutusTx.CompiledCode (AssetClass → BuiltinData → BuiltinData → BuiltinData → ())
+
+class HasPartialOrderConfigAddr a where
+  getPartialOrderConfigAddr ∷ a → GYAddress
 
 data PartialOrderConfigInfoF addr = PartialOrderConfigInfo
   { -- | Public key hashes of the potential signatories.

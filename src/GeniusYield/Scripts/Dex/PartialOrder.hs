@@ -24,6 +24,7 @@ module GeniusYield.Scripts.Dex.PartialOrder (
 
 import GHC.Generics (Generic)
 import GeniusYield.Scripts.Common
+import GeniusYield.Scripts.Dex.PartialOrderConfig (HasPartialOrderConfigAddr (getPartialOrderConfigAddr))
 import GeniusYield.Types
 import PlutusLedgerApi.V1 (Address, POSIXTime, PubKeyHash, TokenName, TxOutRef, Value)
 import PlutusLedgerApi.V1.Value (AssetClass)
@@ -116,17 +117,16 @@ data PartialOrderAction
 
 PlutusTx.makeIsDataIndexed ''PartialOrderAction [('PartialCancel, 0), ('PartialFill, 1), ('CompleteFill, 2)]
 
-partialOrderValidator ∷ HasPartialOrderScript a ⇒ a → GYAddress → GYAssetClass → GYValidator 'PlutusV2
-partialOrderValidator a addr ac =
+partialOrderValidator ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a) ⇒ a → GYAssetClass → GYValidator 'PlutusV2
+partialOrderValidator a ac =
   validatorFromPly
     $ getPartialOrderValidator a
-    # addressToPlutus addr
+    # addressToPlutus (getPartialOrderConfigAddr a)
     # assetClassToPlutus ac
 
 partialOrderValidatorHash
-  ∷ HasPartialOrderScript a
+  ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a)
   ⇒ a
-  → GYAddress
   → GYAssetClass
   → GYValidatorHash
-partialOrderValidatorHash a addr = validatorHash . partialOrderValidator a addr
+partialOrderValidatorHash a = validatorHash . partialOrderValidator a

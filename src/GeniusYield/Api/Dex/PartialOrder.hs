@@ -695,8 +695,8 @@ mkSkeletonPartiallyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} amt
 cancelPartialOrder
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
-  -- | The order reference.
   → GYTxOutRef
+  -- ^ The order reference.
   → m (GYTxSkeleton 'PlutusV2)
 cancelPartialOrder por orderRef = do
   poi ← getPartialOrderInfo por orderRef
@@ -705,8 +705,8 @@ cancelPartialOrder por orderRef = do
 cancelPartialOrder'
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
-  -- | The order information.
   → PartialOrderInfo
+  -- ^ The order information.
   → m (GYTxSkeleton 'PlutusV2)
 cancelPartialOrder' por poi = cancelMultiplePartialOrders por [poi]
 
@@ -716,42 +716,39 @@ cancelMultiplePartialOrders
   ⇒ PORefs
   → [PartialOrderInfo]
   → m (GYTxSkeleton 'PlutusV2)
-cancelMultiplePartialOrders por@PORefs {..} ois  = do
-
-  gycs <- ask
+cancelMultiplePartialOrders por@PORefs {..} ois = do
+  gycs ← ask
   script ← mintingPolicyToScript <$> partialOrderNftPolicy por
   (cfgRef, pocd) ← fetchPartialOrderConfig porRefNft
 
-
   let (!feeOutputMap, !totalRequiredFees, !accumulatedSkeleton) =
         foldl'
-          (\(!mapAcc, !feeAcc, !skelAcc) poi@PartialOrderInfo {..} ->
+          ( \(!mapAcc, !feeAcc, !skelAcc) poi@PartialOrderInfo {..} →
               let skelAdd =
-                        mustHaveInput (partialOrderInfoToIn gycs por poi PartialCancel)
-                    <> mustHaveOutput (partialOrderInfoToPayment poi (expectedPaymentWithDeposit poi False))
-                    <> mustBeSignedBy poiOwnerKey
-                    <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
-              in
-                if poiPartialFills == 0 || poiContainedFee == mempty
-                  then (mapAcc, feeAcc, skelAcc <> skelAdd)
-                else
-                  let reqContainedFee =
-                        let POIContainedFee {..} = poiContainedFee
-                            feeToRefund :: Natural = floor $ (poiOfferedAmount % poiOfferedOriginalAmount) * (poifOfferedTokens % 1)
-                        in POIContainedFee { poifLovelaces = poifLovelaces, poifOfferedTokens = poifOfferedTokens - feeToRefund, poifAskedTokens = poifAskedTokens }
-                      reqContainedFeeValue = poiContainedFeeToValue reqContainedFee poiOfferedAsset poiAskedAsset
-                  in (PlutusTx.unionWith (<>) mapAcc (PlutusTx.singleton (txOutRefToPlutus poiRef) (valueToPlutus reqContainedFeeValue)), feeAcc <> reqContainedFeeValue, skelAcc <> skelAdd)
+                    mustHaveInput (partialOrderInfoToIn gycs por poi PartialCancel)
+                      <> mustHaveOutput (partialOrderInfoToPayment poi (expectedPaymentWithDeposit poi False))
+                      <> mustBeSignedBy poiOwnerKey
+                      <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
+               in if poiPartialFills == 0 || poiContainedFee == mempty
+                    then (mapAcc, feeAcc, skelAcc <> skelAdd)
+                    else
+                      let reqContainedFee =
+                            let POIContainedFee {..} = poiContainedFee
+                                feeToRefund ∷ Natural = floor $ (poiOfferedAmount % poiOfferedOriginalAmount) * (poifOfferedTokens % 1)
+                             in POIContainedFee {poifLovelaces = poifLovelaces, poifOfferedTokens = poifOfferedTokens - feeToRefund, poifAskedTokens = poifAskedTokens}
+                          reqContainedFeeValue = poiContainedFeeToValue reqContainedFee poiOfferedAsset poiAskedAsset
+                       in (PlutusTx.unionWith (<>) mapAcc (PlutusTx.singleton (txOutRefToPlutus poiRef) (valueToPlutus reqContainedFeeValue)), feeAcc <> reqContainedFeeValue, skelAcc <> skelAdd)
           )
           (PlutusTx.empty, mempty, mempty)
           ois
       feeOutput
-          | totalRequiredFees == mempty = mempty
-          | otherwise                   =
-              mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) totalRequiredFees $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
-  pure $
-        feeOutput
-      <> accumulatedSkeleton
-      <> mustHaveRefInput cfgRef
+        | totalRequiredFees == mempty = mempty
+        | otherwise =
+            mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) totalRequiredFees $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
+  pure
+    $ feeOutput
+    <> accumulatedSkeleton
+    <> mustHaveRefInput cfgRef
 
 -- | Fills multiple orders. If the provided amount of offered tokens to buy in an order is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillMultiplePartialOrders
