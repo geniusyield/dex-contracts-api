@@ -7,7 +7,7 @@ Stability   : develop
 -}
 module GeniusYield.Api.Dex.PartialOrderConfig (
   PocdException (..),
-  partialOrderConfigAddr',
+  -- partialOrderConfigAddr',
   fetchPartialOrderConfig,
 ) where
 
@@ -17,11 +17,11 @@ import GeniusYield.Api.Dex.Types
 import GeniusYield.HTTP.Errors (GYApiError (..), IsGYApiError (..))
 import GeniusYield.Imports
 import GeniusYield.Scripts.Dex.PartialOrderConfig (
+  HasPartialOrderConfigAddr (getPartialOrderConfigAddr),
   PartialOrderConfigInfoF (..),
-  partialOrderConfigAddr,
  )
 import GeniusYield.TxBuilder (
-  GYTxQueryMonad (networkId, utxosAtAddressWithDatums),
+  GYTxQueryMonad (utxosAtAddressWithDatums),
   addressFromPlutus',
   throwAppError,
   utxoDatumPure',
@@ -46,15 +46,17 @@ instance IsGYApiError PocdException where
         gaeMsg = Txt.pack $ printf "Partial order config not found for NFT: %s" nftToken
       }
 
-partialOrderConfigAddr' ∷ GYDexApiQueryMonad m a ⇒ GYAssetClass → m GYAddress
-partialOrderConfigAddr' nftToken = do
-  nid ← networkId
-  a ← ask
-  pure $ partialOrderConfigAddr a nid nftToken
+-- partialOrderConfigAddr' ∷ GYDexApiQueryMonad m a ⇒ GYAssetClass → m GYAddress
+-- partialOrderConfigAddr' nftToken = do
+--   nid ← networkId
+--   a ← ask
+--   pure $ partialOrderConfigAddr a nid nftToken
 
 fetchPartialOrderConfig ∷ GYDexApiQueryMonad m a ⇒ GYAssetClass → m (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
 fetchPartialOrderConfig nftToken = do
-  addr ← partialOrderConfigAddr' nftToken
+  -- addr ← partialOrderConfigAddr' nftToken
+  a ← ask
+  let addr = getPartialOrderConfigAddr a
   utxos ← utxosAtAddressWithDatums addr $ Just nftToken
   case utxos of
     [p@(utxo, Just _)] → do
