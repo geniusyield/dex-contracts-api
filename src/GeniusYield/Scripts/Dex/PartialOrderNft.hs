@@ -15,11 +15,12 @@ module GeniusYield.Scripts.Dex.PartialOrderNft (
 
 import GeniusYield.Scripts.Common
 import GeniusYield.Scripts.Dex.PartialOrder (HasPartialOrderScript, partialOrderValidator)
-import GeniusYield.Scripts.Dex.PartialOrderConfig (HasPartialOrderConfigScript, partialOrderConfigPlutusAddr)
 import GeniusYield.Types (
+  GYAddress,
   GYAssetClass,
   GYMintingPolicy,
   PlutusVersion (PlutusV2),
+  addressToPlutus,
   assetClassToPlutus,
   scriptPlutusHash,
   validatorToScript,
@@ -32,16 +33,16 @@ class HasPartialOrderNftScript a where
   getPartialOrderNftPolicy ∷ a → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]
 
 partialOrderNftMintingPolicy
-  ∷ (HasPartialOrderNftScript a, HasPartialOrderScript a, HasPartialOrderConfigScript a)
+  ∷ (HasPartialOrderNftScript a, HasPartialOrderScript a)
   ⇒ a
+  → GYAddress
   → GYAssetClass
   → GYMintingPolicy 'PlutusV2
-partialOrderNftMintingPolicy a ac =
+partialOrderNftMintingPolicy a addr ac =
   mintingPolicyFromPly
     $ getPartialOrderNftPolicy a
     # scriptPlutusHash (validatorToScript v)
-    # addr
+    # addressToPlutus addr
     # assetClassToPlutus ac
  where
-  v = partialOrderValidator a ac
-  addr = partialOrderConfigPlutusAddr a ac
+  v = partialOrderValidator a addr ac
