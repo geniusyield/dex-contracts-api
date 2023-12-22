@@ -16,7 +16,7 @@ copyright:          2023 GYELD GMBH
 build-type:         Simple
 category:           Blockchain, Cardano, Validator
 extra-doc-files:    CHANGELOG.md, README.md
-extra-source-files: compiled-scripts/*
+extra-source-files: compiled-scripts/minting-policy, compiled-scripts/partial-order
 tested-with:        GHC ==9.2.8
 
 source-repository head

@@ -130,11 +130,11 @@ mintingPolicyIdFromCurrencySymbol cs =
    in
     case Api.deserialiseFromRawBytes Api.AsPolicyId bs of
       Left e →
-        Left
-          $ DeserialiseRawBytesError
-          $ pack
-          $ "mintingPolicyIdFromCurrencySymbol: "
-          <> show cs
-          <> ", error: "
-          <> show e
+        Left $
+          DeserialiseRawBytesError $
+            pack $
+              "mintingPolicyIdFromCurrencySymbol: "
+                <> show cs
+                <> ", error: "
+                <> show e
       Right pid → Right $ mintingPolicyIdFromApi pid
