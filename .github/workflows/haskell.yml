@@ -105,8 +105,9 @@ jobs:
     # TODO: [CI] Add cabal check #9
     #- name: Run checks (cabal)
     #  run: cabal check
-    - name: Create source distribution file (cabal)
-      run: cabal sdist
+    # TODO: [CI] Create source distribution file #11
+    #- name: Create source distribution file (cabal)
+    #  run: cabal sdist
     - name: Identify version (cabal)
       id: get_version
       run: |
