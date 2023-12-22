@@ -93,6 +93,10 @@ jobs:
         sudo ldconfig
     - name: Update dependencies (cabal)
       run: cabal update
+    - name: Install fourmolu
+      run: cabal install fourmolu
+    - name: Run checks (fourmolu)
+      run: fourmolu --mode check src
     - name: Build dependencies (cabal)
       run: cabal build --only-dependencies --enable-tests --enable-benchmarks
     - name: Build all targets (cabal)
