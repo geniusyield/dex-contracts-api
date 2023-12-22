@@ -119,10 +119,10 @@ PlutusTx.makeIsDataIndexed ''PartialOrderAction [('PartialCancel, 0), ('PartialF
 
 partialOrderValidator ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a) ⇒ a → GYAssetClass → GYValidator 'PlutusV2
 partialOrderValidator a ac =
-  validatorFromPly
-    $ getPartialOrderValidator a
-    # addressToPlutus (getPartialOrderConfigAddr a)
-    # assetClassToPlutus ac
+  validatorFromPly $
+    getPartialOrderValidator a
+      # addressToPlutus (getPartialOrderConfigAddr a)
+      # assetClassToPlutus ac
 
 partialOrderValidatorHash
   ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a)

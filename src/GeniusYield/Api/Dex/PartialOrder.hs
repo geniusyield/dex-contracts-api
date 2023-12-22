@@ -396,8 +396,8 @@ makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) = d
   nft ← tokenNameFromPlutus' podNFT
   askedAsset ← assetClassFromPlutus' podAskedAsset
 
-  when (valueAssetClass v (GYToken policyId nft) /= 1)
-    $ throwAppError PodNftNotAvailable
+  when (valueAssetClass v (GYToken policyId nft) /= 1) $
+    throwAppError PodNftNotAvailable
 
   return
     PartialOrderInfo
@@ -535,11 +535,11 @@ placePartialOrder' por@PORefs {..} addr (offerAmt, offerAC) priceAC price start 
 
       o = mkGYTxOut outAddr' offerV (datumFromPlutusData od)
 
-  return
-    $ mustHaveInput nftInput
-    <> mustHaveOutput o
-    <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
-    <> mustHaveRefInput cfgRef
+  return $
+    mustHaveInput nftInput
+      <> mustHaveOutput o
+      <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
+      <> mustHaveRefInput cfgRef
 
 -- | Fills an order. If the provided amount of offered tokens to buy is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillPartialOrder
@@ -630,12 +630,12 @@ mkSkeletonCompletelyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} mR
       feeOutput
         | fee == mempty = mempty -- We do not require a fee output.
         | otherwise =
-            mustHaveOutput
-              $ mkGYTxOut
+            mustHaveOutput $
+              mkGYTxOut
                 (pociFeeAddr pocd)
                 fee
-                ( datumFromPlutusData
-                    $ PartialOrderFeeOutput
+                ( datumFromPlutusData $
+                    PartialOrderFeeOutput
                       { pofdMentionedFees = PlutusTx.singleton (txOutRefToPlutus poiRef) (valueToPlutus containedFee),
                         pofdReservedValue = mempty,
                         pofdSpentUTxORef = Nothing
@@ -643,13 +643,13 @@ mkSkeletonCompletelyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} mR
                 )
       expectedValueOut = expectedPaymentWithDeposit oi True
 
-  return
-    $ mustHaveInput (partialOrderInfoToIn gycs por oi CompleteFill)
-    <> mustHaveRefInput cfgRef
-    <> mustHaveOutput (partialOrderInfoToPayment oi expectedValueOut)
-    <> feeOutput
-    <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
-    <> cs
+  return $
+    mustHaveInput (partialOrderInfoToIn gycs por oi CompleteFill)
+      <> mustHaveRefInput cfgRef
+      <> mustHaveOutput (partialOrderInfoToPayment oi expectedValueOut)
+      <> feeOutput
+      <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
+      <> cs
 
 -- | Creates the partial fill skeleton of a partial order.
 mkSkeletonPartiallyFillPartialOrder
@@ -686,11 +686,11 @@ mkSkeletonPartiallyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} amt
   cs ← validFillRangeConstraints poiStart poiEnd
   gycs ← ask
 
-  return
-    $ mustHaveInput (partialOrderInfoToIn gycs por oi $ PartialFill $ toInteger amt)
-    <> mustHaveOutput o
-    <> cs
-    <> mustHaveRefInput cfgRef
+  return $
+    mustHaveInput (partialOrderInfoToIn gycs por oi $ PartialFill $ toInteger amt)
+      <> mustHaveOutput o
+      <> cs
+      <> mustHaveRefInput cfgRef
 
 cancelPartialOrder
   ∷ (HasCallStack, GYDexApiMonad m a)
@@ -745,10 +745,10 @@ cancelMultiplePartialOrders por@PORefs {..} ois = do
         | totalRequiredFees == mempty = mempty
         | otherwise =
             mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) totalRequiredFees $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
-  pure
-    $ feeOutput
-    <> accumulatedSkeleton
-    <> mustHaveRefInput cfgRef
+  pure $
+    feeOutput
+      <> accumulatedSkeleton
+      <> mustHaveRefInput cfgRef
 
 -- | Fills multiple orders. If the provided amount of offered tokens to buy in an order is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillMultiplePartialOrders
@@ -862,11 +862,11 @@ fillMultiplePartialOrders' por orders mRefPocd = do
 
               cs ← validFillRangeConstraints poiStart poiEnd
 
-              pure
-                $! prevSkel
-                <> mustHaveInput (partialOrderInfoToIn gycs por poi $ PartialFill $ toInteger amt)
-                <> mustHaveOutput o
-                <> cs
+              pure $!
+                prevSkel
+                  <> mustHaveInput (partialOrderInfoToIn gycs por poi $ PartialFill $ toInteger amt)
+                  <> mustHaveOutput o
+                  <> cs
           )
           (mustHaveRefInput cfgRef)
           (zip [(1 ∷ Natural) ..] orders)

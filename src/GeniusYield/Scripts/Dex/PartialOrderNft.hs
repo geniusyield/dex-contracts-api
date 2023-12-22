@@ -38,10 +38,10 @@ partialOrderNftMintingPolicy
   → GYAssetClass
   → GYMintingPolicy 'PlutusV2
 partialOrderNftMintingPolicy a ac =
-  mintingPolicyFromPly
-    $ getPartialOrderNftPolicy a
-    # scriptPlutusHash (validatorToScript v)
-    # addressToPlutus (getPartialOrderConfigAddr a)
-    # assetClassToPlutus ac
+  mintingPolicyFromPly $
+    getPartialOrderNftPolicy a
+      # scriptPlutusHash (validatorToScript v)
+      # addressToPlutus (getPartialOrderConfigAddr a)
+      # assetClassToPlutus ac
  where
   v = partialOrderValidator a ac
