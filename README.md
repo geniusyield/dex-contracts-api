@@ -14,9 +14,9 @@ These are represented in redeemer as:
 
 https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L112-L116
 
-Following is the specification of datum:
+And following is the specification of datum:
 
-https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L75-L110
+https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L75-L108
 
 Where `PartialOrderContainedFee` is defined to be:
 
