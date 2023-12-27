@@ -18,11 +18,11 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
-    #- uses: actions/download-artifact@v3
-    #  name: Download source distribution file artifact
-    #  with:
-    #    name: source-distribution-file
-    #    path: ./artifacts
+    - uses: actions/download-artifact@v3
+      name: Download source distribution file artifact
+      with:
+        name: source-distribution-file
+        path: ./artifacts
     - uses: actions/download-artifact@v3
       name: Download haddock artifact
       with:
@@ -50,5 +50,6 @@ jobs:
           --verify-tag \
           --draft \
           "${SEMANTIC_VERSION}" \
+          "./artifacts/${{ env.VERSION }}.tar.gz#Source distribution file (tar.gz)" \
           "./artifacts/${HADDOCK_FILE}#Haddock (tar)"
         echo "::notice::Succesfully created release draft ${SEMANTIC_VERSION} from ${GIT_REVISION}. (Uploaded: ${{ env.VERSION }}.tar.gz)"
