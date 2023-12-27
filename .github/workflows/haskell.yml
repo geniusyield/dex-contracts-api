@@ -94,8 +94,8 @@ jobs:
     - name: Update dependencies (cabal)
       run: cabal update
     # TODO: [CI] Add fourmolu #10
-    #- name: Install fourmolu
-    #  run: cabal install fourmolu
+    - name: Install fourmolu
+      run: cabal install fourmolu
     #- name: Run checks (fourmolu)
     #  run: fourmolu --mode check src
     - name: Build dependencies (cabal)
