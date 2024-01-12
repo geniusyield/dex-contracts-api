@@ -94,7 +94,7 @@ jobs:
     - name: Update dependencies (cabal)
       run: cabal update
     - name: Install fourmolu
-      run: cabal install fourmolu
+      run: cabal install fourmolu --overwrite-policy=always
     - name: Run checks (fourmolu)
       run: fourmolu --mode check src
     - name: Build dependencies (cabal)
