@@ -21,26 +21,20 @@ module GeniusYield.Scripts.Dex.PartialOrderConfig (
   -- * Address
   partialOrderConfigAddr,
   partialOrderConfigPlutusAddr,
-
-  -- * Helpers
-  mintingPolicyIdFromCurrencySymbol,
 ) where
 
-import Cardano.Api qualified as Api
-import Data.Text (pack)
 import GHC.Generics (Generic)
 import GeniusYield.Scripts.Dex.PartialOrderConfig.Internal (PartialOrderConfigDatum (..))
 import GeniusYield.Types
 import PlutusCore.Version (plcVersion100)
 import PlutusLedgerApi.V1 qualified as Plutus
-import PlutusLedgerApi.V1.Value (AssetClass, CurrencySymbol (..))
+import PlutusLedgerApi.V1.Value (AssetClass)
 import PlutusTx (
   BuiltinData,
   FromData (fromBuiltinData),
   ToData (toBuiltinData),
  )
 import PlutusTx qualified
-import PlutusTx.Builtins.Internal (BuiltinByteString (..))
 
 class HasPartialOrderConfigScript a where
   getPartialOrderConfigValidator ∷ a → PlutusTx.CompiledCode (AssetClass → BuiltinData → BuiltinData → BuiltinData → ())
@@ -77,7 +71,7 @@ instance ToData (PartialOrderConfigInfoF Plutus.Address) where
       PartialOrderConfigDatum
         { pocdSignatories = pubKeyHashToPlutus <$> pociSignatories,
           pocdReqSignatories = pociReqSignatories,
-          pocdNftSymbol = mintingPolicyIdCurrencySymbol pociNftSymbol,
+          pocdNftSymbol = mintingPolicyIdToCurrencySymbol pociNftSymbol,
           pocdFeeAddr = pociFeeAddr,
           pocdMakerFeeFlat = pociMakerFeeFlat,
           pocdMakerFeeRatio = rationalToPlutus pociMakerFeeRatio,
@@ -121,20 +115,3 @@ partialOrderConfigAddr script nid ac =
 
 partialOrderConfigPlutusAddr ∷ HasPartialOrderConfigScript a ⇒ a → GYAssetClass → Plutus.Address
 partialOrderConfigPlutusAddr script ac = addressToPlutus $ partialOrderConfigAddr script GYMainnet ac
-
--- TODO: move to Atlas!
-mintingPolicyIdFromCurrencySymbol ∷ CurrencySymbol → Either PlutusToCardanoError GYMintingPolicyId
-mintingPolicyIdFromCurrencySymbol cs =
-  let
-    BuiltinByteString bs = unCurrencySymbol cs
-   in
-    case Api.deserialiseFromRawBytes Api.AsPolicyId bs of
-      Left e →
-        Left $
-          DeserialiseRawBytesError $
-            pack $
-              "mintingPolicyIdFromCurrencySymbol: "
-                <> show cs
-                <> ", error: "
-                <> show e
-      Right pid → Right $ mintingPolicyIdFromApi pid
