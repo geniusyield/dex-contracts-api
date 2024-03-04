@@ -1,0 +1,73 @@
+cabal-version:   3.6
+name:            geniusyield-orderbot
+version:         0.1.0
+synopsis:        Orderbot framework to interaction with GeniusYield DEX.
+description:
+  Orderbot framework to interaction with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
+
+license:         Apache-2.0
+license-file:    LICENSE
+bug-reports:     http://github.com/geniusyield/dex-contracts-api/issues
+author:          GeniusYield
+maintainer:      support@geniusyield.co
+copyright:       2024 GYELD GMBH
+build-type:      Simple
+category:        Blockchain, Cardano
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.2.8
+
+source-repository head
+  type:     git
+  location: https://github.com/geniusyield/dex-contracts-api.git
+
+common common
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    FunctionalDependencies
+    GADTs
+    LambdaCase
+    MultiWayIf
+    OverloadedStrings
+    RecordWildCards
+    RoleAnnotations
+    TemplateHaskell
+    TypeFamilies
+    TypeFamilyDependencies
+    UndecidableInstances
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:        -Wall -Wincomplete-uni-patterns -Wunused-packages
+
+  -- Speed-ups GHCi considerably.
+  ghc-options:        -fno-show-valid-hole-fits
+
+library
+  import:          common
+  hs-source-dirs:  src
+  exposed-modules:
+    GeniusYield.OrderBot.Adapter.Maestro.Markets
+    GeniusYield.OrderBot.Domain.Markets
+    GeniusYield.OrderBot.Domain.OrderBook
+    GeniusYield.OrderBot.Types
+
+  build-depends:
+    , aeson
+    , base                 ^>=4.16.4.0
+    , deriving-aeson
+    , geniusyield-dex-api
+    , http-api-data
+    , rio
+    , strict
+
+  -- Dependencies whose version is fixed by @cabal.project@ file.
+  build-depends:
+    , atlas-cardano
+    , maestro-sdk
