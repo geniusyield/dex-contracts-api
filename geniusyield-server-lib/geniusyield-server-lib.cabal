@@ -64,6 +64,7 @@ library
     GeniusYield.Server.Files
     GeniusYield.Server.Options
     GeniusYield.Server.RequestLoggerMiddleware
+    GeniusYield.Server.Tx
     GeniusYield.Server.Utils
 
   other-modules:

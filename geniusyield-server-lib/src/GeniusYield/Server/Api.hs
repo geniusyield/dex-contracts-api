@@ -20,8 +20,9 @@ import GeniusYield.GYConfig (GYCoreConfig (cfgNetworkId))
 import GeniusYield.Imports
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
-import GeniusYield.Server.Dex.PartialOrder (DEXPartialOrderAPI, handleDEXPartialOrder)
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
+import GeniusYield.Server.Dex.PartialOrder (DEXPartialOrderAPI, handleDEXPartialOrder)
+import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.Types
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
@@ -55,6 +56,7 @@ type GeniusYieldAPI =
   "settings" :> Get '[JSON] Settings
     :<|> DEXPartialOrderAPI
     :<|> MarketsAPI
+    :<|> TxAPI
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
@@ -77,6 +79,7 @@ geniusYieldServer ctx =
   handleSettings ctx
     :<|> handleDEXPartialOrder ctx
     :<|> handleMarketsApi ctx
+    :<|> handleTxApi ctx
 
 type MainAPI =
   GeniusYieldAPI
