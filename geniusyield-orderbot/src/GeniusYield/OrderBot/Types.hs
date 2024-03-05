@@ -25,17 +25,20 @@ module GeniusYield.OrderBot.Types (
   DexPair (..),
 ) where
 
-import Data.Aeson (ToJSON, (.=))
+import Data.Aeson (FromJSON (..), ToJSON, (.=))
 import Data.Aeson qualified as Aeson
 import Data.Kind (Type)
 import Data.Ratio (denominator, numerator, (%))
 import Data.Word (Word64)
 import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..))
-import GeniusYield.Imports (Text)
 import GeniusYield.Types (rationalToGHC)
 import GeniusYield.Types.TxOutRef (GYTxOutRef)
 import GeniusYield.Types.Value (GYAssetClass (..))
 import Numeric.Natural (Natural)
+import RIO (Text)
+import RIO.Text qualified as Text
+import RIO.Text.Partial qualified as Text
+import Web.HttpApiData (FromHttpApiData (..), ToHttpApiData (..))
 
 -------------------------------------------------------------------------------
 -- Information on DEX orders relevant to a matching strategy
@@ -194,11 +197,44 @@ data OrderAssetPair = OAssetPair
   deriving stock (Eq, Ord, Show)
 
 instance ToJSON OrderAssetPair where
-  toJSON OAssetPair {currencyAsset, commodityAsset} =
-    Aeson.object
-      [ "currencyAsset" .= currencyAsset,
-        "commodityAsset" .= commodityAsset
-      ]
+  toJSON oap =
+    Aeson.String $ toUrlPiece oap
+
+instance FromJSON OrderAssetPair where
+  parseJSON = Aeson.withText "OrderAssetPair" $ \t →
+    case parseUrlPiece t of
+      Left e → fail $ Text.unpack e
+      Right oap → pure oap
+
+-- >>> toUrlPiece $ OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYLovelace}
+-- "_"
+-- >>> toUrlPiece $ OAssetPair {currencyAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX", commodityAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX"}
+-- "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958"
+-- >>> toUrlPiece $ OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX"}
+-- "_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958"
+instance ToHttpApiData OrderAssetPair where
+  toUrlPiece OAssetPair {..} = toUrlPiece' currencyAsset <> "_" <> toUrlPiece' commodityAsset
+   where
+    toUrlPiece' t = case toUrlPiece t of
+      "lovelace" → ""
+      anyOther → anyOther
+
+-- >>> parseUrlPiece "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958" :: Either Text OrderAssetPair
+-- Right (OAssetPair {currencyAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX", commodityAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX"})
+-- >>> parseUrlPiece "_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958" :: Either Text OrderAssetPair
+-- Right (OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX"})
+-- >>> parseUrlPiece "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_" :: Either Text OrderAssetPair
+-- Right (OAssetPair {currencyAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX", commodityAsset = GYLovelace})
+-- >>> parseUrlPiece "_" :: Either Text OrderAssetPair
+-- Right (OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYLovelace})
+-- >>> parseUrlPiece "" :: Either Text OrderAssetPair
+-- Right (OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYLovelace})
+instance FromHttpApiData OrderAssetPair where
+  parseUrlPiece t = do
+    let (cur, com) = (\com' → if Text.null com' then com' else Text.drop 1 com') <$> Text.breakOn "_" t
+    curAsset ← parseUrlPiece cur
+    comAsset ← parseUrlPiece com
+    pure $ OAssetPair curAsset comAsset
 
 {- | Two order asset pairs are considered "equivalent" (but not strictly equal, as in 'Eq'),
      if they contain the same 2 assets irrespective of order.

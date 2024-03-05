@@ -28,6 +28,7 @@ module GeniusYield.Api.Dex.PartialOrder (
   -- * Queries
   partialOrders,
   getPartialOrderInfo,
+  getPartialOrdersInfos,
 
   -- * Tx constructors
   placePartialOrder,

@@ -3,6 +3,7 @@
 module GeniusYield.Server.Utils (
   ExceptionTypes (..),
   isMatchedException,
+  unsignedTxHex,
   logInfo,
   logDebug,
   pubKeyFromAddress,
@@ -50,6 +51,9 @@ isMatchedException (etype :>> etypes) se = isJust (f etype) || isMatchedExceptio
  where
   f ∷ ∀ e. Exception e ⇒ Proxy e → Maybe e
   f _ = fromException @e se
+
+unsignedTxHex ∷ GYTxBody → String
+unsignedTxHex = unsignedTx >>> txToHex
 
 dropAndCamelToSnake ∷ ∀ a. KnownSymbol a ⇒ String → String
 dropAndCamelToSnake = camelTo2 '_' . drop (length $ symbolVal (Proxy @a))

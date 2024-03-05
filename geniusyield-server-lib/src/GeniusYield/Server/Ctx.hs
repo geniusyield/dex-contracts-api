@@ -77,7 +77,7 @@ runSkeletonI
   -- ^ User's used addresses. Note that internally we prepend given change address to this list so that in case wallet's state isn't updated quickly to mark an earlier given change address as used, we'll be able to use UTxOs potentially present at this change address.
   → GYAddress
   -- ^ User's change address.
-  → Maybe GYTxOutRefCbor
+  → Maybe GYTxOutRef
   -- ^ User's collateral.
   → ReaderT DEXInfo GYTxMonadNode (GYTxSkeleton v)
   → IO GYTxBody
@@ -91,7 +91,7 @@ runSkeletonWithStrategyI
   -- ^ User's used addresses. Note that internally we prepend given change address to this list so that in case wallet's state isn't updated quickly to mark an earlier given change address as used, we'll be able to use UTxOs potentially present at this change address.
   → GYAddress
   -- ^ User's change address.
-  → Maybe GYTxOutRefCbor
+  → Maybe GYTxOutRef
   -- ^ User's collateral.
   → ReaderT DEXInfo GYTxMonadNode (GYTxSkeleton v)
   → IO GYTxBody
@@ -104,7 +104,7 @@ runSkeletonF
   -- ^ User's used addresses. Note that internally we prepend given change address to this list so that in case wallet's state isn't updated quickly to mark an earlier given change address as used, we'll be able to use UTxOs potentially present at this change address.
   → GYAddress
   -- ^ User's change address.
-  → Maybe GYTxOutRefCbor
+  → Maybe GYTxOutRef
   -- ^ User's collateral.
   → ReaderT DEXInfo GYTxMonadNode (t (GYTxSkeleton v))
   → IO (t GYTxBody)
@@ -118,7 +118,7 @@ runSkeletonWithStrategyF
   -- ^ User's used addresses. Note that internally we prepend given change address to this list so that in case wallet's state isn't updated quickly to mark an earlier given change address as used, we'll be able to use UTxOs potentially present at this change address.
   → GYAddress
   -- ^ User's change address.
-  → Maybe GYTxOutRefCbor
+  → Maybe GYTxOutRef
   -- ^ User's collateral.
   → ReaderT DEXInfo GYTxMonadNode (t (GYTxSkeleton v))
   → IO (t GYTxBody)
@@ -128,7 +128,7 @@ runSkeletonWithStrategyF cstrat ctx addrs addr mcollateral skeleton = do
       di = ctxDexInfo ctx
       mcollateral' = do
         collateral ← mcollateral
-        pure (getTxOutRefHex collateral, True)
+        pure (collateral, True)
 
   runGYTxMonadNodeF cstrat nid providers (addr : addrs) addr mcollateral' $ runReaderT skeleton di
 
