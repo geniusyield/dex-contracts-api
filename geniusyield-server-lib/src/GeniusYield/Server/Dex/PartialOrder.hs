@@ -187,11 +187,15 @@ type DEXPartialOrderAPI =
   "trading_fees"
     :> Get '[JSON] TradingFees
     :<|> "orders"
-      :> "place"
+      :> "open"
+      :> "tx"
+      :> "generate"
       :> ReqBody '[JSON] PlaceOrderRequest
       :> Post '[JSON] PlaceOrderResponse
     :<|> "orders"
       :> "cancel"
+      :> "tx"
+      :> "generate"
       :> ReqBody '[JSON] CancelOrderRequest
       :> Post '[JSON] CancelOrderResponse
     :<|> "orders"
