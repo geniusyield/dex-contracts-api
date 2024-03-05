@@ -16,13 +16,14 @@ import GeniusYield.HTTP.Errors (
  )
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Domain.Markets (Markets (getMarkets))
-import GeniusYield.OrderBot.Types (DexPair (..), OrderAssetPair (commodityAsset, currencyAsset), TokenDisplayDetails (..))
+import GeniusYield.OrderBot.Types (DexPair (..), OrderAssetPair (commodityAsset, currencyAsset), TokenDisplayDetails (..), mkOrderAssetPair)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils (addSwaggerDescription, addSwaggerExample, dropAndCamelToSnake, logInfo)
 import GeniusYield.TxBuilder.Class
 import GeniusYield.Types
 import Network.HTTP.Types (status400)
+import RIO (Word64)
 import Servant
 
 {- $setup
@@ -72,9 +73,13 @@ instance Swagger.ToSchema TargetAsset where
       & addSwaggerExample "GENS"
 
 data Market = Market
-  { marketId ∷ !MarketId,
-    baseAsset ∷ !BaseAsset,
-    targetAsset ∷ !TargetAsset
+  { marketId ∷ !OrderAssetPair,
+    baseAsset ∷ !GYAssetClass,
+    targetAsset ∷ !GYAssetClass,
+    baseAssetTicker ∷ !(Maybe Text),
+    targetAssetTicker ∷ !(Maybe Text),
+    baseAssetDecimals ∷ !(Maybe Word64),
+    targetAssetDecimals ∷ !(Maybe Word64)
   }
   deriving stock (Show, Eq, Generic)
   deriving
@@ -104,7 +109,10 @@ handleMarkets ctx = do
  where
   -- We assume following for now as there is no link b/w display name and actual asset name, for instance @LENFI@ token has asset name @AADA@.
   fromDexPair ∷ DexPair → Market
-  fromDexPair DexPair {..} = Market {marketId = MarketId dpMarketPairId, baseAsset = BaseAsset (tddTicker dpCurrencyToken), targetAsset = TargetAsset (tddTicker dpCommodityToken)}
+  fromDexPair DexPair {..} =
+    let baseAsset' = tddAssetClass dpCurrencyToken
+        targetAsset' = tddAssetClass dpCommodityToken
+     in Market {marketId = mkOrderAssetPair baseAsset' targetAsset', baseAsset = baseAsset', targetAsset = targetAsset', baseAssetTicker = Just $ tddTicker dpCurrencyToken, targetAssetTicker = Just $ tddTicker dpCommodityToken, baseAssetDecimals = Just $ tddDecimals dpCurrencyToken, targetAssetDecimals = Just $ tddDecimals dpCommodityToken}
 
 -- Market
 --   { marketId = MarketId dexMarketPairId,
