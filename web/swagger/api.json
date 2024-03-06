@@ -345,7 +345,7 @@
         }
     },
     "info": {
-        "description": "This API is used to interact with GeniusYield DEX.",
+        "description": "API to interact with GeniusYield DEX.",
         "title": "Genius Yield Haskell Server API",
         "version": "1.0"
     },
@@ -373,12 +373,12 @@
                 ]
             }
         },
-        "/v1/orders/cancel/tx/generate": {
+        "/v1/orders/cancel": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
-                "description": "Create a transaction to cancel order(s)",
+                "description": "Cancel order(s). This differs from earlier endpoint in that it would also sign & submit the built transaction",
                 "parameters": [
                     {
                         "in": "body",
@@ -409,12 +409,48 @@
                 ]
             }
         },
-        "/v1/orders/open/tx/generate": {
+        "/v1/orders/cancel/tx/generate": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
-                "description": "Create an order",
+                "description": "Build a transaction to cancel order(s)",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CancelOrderParameters"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/CancelOrderTransactionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `body`"
+                    }
+                },
+                "summary": "Build transaction to cancel order(s)",
+                "tags": [
+                    "Orders"
+                ]
+            }
+        },
+        "/v1/orders/open": {
+            "post": {
+                "consumes": [
+                    "application/json;charset=utf-8"
+                ],
+                "description": "Create an order. This differs from earlier endpoint in that it would also sign & submit the built transaction",
                 "parameters": [
                     {
                         "in": "body",
@@ -440,6 +476,42 @@
                     }
                 },
                 "summary": "Create an order",
+                "tags": [
+                    "Orders"
+                ]
+            }
+        },
+        "/v1/orders/open/tx/generate": {
+            "post": {
+                "consumes": [
+                    "application/json;charset=utf-8"
+                ],
+                "description": "Build a transaction to create an order",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/PlaceOrderParameters"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/PlaceOrderTransactionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `body`"
+                    }
+                },
+                "summary": "Build transaction to create order",
                 "tags": [
                     "Orders"
                 ]

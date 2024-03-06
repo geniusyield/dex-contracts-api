@@ -167,18 +167,28 @@ instance Swagger.ToSchema OrderBookInfo where
 -- TODO: Rename it to `OrdersAPI`.
 
 type DEXPartialOrderAPI =
-  Summary "Create an order"
-    :> Description "Create an order"
+  Summary "Build transaction to create order"
+    :> Description "Build a transaction to create an order"
     :> "open"
     :> "tx"
     :> "generate"
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
-    :<|> Summary "Cancel order(s)"
-      :> Description "Create a transaction to cancel order(s)"
+    :<|> Summary "Create an order"
+      :> Description "Create an order. This differs from earlier endpoint in that it would also sign & submit the built transaction"
+      :> "open"
+      :> ReqBody '[JSON] PlaceOrderParameters
+      :> Post '[JSON] PlaceOrderTransactionDetails
+    :<|> Summary "Build transaction to cancel order(s)"
+      :> Description "Build a transaction to cancel order(s)"
       :> "cancel"
       :> "tx"
       :> "generate"
+      :> ReqBody '[JSON] CancelOrderParameters
+      :> Post '[JSON] CancelOrderTransactionDetails
+    :<|> Summary "Cancel order(s)"
+      :> Description "Cancel order(s). This differs from earlier endpoint in that it would also sign & submit the built transaction"
+      :> "cancel"
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Get order(s)"
@@ -190,6 +200,8 @@ type DEXPartialOrderAPI =
 handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
 handleDEXPartialOrder ctx =
   handlePlaceOrder ctx
+    :<|> handlePlaceOrder ctx
+    :<|> handleCancelOrder ctx
     :<|> handleCancelOrder ctx
     :<|> handleOrders ctx
 
