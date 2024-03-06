@@ -47,12 +47,18 @@ instance Swagger.ToSchema TransactionSign where
 
 type TxAPI =
   "sign"
+    :> Summary "Sign a transaction"
+    :> Description "Signs the given transaction using key configured in server."
     :> ReqBody '[JSON] GYTx
     :> Post '[JSON] GYTx
     :<|> "sign_and_submit"
+      :> Summary "Sign and submit a transaction"
+      :> Description "Signs the given transaction using key configured in server and submits it to the network."
       :> ReqBody '[JSON] GYTx
       :> Post '[JSON] GYTxId
     :<|> "submit"
+      :> Summary "Submit a transaction"
+      :> Description "Submits the given transaction to the network."
       :> ReqBody '[JSON] GYTx
       :> Post '[JSON] GYTxId
 

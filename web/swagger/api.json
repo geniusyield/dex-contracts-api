@@ -513,6 +513,7 @@
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
+                "description": "Signs the given transaction using key configured in server.",
                 "parameters": [
                     {
                         "in": "body",
@@ -537,6 +538,7 @@
                         "description": "Invalid `body`"
                     }
                 },
+                "summary": "Sign a transaction",
                 "tags": [
                     "Transaction"
                 ]
@@ -547,6 +549,7 @@
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
+                "description": "Signs the given transaction using key configured in server and submits it to the network.",
                 "parameters": [
                     {
                         "in": "body",
@@ -571,6 +574,7 @@
                         "description": "Invalid `body`"
                     }
                 },
+                "summary": "Sign and submit a transaction",
                 "tags": [
                     "Transaction"
                 ]
@@ -581,6 +585,7 @@
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
+                "description": "Submits the given transaction to the network.",
                 "parameters": [
                     {
                         "in": "body",
@@ -605,6 +610,7 @@
                         "description": "Invalid `body`"
                     }
                 },
+                "summary": "Submit a transaction",
                 "tags": [
                     "Transaction"
                 ]
