@@ -362,7 +362,10 @@
                             "type": "array"
                         }
                     }
-                }
+                },
+                "tags": [
+                    "Markets"
+                ]
             }
         },
         "/v1/orders/cancel/tx/generate": {
@@ -393,7 +396,10 @@
                     "400": {
                         "description": "Invalid `body`"
                     }
-                }
+                },
+                "tags": [
+                    "Orders"
+                ]
             }
         },
         "/v1/orders/open/tx/generate": {
@@ -424,7 +430,28 @@
                     "400": {
                         "description": "Invalid `body`"
                     }
-                }
+                },
+                "tags": [
+                    "Orders"
+                ]
+            }
+        },
+        "/v1/orders/trading_fees": {
+            "get": {
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/TradingFees"
+                        }
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ]
             }
         },
         "/v1/orders/{market_id}": {
@@ -457,7 +484,10 @@
                     "400": {
                         "description": "Invalid `address` or `market_id`"
                     }
-                }
+                },
+                "tags": [
+                    "Orders"
+                ]
             }
         },
         "/v1/settings": {
@@ -472,22 +502,10 @@
                             "$ref": "#/definitions/Settings"
                         }
                     }
-                }
-            }
-        },
-        "/v1/trading_fees": {
-            "get": {
-                "produces": [
-                    "application/json;charset=utf-8"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/TradingFees"
-                        }
-                    }
-                }
+                },
+                "tags": [
+                    "Settings"
+                ]
             }
         },
         "/v1/tx/sign": {
@@ -518,7 +536,10 @@
                     "400": {
                         "description": "Invalid `body`"
                     }
-                }
+                },
+                "tags": [
+                    "Transaction"
+                ]
             }
         },
         "/v1/tx/sign_and_submit": {
@@ -549,7 +570,10 @@
                     "400": {
                         "description": "Invalid `body`"
                     }
-                }
+                },
+                "tags": [
+                    "Transaction"
+                ]
             }
         },
         "/v1/tx/submit": {
@@ -580,9 +604,30 @@
                     "400": {
                         "description": "Invalid `body`"
                     }
-                }
+                },
+                "tags": [
+                    "Transaction"
+                ]
             }
         }
     },
-    "swagger": "2.0"
+    "swagger": "2.0",
+    "tags": [
+        {
+            "description": "Endpoints related to transaction hex such as submitting a transaction",
+            "name": "Transaction"
+        },
+        {
+            "description": "Endpoints related to accessing markets information",
+            "name": "Markets"
+        },
+        {
+            "description": "Endpoints related to interacting with orders",
+            "name": "Orders"
+        },
+        {
+            "description": "Endpoint to get server settings such as network, version, and revision",
+            "name": "Settings"
+        }
+    ]
 }

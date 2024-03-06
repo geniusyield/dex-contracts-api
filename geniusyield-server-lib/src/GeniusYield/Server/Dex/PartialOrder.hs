@@ -184,25 +184,24 @@ instance Swagger.ToSchema OrderBookInfo where
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderResPrefix}
 
 -- TODO: Give timestamp for /orders
+-- TODO: Rename it to `OrdersAPI`.
 
 type DEXPartialOrderAPI =
   "trading_fees"
     :> Get '[JSON] TradingFees
-    :<|> "orders"
-      :> ( "open"
-            :> "tx"
-            :> "generate"
-            :> ReqBody '[JSON] PlaceOrderParameters
-            :> Post '[JSON] PlaceOrderTransactionDetails
-            :<|> "cancel"
-              :> "tx"
-              :> "generate"
-              :> ReqBody '[JSON] CancelOrderParameters
-              :> Post '[JSON] CancelOrderTransactionDetails
-            :<|> Capture "market_id" OrderAssetPair
-              :> QueryParam "address" GYAddressBech32
-              :> Get '[JSON] OrderBookInfo
-         )
+    :<|> "open"
+      :> "tx"
+      :> "generate"
+      :> ReqBody '[JSON] PlaceOrderParameters
+      :> Post '[JSON] PlaceOrderTransactionDetails
+    :<|> "cancel"
+      :> "tx"
+      :> "generate"
+      :> ReqBody '[JSON] CancelOrderParameters
+      :> Post '[JSON] CancelOrderTransactionDetails
+    :<|> Capture "market_id" OrderAssetPair
+      :> QueryParam "address" GYAddressBech32
+      :> Get '[JSON] OrderBookInfo
 
 handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
 handleDEXPartialOrder ctx =

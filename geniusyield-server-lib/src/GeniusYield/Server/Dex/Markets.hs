@@ -96,8 +96,7 @@ instance Swagger.ToSchema Market where
       & addSwaggerDescription "Market information"
 
 type MarketsAPI =
-  "markets"
-    :> Get '[JSON] [Market]
+  Get '[JSON] [Market]
 
 handleMarketsApi ∷ Ctx → ServerT MarketsAPI IO
 handleMarketsApi ctx = handleMarkets ctx

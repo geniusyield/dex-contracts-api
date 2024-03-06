@@ -46,16 +46,13 @@ instance Swagger.ToSchema TransactionSign where
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @TransactionSignPrefix}
 
 type TxAPI =
-  "tx"
-    :> "sign"
+  "sign"
     :> ReqBody '[JSON] GYTx
     :> Post '[JSON] GYTx
-    :<|> "tx"
-      :> "sign_and_submit"
+    :<|> "sign_and_submit"
       :> ReqBody '[JSON] GYTx
       :> Post '[JSON] GYTxId
-    :<|> "tx"
-      :> "submit"
+    :<|> "submit"
       :> ReqBody '[JSON] GYTx
       :> Post '[JSON] GYTxId
 

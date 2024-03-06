@@ -52,13 +52,13 @@ instance Swagger.ToSchema Settings where
 -- Server's API
 -------------------------------------------------------------------------------
 
-type GeniusYieldAPI =
-  "v1"
-    :> ( "settings" :> Get '[JSON] Settings
-          :<|> DEXPartialOrderAPI
-          :<|> MarketsAPI
-          :<|> TxAPI
-       )
+type V1API =
+  "settings" :> Get '[JSON] Settings
+    :<|> "orders" :> DEXPartialOrderAPI
+    :<|> "markets" :> MarketsAPI
+    :<|> "tx" :> TxAPI
+
+type GeniusYieldAPI = "v1" :> V1API
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
@@ -75,6 +75,10 @@ geniusYieldAPISwagger =
       & info
       . description
     ?~ "This API is used to interact with GeniusYield DEX."
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "tx" :> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "markets" :> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "orders" :> DEXPartialOrderAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "settings" :> Get '[JSON] Settings)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
