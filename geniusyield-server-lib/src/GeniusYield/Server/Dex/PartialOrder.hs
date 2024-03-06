@@ -148,9 +148,9 @@ instance Swagger.ToSchema OrderInfo where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderInfoPrefix}
 
--- TODO: Show id instead?
 data OrderBookInfo = OrderBookInfo
   { obiMarketPairId ∷ !OrderAssetPair,
+    obiTimestamp ∷ !GYTime,
     obiBids ∷ ![OrderInfo],
     obiAsks ∷ ![OrderInfo]
   }
@@ -163,7 +163,6 @@ instance Swagger.ToSchema OrderBookInfo where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderResPrefix}
 
--- TODO: Give timestamp for /orders
 -- TODO: Rename it to `OrdersAPI`.
 
 type DEXPartialOrderAPI =
@@ -261,7 +260,7 @@ handleOrders ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBo
 handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
   logInfo ctx "Fetching order(s)."
   let porefs = dexPORefs ctxDexInfo
-  -- this timestamp
+  gytime ← getCurrentGYTime
   os ← runQuery ctx $ partialOrders porefs
   let os' =
         Map.filter
@@ -286,6 +285,7 @@ handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
   pure $
     OrderBookInfo
       { obiMarketPairId = orderAssetPair,
+        obiTimestamp = gytime,
         obiAsks = asks,
         obiBids = bids
       }

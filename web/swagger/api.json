@@ -156,10 +156,17 @@
                 },
                 "market_pair_id": {
                     "$ref": "#/definitions/OrderAssetPair"
+                },
+                "timestamp": {
+                    "description": "This is the posix time in ISO8601 format.",
+                    "example": "1970-01-01T00:00:00Z",
+                    "format": "ISO8601",
+                    "type": "string"
                 }
             },
             "required": [
                 "market_pair_id",
+                "timestamp",
                 "bids",
                 "asks"
             ],
