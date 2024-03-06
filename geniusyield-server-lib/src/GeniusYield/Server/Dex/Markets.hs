@@ -96,7 +96,9 @@ instance Swagger.ToSchema Market where
       & addSwaggerDescription "Market information"
 
 type MarketsAPI =
-  Get '[JSON] [Market]
+  Summary "Get markets information for the DEX."
+    :> Description "Returns the list of markets information supported by GeniusYield DEX."
+    :> Get '[JSON] [Market]
 
 handleMarketsApi ∷ Ctx → ServerT MarketsAPI IO
 handleMarketsApi ctx = handleMarkets ctx

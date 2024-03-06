@@ -31,26 +31,6 @@ import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
 import RIO.Map qualified as Map
 import Servant
 
-type TradingFeesPrefix ∷ Symbol
-type TradingFeesPrefix = "tf"
-
--- TODO: JSON & Swagger instances.
-data TradingFees = TradingFees
-  { tfFlatMakerFee ∷ !GYNatural,
-    tfFlatTakerFee ∷ !GYNatural,
-    tfPercentageMakerFee ∷ !GYRational,
-    tfPercentageTakerFee ∷ !GYRational
-  }
-  deriving stock (Show, Eq, Generic)
-  deriving
-    (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix TradingFeesPrefix, CamelToSnake]] TradingFees
-
-instance Swagger.ToSchema TradingFees where
-  declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @TradingFeesPrefix}
-      & addSwaggerDescription "Trading fees of DEX."
-
 type PlaceOrderReqPrefix ∷ Symbol
 type PlaceOrderReqPrefix = "pop"
 
@@ -187,40 +167,31 @@ instance Swagger.ToSchema OrderBookInfo where
 -- TODO: Rename it to `OrdersAPI`.
 
 type DEXPartialOrderAPI =
-  "trading_fees"
-    :> Get '[JSON] TradingFees
-    :<|> "open"
-      :> "tx"
-      :> "generate"
-      :> ReqBody '[JSON] PlaceOrderParameters
-      :> Post '[JSON] PlaceOrderTransactionDetails
-    :<|> "cancel"
+  Summary "Create an order"
+    :> Description "Create an order"
+    :> "open"
+    :> "tx"
+    :> "generate"
+    :> ReqBody '[JSON] PlaceOrderParameters
+    :> Post '[JSON] PlaceOrderTransactionDetails
+    :<|> Summary "Cancel order(s)"
+      :> Description "Create a transaction to cancel order(s)"
+      :> "cancel"
       :> "tx"
       :> "generate"
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
-    :<|> Capture "market_id" OrderAssetPair
+    :<|> Summary "Get order(s)"
+      :> Description "Get on-chain order(s)"
+      :> Capture "market_id" OrderAssetPair
       :> QueryParam "address" GYAddressBech32
       :> Get '[JSON] OrderBookInfo
 
 handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
 handleDEXPartialOrder ctx =
-  handleTradingFees ctx
-    :<|> handlePlaceOrder ctx
+  handlePlaceOrder ctx
     :<|> handleCancelOrder ctx
     :<|> handleOrders ctx
-
-handleTradingFees ∷ Ctx → IO TradingFees
-handleTradingFees ctx@Ctx {..} = do
-  logInfo ctx "Calculating trading fees."
-  (_, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ dexPORefs $ ctxDexInfo
-  pure
-    TradingFees
-      { tfFlatMakerFee = fromIntegral $ pociMakerFeeFlat pocd,
-        tfFlatTakerFee = fromIntegral $ pociTakerFee pocd,
-        tfPercentageMakerFee = 100 * pociMakerFeeRatio pocd,
-        tfPercentageTakerFee = 100 * pociMakerFeeRatio pocd
-      }
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
 handlePlaceOrder ctx@Ctx {..} PlaceOrderParameters {..} = do
