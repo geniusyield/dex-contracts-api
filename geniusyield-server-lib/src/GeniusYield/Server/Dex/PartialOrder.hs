@@ -52,136 +52,138 @@ instance Swagger.ToSchema TradingFees where
       & addSwaggerDescription "Trading fees of DEX."
 
 type PlaceOrderReqPrefix ∷ Symbol
-type PlaceOrderReqPrefix = "poreq"
+type PlaceOrderReqPrefix = "pop"
 
 -- TODO: Review request and response swagger & json instances.
-data PlaceOrderRequest = PlaceOrderRequest
-  { poreqAddress ∷ !GYAddressBech32,
-    poreqCollateral ∷ !GYTxOutRef,
-    poreqOfferToken ∷ !GYAssetClass,
-    poreqOfferAmount ∷ !GYNatural,
-    poreqPriceToken ∷ !GYAssetClass,
-    poreqPriceAmount ∷ !GYNatural,
-    poreqStart ∷ !(Maybe GYTime),
-    poreqEnd ∷ !(Maybe GYTime)
+data PlaceOrderParameters = PlaceOrderParameters
+  { popAddress ∷ !GYAddressBech32,
+    popCollateral ∷ !GYTxOutRef,
+    popOfferToken ∷ !GYAssetClass,
+    popOfferAmount ∷ !GYNatural,
+    popPriceToken ∷ !GYAssetClass,
+    popPriceAmount ∷ !GYNatural,
+    popStart ∷ !(Maybe GYTime),
+    popEnd ∷ !(Maybe GYTime)
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix PlaceOrderReqPrefix, CamelToSnake]] PlaceOrderRequest
+    via CustomJSON '[FieldLabelModifier '[StripPrefix PlaceOrderReqPrefix, CamelToSnake]] PlaceOrderParameters
 
-instance Swagger.ToSchema PlaceOrderRequest where
+instance Swagger.ToSchema PlaceOrderParameters where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @PlaceOrderReqPrefix}
       & addSwaggerDescription "Place order request parameters."
 
 type PlaceOrderResPrefix ∷ Symbol
-type PlaceOrderResPrefix = "pores"
+type PlaceOrderResPrefix = "potd"
 
-data PlaceOrderResponse = PlaceOrderResponse
-  { poresTransaction ∷ !GYTx,
-    poresTransactionId ∷ !GYTxId,
-    poresTransactionFee ∷ !Natural,
-    poresMakerLovelaceFlatFee ∷ !Natural,
-    poresMakerOfferedPercentFee ∷ !GYRational,
-    poresMakerOfferedPercentFeeAmount ∷ !GYNatural,
-    poresLovelaceDeposit ∷ !GYNatural
+data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
+  { potdTransaction ∷ !GYTx,
+    potdTransactionId ∷ !GYTxId,
+    potdTransactionFee ∷ !Natural,
+    potdMakerLovelaceFlatFee ∷ !Natural,
+    potdMakerOfferedPercentFee ∷ !GYRational,
+    potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
+    potdLovelaceDeposit ∷ !GYNatural
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix PlaceOrderResPrefix, CamelToSnake]] PlaceOrderResponse
+    via CustomJSON '[FieldLabelModifier '[StripPrefix PlaceOrderResPrefix, CamelToSnake]] PlaceOrderTransactionDetails
 
-instance Swagger.ToSchema PlaceOrderResponse where
+instance Swagger.ToSchema PlaceOrderTransactionDetails where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @PlaceOrderResPrefix}
 
 type CancelOrderReqPrefix ∷ Symbol
-type CancelOrderReqPrefix = "coreq"
+type CancelOrderReqPrefix = "cop"
 
 -- TODO: Review request and response swagger & json instances.
-data CancelOrderRequest = CancelOrderRequest
-  { coreqAddress ∷ !GYAddressBech32,
-    coreqCollateral ∷ !GYTxOutRef,
-    coreqOrderReferences ∷ ![GYTxOutRef]
+data CancelOrderParameters = CancelOrderParameters
+  { copAddress ∷ !GYAddressBech32,
+    copCollateral ∷ !GYTxOutRef,
+    copOrderReferences ∷ ![GYTxOutRef]
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix CancelOrderReqPrefix, CamelToSnake]] CancelOrderRequest
+    via CustomJSON '[FieldLabelModifier '[StripPrefix CancelOrderReqPrefix, CamelToSnake]] CancelOrderParameters
 
-instance Swagger.ToSchema CancelOrderRequest where
+instance Swagger.ToSchema CancelOrderParameters where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @CancelOrderReqPrefix}
       & addSwaggerDescription "Cancel order request parameters."
 
 type CancelOrderResPrefix ∷ Symbol
-type CancelOrderResPrefix = "cores"
+type CancelOrderResPrefix = "cotd"
 
-data CancelOrderResponse = CancelOrderResponse
-  { coresTransaction ∷ !GYTx,
-    coresTransactionId ∷ !GYTxId,
-    coresTransactionFee ∷ !Natural
+data CancelOrderTransactionDetails = CancelOrderTransactionDetails
+  { cotdTransaction ∷ !GYTx,
+    cotdTransactionId ∷ !GYTxId,
+    cotdTransactionFee ∷ !Natural
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix CancelOrderResPrefix, CamelToSnake]] CancelOrderResponse
+    via CustomJSON '[FieldLabelModifier '[StripPrefix CancelOrderResPrefix, CamelToSnake]] CancelOrderTransactionDetails
 
-instance Swagger.ToSchema CancelOrderResponse where
+instance Swagger.ToSchema CancelOrderTransactionDetails where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @CancelOrderResPrefix}
 
 type OrderResPrefix ∷ Symbol
-type OrderResPrefix = "ores"
+type OrderResPrefix = "obi"
 
-type MarketPairOrderPrefix ∷ Symbol
-type MarketPairOrderPrefix = "mpo"
+type OrderInfoPrefix ∷ Symbol
+type OrderInfoPrefix = "oi"
 
-data MarketPairOrder = MarketPairOrder
-  { mpoOfferAmount ∷ !GYNatural,
-    mpoPrice ∷ !GYRational,
-    mpoStart ∷ !(Maybe GYTime),
-    mpoEnd ∷ !(Maybe GYTime),
-    mpoOwnerAddress ∷ !GYAddressBech32,
-    mpoOwnerKeyHash ∷ !GYPubKeyHash,
-    mpoOutputReference ∷ !GYTxOutRef
+data OrderInfo = OrderInfo
+  { oiOfferAmount ∷ !GYNatural,
+    oiPrice ∷ !GYRational,
+    oiStart ∷ !(Maybe GYTime),
+    oiEnd ∷ !(Maybe GYTime),
+    oiOwnerAddress ∷ !GYAddressBech32,
+    oiOwnerKeyHash ∷ !GYPubKeyHash,
+    oiOutputReference ∷ !GYTxOutRef
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix MarketPairOrderPrefix, CamelToSnake]] MarketPairOrder
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
 
-poiToMarketPairOrder ∷ PartialOrderInfo → MarketPairOrder
-poiToMarketPairOrder PartialOrderInfo {..} =
-  MarketPairOrder
-    { mpoOfferAmount = naturalFromGHC poiOfferedAmount,
-      mpoPrice = poiPrice,
-      mpoStart = poiStart,
-      mpoEnd = poiEnd,
-      mpoOwnerAddress = addressToBech32 poiOwnerAddr,
-      mpoOwnerKeyHash = poiOwnerKey,
-      mpoOutputReference = poiRef
+poiToOrderInfo ∷ PartialOrderInfo → OrderInfo
+poiToOrderInfo PartialOrderInfo {..} =
+  OrderInfo
+    { oiOfferAmount = naturalFromGHC poiOfferedAmount,
+      oiPrice = poiPrice,
+      oiStart = poiStart,
+      oiEnd = poiEnd,
+      oiOwnerAddress = addressToBech32 poiOwnerAddr,
+      oiOwnerKeyHash = poiOwnerKey,
+      oiOutputReference = poiRef
     }
 
-instance Swagger.ToSchema MarketPairOrder where
+instance Swagger.ToSchema OrderInfo where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @MarketPairOrderPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderInfoPrefix}
 
 -- TODO: Show id instead?
-data OrderResponse = OrderResponse
-  { oresMarketPairId ∷ !OrderAssetPair,
-    oresBids ∷ ![MarketPairOrder],
-    oresAsks ∷ ![MarketPairOrder]
+data OrderBookInfo = OrderBookInfo
+  { obiMarketPairId ∷ !OrderAssetPair,
+    obiBids ∷ ![OrderInfo],
+    obiAsks ∷ ![OrderInfo]
   }
   deriving stock (Generic)
   deriving
     (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderResPrefix, CamelToSnake]] OrderResponse
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderResPrefix, CamelToSnake]] OrderBookInfo
 
-instance Swagger.ToSchema OrderResponse where
+instance Swagger.ToSchema OrderBookInfo where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderResPrefix}
+
+-- TODO: Give timestamp for /orders
 
 type DEXPartialOrderAPI =
   "trading_fees"
@@ -190,18 +192,18 @@ type DEXPartialOrderAPI =
       :> "open"
       :> "tx"
       :> "generate"
-      :> ReqBody '[JSON] PlaceOrderRequest
-      :> Post '[JSON] PlaceOrderResponse
+      :> ReqBody '[JSON] PlaceOrderParameters
+      :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> "orders"
       :> "cancel"
       :> "tx"
       :> "generate"
-      :> ReqBody '[JSON] CancelOrderRequest
-      :> Post '[JSON] CancelOrderResponse
+      :> ReqBody '[JSON] CancelOrderParameters
+      :> Post '[JSON] CancelOrderTransactionDetails
     :<|> "orders"
       :> Capture "market_id" OrderAssetPair
       :> QueryParam "address" GYAddressBech32
-      :> Get '[JSON] OrderResponse
+      :> Get '[JSON] OrderBookInfo
 
 handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
 handleDEXPartialOrder ctx =
@@ -222,62 +224,63 @@ handleTradingFees ctx@Ctx {..} = do
         tfPercentageTakerFee = 100 * pociMakerFeeRatio pocd
       }
 
-handlePlaceOrder ∷ Ctx → PlaceOrderRequest → IO PlaceOrderResponse
-handlePlaceOrder ctx@Ctx {..} PlaceOrderRequest {..} = do
+handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
+handlePlaceOrder ctx@Ctx {..} PlaceOrderParameters {..} = do
   logInfo ctx "Placing an order."
   -- TODO: To log request params here as well?
   let porefs = dexPORefs ctxDexInfo
-      poreqAddress' = addressFromBech32 poreqAddress
+      popAddress' = addressFromBech32 popAddress
   (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ porefs
   let unitPrice =
         rationalFromGHC $
-          toInteger poreqPriceAmount % toInteger poreqOfferAmount
+          toInteger popPriceAmount % toInteger popOfferAmount
   txBody ←
-    runSkeletonI ctx (pure poreqAddress') poreqAddress' (Just poreqCollateral) $
+    runSkeletonI ctx (pure popAddress') popAddress' (Just popCollateral) $
       placePartialOrder'
         porefs
-        poreqAddress'
-        (naturalToGHC poreqOfferAmount, poreqOfferToken)
-        poreqPriceToken
+        popAddress'
+        (naturalToGHC popOfferAmount, popOfferToken)
+        popPriceToken
         unitPrice
-        poreqStart
-        poreqEnd
+        popStart
+        popEnd
         0
         0
-        (addressToStakeCredential poreqAddress')
+        (addressToStakeCredential popAddress')
         cfgRef
         pocd
   pure
-    PlaceOrderResponse
-      { poresTransaction = unsignedTx txBody,
-        poresTransactionId = txBodyTxId txBody,
-        poresTransactionFee = fromIntegral $ txBodyFee txBody,
-        poresMakerLovelaceFlatFee = fromIntegral $ pociMakerFeeFlat pocd,
-        poresMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
-        poresMakerOfferedPercentFeeAmount = ceiling $ toRational poreqOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
-        poresLovelaceDeposit = fromIntegral $ pociMinDeposit pocd
+    PlaceOrderTransactionDetails
+      { potdTransaction = unsignedTx txBody,
+        potdTransactionId = txBodyTxId txBody,
+        potdTransactionFee = fromIntegral $ txBodyFee txBody,
+        potdMakerLovelaceFlatFee = fromIntegral $ pociMakerFeeFlat pocd,
+        potdMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
+        potdMakerOfferedPercentFeeAmount = ceiling $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
+        potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd
       }
 
-handleCancelOrder ∷ Ctx → CancelOrderRequest → IO CancelOrderResponse
-handleCancelOrder ctx@Ctx {..} CancelOrderRequest {..} = do
+handleCancelOrder ∷ Ctx → CancelOrderParameters → IO CancelOrderTransactionDetails
+handleCancelOrder ctx@Ctx {..} CancelOrderParameters {..} = do
   logInfo ctx "Canceling order(s)."
   -- TODO: To log request params here as well?
   let porefs = dexPORefs ctxDexInfo
-      coreqAddress' = addressFromBech32 coreqAddress
-  txBody ← runSkeletonI ctx (pure coreqAddress') coreqAddress' (Just coreqCollateral) $ do
-    pois ← Map.elems <$> getPartialOrdersInfos porefs coreqOrderReferences
+      copAddress' = addressFromBech32 copAddress
+  txBody ← runSkeletonI ctx (pure copAddress') copAddress' (Just copCollateral) $ do
+    pois ← Map.elems <$> getPartialOrdersInfos porefs copOrderReferences
     cancelMultiplePartialOrders porefs pois
   pure
-    CancelOrderResponse
-      { coresTransaction = unsignedTx txBody,
-        coresTransactionId = txBodyTxId txBody,
-        coresTransactionFee = fromIntegral $ txBodyFee txBody
+    CancelOrderTransactionDetails
+      { cotdTransaction = unsignedTx txBody,
+        cotdTransactionId = txBodyTxId txBody,
+        cotdTransactionFee = fromIntegral $ txBodyFee txBody
       }
 
-handleOrders ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderResponse
+handleOrders ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBookInfo
 handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
   logInfo ctx "Fetching order(s)."
   let porefs = dexPORefs ctxDexInfo
+  -- this timestamp
   os ← runQuery ctx $ partialOrders porefs
   let os' =
         Map.filter
@@ -294,14 +297,14 @@ handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
         Map.foldl'
           ( \(!accBids, !accAsks) poi@PartialOrderInfo {..} →
               let buyAP = mkOrderAssetPair poiOfferedAsset poiAskedAsset
-                  poi' = poiToMarketPairOrder poi
+                  poi' = poiToOrderInfo poi
                in if buyAP == orderAssetPair then (poi' : accBids, accAsks) else (accBids, poi' : accAsks)
           )
           ([], [])
           os'
   pure $
-    OrderResponse
-      { oresMarketPairId = orderAssetPair,
-        oresAsks = asks,
-        oresBids = bids
+    OrderBookInfo
+      { obiMarketPairId = orderAssetPair,
+        obiAsks = asks,
+        obiBids = bids
       }

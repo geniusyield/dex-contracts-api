@@ -1,6 +1,6 @@
 {
     "definitions": {
-        "CancelOrderRequest": {
+        "CancelOrderParameters": {
             "description": "Cancel order request parameters.",
             "properties": {
                 "address": {
@@ -23,7 +23,7 @@
             ],
             "type": "object"
         },
-        "CancelOrderResponse": {
+        "CancelOrderTransactionDetails": {
             "properties": {
                 "transaction": {
                     "$ref": "#/definitions/GYTx"
@@ -132,7 +132,37 @@
             ],
             "type": "object"
         },
-        "MarketPairOrder": {
+        "OrderAssetPair": {
+            "description": "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name.",
+            "example": "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53",
+            "type": "string"
+        },
+        "OrderBookInfo": {
+            "properties": {
+                "asks": {
+                    "items": {
+                        "$ref": "#/definitions/OrderInfo"
+                    },
+                    "type": "array"
+                },
+                "bids": {
+                    "items": {
+                        "$ref": "#/definitions/OrderInfo"
+                    },
+                    "type": "array"
+                },
+                "market_pair_id": {
+                    "$ref": "#/definitions/OrderAssetPair"
+                }
+            },
+            "required": [
+                "market_pair_id",
+                "bids",
+                "asks"
+            ],
+            "type": "object"
+        },
+        "OrderInfo": {
             "properties": {
                 "end": {
                     "description": "This is the posix time in ISO8601 format.",
@@ -173,37 +203,7 @@
             ],
             "type": "object"
         },
-        "OrderAssetPair": {
-            "description": "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name.",
-            "example": "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53",
-            "type": "string"
-        },
-        "OrderResponse": {
-            "properties": {
-                "asks": {
-                    "items": {
-                        "$ref": "#/definitions/MarketPairOrder"
-                    },
-                    "type": "array"
-                },
-                "bids": {
-                    "items": {
-                        "$ref": "#/definitions/MarketPairOrder"
-                    },
-                    "type": "array"
-                },
-                "market_pair_id": {
-                    "$ref": "#/definitions/OrderAssetPair"
-                }
-            },
-            "required": [
-                "market_pair_id",
-                "bids",
-                "asks"
-            ],
-            "type": "object"
-        },
-        "PlaceOrderRequest": {
+        "PlaceOrderParameters": {
             "description": "Place order request parameters.",
             "properties": {
                 "address": {
@@ -247,7 +247,7 @@
             ],
             "type": "object"
         },
-        "PlaceOrderResponse": {
+        "PlaceOrderTransactionDetails": {
             "properties": {
                 "lovelace_deposit": {
                     "$ref": "#/definitions/GYNatural"
@@ -376,7 +376,7 @@
                         "name": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/CancelOrderRequest"
+                            "$ref": "#/definitions/CancelOrderParameters"
                         }
                     }
                 ],
@@ -387,7 +387,7 @@
                     "200": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/CancelOrderResponse"
+                            "$ref": "#/definitions/CancelOrderTransactionDetails"
                         }
                     },
                     "400": {
@@ -407,7 +407,7 @@
                         "name": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/PlaceOrderRequest"
+                            "$ref": "#/definitions/PlaceOrderParameters"
                         }
                     }
                 ],
@@ -418,7 +418,7 @@
                     "200": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/PlaceOrderResponse"
+                            "$ref": "#/definitions/PlaceOrderTransactionDetails"
                         }
                     },
                     "400": {
@@ -451,7 +451,7 @@
                     "200": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/OrderResponse"
+                            "$ref": "#/definitions/OrderBookInfo"
                         }
                     },
                     "400": {
