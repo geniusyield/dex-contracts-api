@@ -342,12 +342,12 @@
         }
     },
     "info": {
-        "description": "This API is used for building and submitting transactions.",
+        "description": "This API is used to interact with GeniusYield DEX.",
         "title": "Genius Yield Haskell Server API",
         "version": "1.0"
     },
     "paths": {
-        "/markets": {
+        "/v1/markets": {
             "get": {
                 "produces": [
                     "application/json;charset=utf-8"
@@ -365,7 +365,7 @@
                 }
             }
         },
-        "/orders/cancel/tx/generate": {
+        "/v1/orders/cancel/tx/generate": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -396,7 +396,7 @@
                 }
             }
         },
-        "/orders/open/tx/generate": {
+        "/v1/orders/open/tx/generate": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -427,7 +427,7 @@
                 }
             }
         },
-        "/orders/{market_id}": {
+        "/v1/orders/{market_id}": {
             "get": {
                 "parameters": [
                     {
@@ -460,7 +460,7 @@
                 }
             }
         },
-        "/settings": {
+        "/v1/settings": {
             "get": {
                 "produces": [
                     "application/json;charset=utf-8"
@@ -475,7 +475,7 @@
                 }
             }
         },
-        "/trading_fees": {
+        "/v1/trading_fees": {
             "get": {
                 "produces": [
                     "application/json;charset=utf-8"
@@ -490,7 +490,7 @@
                 }
             }
         },
-        "/tx/sign": {
+        "/v1/tx/sign": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -521,7 +521,7 @@
                 }
             }
         },
-        "/tx/sign_and_submit": {
+        "/v1/tx/sign_and_submit": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -552,7 +552,7 @@
                 }
             }
         },
-        "/tx/submit": {
+        "/v1/tx/submit": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"

@@ -189,21 +189,20 @@ type DEXPartialOrderAPI =
   "trading_fees"
     :> Get '[JSON] TradingFees
     :<|> "orders"
-      :> "open"
-      :> "tx"
-      :> "generate"
-      :> ReqBody '[JSON] PlaceOrderParameters
-      :> Post '[JSON] PlaceOrderTransactionDetails
-    :<|> "orders"
-      :> "cancel"
-      :> "tx"
-      :> "generate"
-      :> ReqBody '[JSON] CancelOrderParameters
-      :> Post '[JSON] CancelOrderTransactionDetails
-    :<|> "orders"
-      :> Capture "market_id" OrderAssetPair
-      :> QueryParam "address" GYAddressBech32
-      :> Get '[JSON] OrderBookInfo
+      :> ( "open"
+            :> "tx"
+            :> "generate"
+            :> ReqBody '[JSON] PlaceOrderParameters
+            :> Post '[JSON] PlaceOrderTransactionDetails
+            :<|> "cancel"
+              :> "tx"
+              :> "generate"
+              :> ReqBody '[JSON] CancelOrderParameters
+              :> Post '[JSON] CancelOrderTransactionDetails
+            :<|> Capture "market_id" OrderAssetPair
+              :> QueryParam "address" GYAddressBech32
+              :> Get '[JSON] OrderBookInfo
+         )
 
 handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
 handleDEXPartialOrder ctx =
@@ -293,7 +292,7 @@ handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
           os
       -- TODO: Make it strict, likely there is memory leak here.
       -- TODO: Check if it's implementation is correct.
-      (bids, asks) =
+      (!bids, !asks) =
         Map.foldl'
           ( \(!accBids, !accAsks) poi@PartialOrderInfo {..} →
               let buyAP = mkOrderAssetPair poiOfferedAsset poiAskedAsset

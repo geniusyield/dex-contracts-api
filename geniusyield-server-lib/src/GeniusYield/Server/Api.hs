@@ -53,10 +53,12 @@ instance Swagger.ToSchema Settings where
 -------------------------------------------------------------------------------
 
 type GeniusYieldAPI =
-  "settings" :> Get '[JSON] Settings
-    :<|> DEXPartialOrderAPI
-    :<|> MarketsAPI
-    :<|> TxAPI
+  "v1"
+    :> ( "settings" :> Get '[JSON] Settings
+          :<|> DEXPartialOrderAPI
+          :<|> MarketsAPI
+          :<|> TxAPI
+       )
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
@@ -72,7 +74,7 @@ geniusYieldAPISwagger =
     .~ "1.0"
       & info
       . description
-    ?~ "This API is used for building and submitting transactions."
+    ?~ "This API is used to interact with GeniusYield DEX."
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
