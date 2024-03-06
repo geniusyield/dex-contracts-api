@@ -100,10 +100,13 @@ geniusYieldAPISwagger =
   toSwagger geniusYieldAPI
     & info
     . title
-    .~ "Genius Yield Haskell Server API"
+    .~ "Genius Yield DEX Server API"
       & info
       . version
     .~ "1.0"
+      & info
+      . license
+    ?~ ("Apache-2.0" & url ?~ URL "https://opensource.org/licenses/apache-2-0")
       & info
       . description
     ?~ "API to interact with GeniusYield DEX."

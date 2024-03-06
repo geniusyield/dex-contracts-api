@@ -346,7 +346,11 @@
     },
     "info": {
         "description": "API to interact with GeniusYield DEX.",
-        "title": "Genius Yield Haskell Server API",
+        "license": {
+            "name": "Apache-2.0",
+            "url": "https://opensource.org/licenses/apache-2-0"
+        },
+        "title": "Genius Yield DEX Server API",
         "version": "1.0"
     },
     "paths": {
