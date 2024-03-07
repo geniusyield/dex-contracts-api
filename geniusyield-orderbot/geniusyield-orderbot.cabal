@@ -53,7 +53,8 @@ library
   import:          common
   hs-source-dirs:  src
   exposed-modules:
-    GeniusYield.OrderBot.Adapter.Maestro.Markets
+    GeniusYield.OrderBot.Adapter.Maestro
+    GeniusYield.OrderBot.Domain.Assets
     GeniusYield.OrderBot.Domain.Markets
     GeniusYield.OrderBot.Domain.OrderBook
     GeniusYield.OrderBot.Types

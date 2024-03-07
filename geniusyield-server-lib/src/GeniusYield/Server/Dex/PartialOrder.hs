@@ -23,7 +23,7 @@ import GeniusYield.Imports
 import GeniusYield.OrderBot.Types (OrderAssetPair (..), mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
-import GeniusYield.Server.Utils (addSwaggerDescription, dropAndCamelToSnake, logInfo, unsignedTxHex)
+import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
 import GeniusYield.TxBuilder.Class
 import GeniusYield.Types
 import Network.HTTP.Types (status400)
@@ -52,7 +52,7 @@ data PlaceOrderParameters = PlaceOrderParameters
 
 instance Swagger.ToSchema PlaceOrderParameters where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @PlaceOrderReqPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @PlaceOrderReqPrefix}
       & addSwaggerDescription "Place order request parameters."
 
 type PlaceOrderResPrefix ∷ Symbol
@@ -74,7 +74,7 @@ data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
 
 instance Swagger.ToSchema PlaceOrderTransactionDetails where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @PlaceOrderResPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @PlaceOrderResPrefix}
 
 type CancelOrderReqPrefix ∷ Symbol
 type CancelOrderReqPrefix = "cop"
@@ -92,7 +92,7 @@ data CancelOrderParameters = CancelOrderParameters
 
 instance Swagger.ToSchema CancelOrderParameters where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @CancelOrderReqPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @CancelOrderReqPrefix}
       & addSwaggerDescription "Cancel order request parameters."
 
 type CancelOrderResPrefix ∷ Symbol
@@ -110,7 +110,7 @@ data CancelOrderTransactionDetails = CancelOrderTransactionDetails
 
 instance Swagger.ToSchema CancelOrderTransactionDetails where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @CancelOrderResPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @CancelOrderResPrefix}
 
 type OrderResPrefix ∷ Symbol
 type OrderResPrefix = "obi"
@@ -146,7 +146,7 @@ poiToOrderInfo PartialOrderInfo {..} =
 
 instance Swagger.ToSchema OrderInfo where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderInfoPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
 
 data OrderBookInfo = OrderBookInfo
   { obiMarketPairId ∷ !OrderAssetPair,
@@ -161,7 +161,7 @@ data OrderBookInfo = OrderBookInfo
 
 instance Swagger.ToSchema OrderBookInfo where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @OrderResPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderResPrefix}
 
 -- TODO: Rename it to `OrdersAPI`.
 

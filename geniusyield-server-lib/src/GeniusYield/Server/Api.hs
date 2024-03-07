@@ -15,11 +15,13 @@ import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
 import Deriving.Aeson
+import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.GYConfig (GYCoreConfig (cfgNetworkId))
 import GeniusYield.Imports
+import GeniusYield.OrderBot.Domain.Assets
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
@@ -48,7 +50,7 @@ data Settings = Settings
 
 instance Swagger.ToSchema Settings where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @SettingsPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @SettingsPrefix}
       & addSwaggerDescription "Genius Yield Server settings."
 
 type TradingFeesPrefix ∷ Symbol
@@ -68,7 +70,7 @@ data TradingFees = TradingFees
 
 instance Swagger.ToSchema TradingFees where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @TradingFeesPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @TradingFeesPrefix}
       & addSwaggerDescription "Trading fees of DEX."
 
 -------------------------------------------------------------------------------
@@ -82,18 +84,22 @@ type TradingFeesAPI =
     :> Description "Get trading fees of DEX."
     :> Get '[JSON] TradingFees
 
+type AssetsAPI = Summary "Get assets information" :> Description "Get information for a specific asset." :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails
+
 type V1API =
   "settings" :> SettingsAPI
     :<|> "orders" :> DEXPartialOrderAPI
     :<|> "markets" :> MarketsAPI
     :<|> "tx" :> TxAPI
-    :<|> "trading_fees"
-      :> TradingFeesAPI
+    :<|> "trading_fees" :> TradingFeesAPI
+    :<|> "assets" :> AssetsAPI
 
 type GeniusYieldAPI = "v1" :> V1API
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
+
+-- TODO: Also provide yaml file.
 
 geniusYieldAPISwagger ∷ Swagger
 geniusYieldAPISwagger =
@@ -115,6 +121,7 @@ geniusYieldAPISwagger =
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "orders" :> DEXPartialOrderAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "settings" :> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "trading_fees" :> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "assets" :> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
@@ -123,6 +130,7 @@ geniusYieldServer ctx =
     :<|> handleMarketsApi ctx
     :<|> handleTxApi ctx
     :<|> handleTradingFees ctx
+    :<|> handleAssetsApi ctx
 
 type MainAPI =
   GeniusYieldAPI
@@ -171,3 +179,9 @@ handleTradingFees ctx@Ctx {..} = do
         tfPercentageMakerFee = 100 * pociMakerFeeRatio pocd,
         tfPercentageTakerFee = 100 * pociMakerFeeRatio pocd
       }
+
+-- TODO: Is naming of API here appropriate? Check naming in other places as well.
+handleAssetsApi ∷ Ctx → GYAssetClass → IO AssetDetails
+handleAssetsApi ctx@Ctx {..} ac = do
+  logInfo ctx $ "Fetching details of asset: " +|| ac ||+ ""
+  getAssetDetails ctxMarketsProvider ac

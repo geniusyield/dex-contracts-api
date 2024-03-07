@@ -20,25 +20,21 @@ module GeniusYield.OrderBot.Types (
   equivalentAssetPair,
   mkEquivalentAssetPair,
   invPrice,
-  TokenDisplayDetails (..),
-  adaTokenDisplayDetails,
-  DexPair (..),
 ) where
 
 import Control.Lens ((?~))
-import Data.Aeson (FromJSON (..), ToJSON (..), (.=))
+import Data.Aeson (FromJSON (..), ToJSON (..))
 import Data.Aeson qualified as Aeson
 import Data.Kind (Type)
 import Data.Ratio (denominator, numerator, (%))
 import Data.Swagger qualified as Swagger
 import Data.Swagger.Internal.Schema qualified as Swagger
-import Data.Word (Word64)
 import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..))
 import GeniusYield.Types (rationalToGHC)
 import GeniusYield.Types.TxOutRef (GYTxOutRef)
 import GeniusYield.Types.Value (GYAssetClass (..))
 import Numeric.Natural (Natural)
-import RIO (Text, (&))
+import RIO ((&))
 import RIO.Text qualified as Text
 import RIO.Text.Partial qualified as Text
 import Web.HttpApiData (FromHttpApiData (..), ToHttpApiData (..))
@@ -292,23 +288,3 @@ mkOrderType
 mkOrderType asked oap
   | commodityAsset oap == asked = BuyOrder
   | otherwise = SellOrder
-
-data TokenDisplayDetails = TokenDisplayDetails
-  { tddTicker ∷ !Text,
-    tddDecimals ∷ !Word64,
-    tddAssetClass ∷ !GYAssetClass
-  }
-
-adaTokenDisplayDetails ∷ TokenDisplayDetails
-adaTokenDisplayDetails =
-  TokenDisplayDetails
-    { tddTicker = "ADA",
-      tddDecimals = 6,
-      tddAssetClass = GYLovelace
-    }
-
-data DexPair = DexPair
-  { dpCurrencyToken ∷ !TokenDisplayDetails,
-    dpCommodityToken ∷ !TokenDisplayDetails,
-    dpMarketPairId ∷ !Text
-  }

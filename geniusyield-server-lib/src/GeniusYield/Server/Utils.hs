@@ -3,11 +3,10 @@
 module GeniusYield.Server.Utils (
   ExceptionTypes (..),
   isMatchedException,
-  unsignedTxHex,
   logInfo,
   logDebug,
   pubKeyFromAddress,
-  dropAndCamelToSnake,
+  dropSymbolAndCamelToSnake,
   addSwaggerDescription,
   addSwaggerExample,
 ) where
@@ -19,6 +18,7 @@ import Data.Swagger qualified as Swagger
 import GHC.TypeLits
 import GeniusYield.Imports
 import GeniusYield.Server.Ctx
+import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
 import GeniusYield.Types
 
 newtype NoPubKeyAddressError = NoPubKeyAddressError GYAddressBech32
@@ -51,15 +51,3 @@ isMatchedException (etype :>> etypes) se = isJust (f etype) || isMatchedExceptio
  where
   f ∷ ∀ e. Exception e ⇒ Proxy e → Maybe e
   f _ = fromException @e se
-
-unsignedTxHex ∷ GYTxBody → String
-unsignedTxHex = unsignedTx >>> txToHex
-
-dropAndCamelToSnake ∷ ∀ a. KnownSymbol a ⇒ String → String
-dropAndCamelToSnake = camelTo2 '_' . drop (length $ symbolVal (Proxy @a))
-
-addSwaggerDescription ∷ (Functor f1, Functor f2, Swagger.HasSchema b1 a, Swagger.HasDescription a (Maybe b2)) ⇒ b2 → f1 (f2 b1) → f1 (f2 b1)
-addSwaggerDescription desc = mapped . mapped . Swagger.schema . Swagger.description ?~ desc
-
-addSwaggerExample ∷ (Functor f1, Functor f2, Swagger.HasSchema b1 a, Swagger.HasExample a (Maybe b2)) ⇒ b2 → f1 (f2 b1) → f1 (f2 b1)
-addSwaggerExample ex = mapped . mapped . Swagger.schema . Swagger.example ?~ ex

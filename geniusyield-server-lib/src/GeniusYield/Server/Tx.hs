@@ -21,7 +21,7 @@ import GeniusYield.Imports
 import GeniusYield.OrderBot.Types (OrderAssetPair (..), mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
-import GeniusYield.Server.Utils (addSwaggerDescription, dropAndCamelToSnake, logInfo, unsignedTxHex)
+import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
 import GeniusYield.TxBuilder.Class
 import GeniusYield.Types
 import Network.HTTP.Types (status400)
@@ -43,7 +43,7 @@ data TransactionSign = TransactionSign
 
 instance Swagger.ToSchema TransactionSign where
   declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropAndCamelToSnake @TransactionSignPrefix}
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @TransactionSignPrefix}
 
 type TxAPI =
   "sign"

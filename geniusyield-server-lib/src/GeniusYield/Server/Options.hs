@@ -13,7 +13,7 @@ import Fmt
 import GeniusYield.GYConfig
 import GeniusYield.HTTP.Errors
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Adapter.Maestro.Markets (MaestroMarketsProvider (MaestroMarketsProvider))
+import GeniusYield.OrderBot.Adapter.Maestro (MaestroMarketsProvider (MaestroMarketsProvider))
 import GeniusYield.Providers (networkIdToMaestroEnv)
 import GeniusYield.Server.Api
 import GeniusYield.Server.Constants (gitHash)
@@ -37,8 +37,7 @@ newtype Command = Serve ServeCommand
 
 data ServeCommand = ServeCommand
   { serveCommandAtlasConfigPath ∷ FilePath,
-    serveCommandMaestroKey ∷ Text,
-    serveCommandMaestroDex ∷ Text
+    serveCommandMaestroKey ∷ Text
   }
 
 parseCommand ∷ Parser Command
@@ -67,18 +66,12 @@ parseServeCommand =
           <> short 'm'
           <> help "Maestro key to get markets information"
       )
-    <*> strOption
-      ( long "maestro-dex-provider"
-          <> metavar "MAESTRO-DEX-PROVIDER"
-          <> short 'd'
-          <> help "DEX Provider for Maestro to get markets information from, available values are `minswap` and `genius-yield`"
-      )
 
 runCommand ∷ Command → IO ()
 runCommand (Serve serveCommand) = runServeCommand serveCommand
 
 runServeCommand ∷ ServeCommand → IO ()
-runServeCommand (ServeCommand cfp mt md) = do
+runServeCommand (ServeCommand cfp mt) = do
   coreCfg ← coreConfigIO cfp
   menv ← networkIdToMaestroEnv mt (cfgNetworkId coreCfg)
   let port = 8082
@@ -121,7 +114,7 @@ runServeCommand (ServeCommand cfp mt md) = do
                 | cfgNetworkId coreCfg == GYMainnet → dexInfoDefaultMainnet
                 | cfgNetworkId coreCfg == GYTestnetPreprod → dexInfoDefaultPreprod
                 | otherwise → error "Only mainnet & preprod network are supported",
-            ctxMarketsProvider = MPMaestro (MaestroMarketsProvider menv (dexFromString md))
+            ctxMarketsProvider = MPMaestro (MaestroMarketsProvider menv)
           }
 
     logInfoS $
@@ -136,8 +129,3 @@ app ctx =
       mainAPI
       (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
     $ mainServer ctx
-
--- FIXME: Get rid of this hack and use configs.
-dexFromString "genius-yield" = GeniusYield
-dexFromString "minswap" = Minswap
-dexFromString _ = error "Invalid DEX provider"

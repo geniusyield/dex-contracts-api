@@ -6,8 +6,9 @@ import Control.Monad.Reader (ReaderT (..))
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.GYConfig
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Adapter.Maestro.Markets (MaestroMarketsProvider)
-import GeniusYield.OrderBot.Domain.Markets (Markets (getMarkets))
+import GeniusYield.OrderBot.Adapter.Maestro (MaestroMarketsProvider)
+import GeniusYield.OrderBot.Domain.Assets (HasAssets (getAssetDetails))
+import GeniusYield.OrderBot.Domain.Markets (HasMarkets (getMarkets))
 import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
 import GeniusYield.Server.Constants (poConfigAddrMainnet, poConfigAddrPreprod, poRefsMainnet, poRefsPreprod)
 import GeniusYield.Server.Files (nftPolicy, orderValidator)
@@ -59,8 +60,11 @@ dexInfoDefaultPreprod =
 
 newtype MarketsProvider = MPMaestro MaestroMarketsProvider
 
-instance Markets MarketsProvider where
+instance HasMarkets MarketsProvider where
   getMarkets (MPMaestro m) = getMarkets m
+
+instance HasAssets MarketsProvider where
+  getAssetDetails (MPMaestro m) = getAssetDetails m
 
 -- | Server context: configuration & shared state.
 data Ctx = Ctx

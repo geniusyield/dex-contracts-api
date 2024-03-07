@@ -1,5 +1,36 @@
 {
     "definitions": {
+        "AssetDecimals": {
+            "description": "Decimals of an asset.",
+            "example": 6,
+            "format": "int64",
+            "maximum": 1.8446744073709551615e19,
+            "minimum": 0,
+            "type": "integer"
+        },
+        "AssetDetails": {
+            "description": "Asset details.",
+            "properties": {
+                "asset": {
+                    "$ref": "#/definitions/GYAssetClass"
+                },
+                "asset_decimals": {
+                    "$ref": "#/definitions/AssetDecimals"
+                },
+                "asset_ticker": {
+                    "$ref": "#/definitions/AssetTicker"
+                }
+            },
+            "required": [
+                "asset"
+            ],
+            "type": "object"
+        },
+        "AssetTicker": {
+            "description": "Ticker of an asset.",
+            "example": "ADA",
+            "type": "string"
+        },
         "CancelOrderParameters": {
             "description": "Cancel order request parameters.",
             "properties": {
@@ -51,21 +82,8 @@
             "type": "string"
         },
         "GYAssetClass": {
-            "description": "This is an asset class, i.e. either lovelace or some other token with its minting policy and token name.",
+            "description": "This is an asset class, i.e. either \"lovelace\" or some other token with its minting policy and token name delimited by dot (.).",
             "example": "ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44",
-            "maxProperties": 1,
-            "minProperties": 1,
-            "properties": {
-                "GYLovelace": {
-                    "example": [],
-                    "items": {},
-                    "maxItems": 0,
-                    "type": "array"
-                },
-                "GYToken": {
-                    "type": "string"
-                }
-            },
             "type": "string"
         },
         "GYNatural": {
@@ -103,29 +121,11 @@
                 "base_asset": {
                     "$ref": "#/definitions/GYAssetClass"
                 },
-                "base_asset_decimals": {
-                    "format": "int64",
-                    "maximum": 1.8446744073709551615e19,
-                    "minimum": 0,
-                    "type": "integer"
-                },
-                "base_asset_ticker": {
-                    "type": "string"
-                },
                 "market_id": {
                     "$ref": "#/definitions/OrderAssetPair"
                 },
                 "target_asset": {
                     "$ref": "#/definitions/GYAssetClass"
-                },
-                "target_asset_decimals": {
-                    "format": "int64",
-                    "maximum": 1.8446744073709551615e19,
-                    "minimum": 0,
-                    "type": "integer"
-                },
-                "target_asset_ticker": {
-                    "type": "string"
                 }
             },
             "required": [
@@ -361,6 +361,37 @@
         "version": "1.0"
     },
     "paths": {
+        "/v1/assets/{asset}": {
+            "get": {
+                "description": "Get information for a specific asset.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "asset",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/AssetDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `asset`"
+                    }
+                },
+                "summary": "Get assets information",
+                "tags": [
+                    "Assets"
+                ]
+            }
+        },
         "/v1/markets": {
             "get": {
                 "description": "Returns the list of markets information supported by GeniusYield DEX.",
@@ -736,6 +767,10 @@
         {
             "description": "Endpoint to get trading fees of DEX.",
             "name": "Trading Fees"
+        },
+        {
+            "description": "Endpoint to fetch asset details.",
+            "name": "Assets"
         }
     ]
 }
