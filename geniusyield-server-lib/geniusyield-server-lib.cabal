@@ -111,6 +111,7 @@ library
     , wai
     , wai-extra
     , warp
+    , yaml
 
   -- Dependencies whose version is fixed by @cabal.project@ file.
   build-depends:

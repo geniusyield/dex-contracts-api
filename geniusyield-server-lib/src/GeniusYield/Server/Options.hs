@@ -6,9 +6,11 @@ module GeniusYield.Server.Options where
 import Control.Exception (SomeException (..), displayException, try)
 import Control.Monad.Trans.Except
 import Data.Aeson.Encode.Pretty (encodePretty)
+import Data.ByteString qualified as B
 import Data.ByteString.Lazy.Char8 qualified as BL8
 import Data.Text.Lazy qualified as LT
 import Data.Version (showVersion)
+import Data.Yaml.Pretty qualified as Yaml
 import Fmt
 import GeniusYield.GYConfig
 import GeniusYield.HTTP.Errors
@@ -81,6 +83,7 @@ runServeCommand (ServeCommand cfp mt) = do
     logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ ""
     -- TODO: Are the directories where these files are written fine?
     BL8.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
+    B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
     writeJSForAPI geniusYieldAPI vanillaJS "web/dist/api.js"
     reqLoggerMiddleware ← gcpReqLogger
     let
