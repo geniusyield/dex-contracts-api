@@ -361,7 +361,7 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/assets/{asset}": {
+        "/v0/assets/{asset}": {
             "get": {
                 "description": "Get information for a specific asset.",
                 "parameters": [
@@ -392,7 +392,7 @@
                 ]
             }
         },
-        "/v1/markets": {
+        "/v0/markets": {
             "get": {
                 "description": "Returns the list of markets information supported by GeniusYield DEX.",
                 "produces": [
@@ -415,7 +415,7 @@
                 ]
             }
         },
-        "/v1/orders/cancel": {
+        "/v0/orders/cancel": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -451,7 +451,7 @@
                 ]
             }
         },
-        "/v1/orders/cancel/tx/generate": {
+        "/v0/orders/cancel/tx/generate": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -487,7 +487,7 @@
                 ]
             }
         },
-        "/v1/orders/open": {
+        "/v0/orders/open": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -523,7 +523,7 @@
                 ]
             }
         },
-        "/v1/orders/open/tx/generate": {
+        "/v0/orders/open/tx/generate": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -559,7 +559,7 @@
                 ]
             }
         },
-        "/v1/orders/{market_id}": {
+        "/v0/orders/{market_id}": {
             "get": {
                 "description": "Get on-chain order(s)",
                 "parameters": [
@@ -597,7 +597,7 @@
                 ]
             }
         },
-        "/v1/settings": {
+        "/v0/settings": {
             "get": {
                 "description": "Get server settings such as network, version, and revision",
                 "produces": [
@@ -617,7 +617,7 @@
                 ]
             }
         },
-        "/v1/trading_fees": {
+        "/v0/trading_fees": {
             "get": {
                 "description": "Get trading fees of DEX.",
                 "produces": [
@@ -637,7 +637,7 @@
                 ]
             }
         },
-        "/v1/tx/sign": {
+        "/v0/tx/sign": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -673,7 +673,7 @@
                 ]
             }
         },
-        "/v1/tx/sign_and_submit": {
+        "/v0/tx/sign_and_submit": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -709,7 +709,7 @@
                 ]
             }
         },
-        "/v1/tx/submit": {
+        "/v0/tx/submit": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
