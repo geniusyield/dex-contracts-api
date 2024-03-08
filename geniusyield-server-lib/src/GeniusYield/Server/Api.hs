@@ -86,7 +86,7 @@ type TradingFeesAPI =
 
 type AssetsAPI = Summary "Get assets information" :> Description "Get information for a specific asset." :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails
 
-type V1API =
+type V0API =
   "settings" :> SettingsAPI
     :<|> "orders" :> DEXPartialOrderAPI
     :<|> "markets" :> MarketsAPI
@@ -94,7 +94,10 @@ type V1API =
     :<|> "trading_fees" :> TradingFeesAPI
     :<|> "assets" :> AssetsAPI
 
-type GeniusYieldAPI = "v1" :> V1API
+type V0 ∷ Symbol
+type V0 = "v0"
+
+type GeniusYieldAPI = V0 :> V0API
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
@@ -116,12 +119,12 @@ geniusYieldAPISwagger =
       & info
       . description
     ?~ "API to interact with GeniusYield DEX."
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "tx" :> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "markets" :> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "orders" :> DEXPartialOrderAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "settings" :> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "trading_fees" :> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("v1" :> "assets" :> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "tx" :> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "markets" :> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "orders" :> DEXPartialOrderAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "settings" :> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "trading_fees" :> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy (V0 :> "assets" :> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
