@@ -1,33 +1,23 @@
 {-# LANGUAGE OverloadedLists #-}
 
 module GeniusYield.Server.Dex.PartialOrder (
-  DEXPartialOrderAPI,
-  handleDEXPartialOrder,
+  OrdersAPI,
+  handleOrdersApi,
 ) where
 
-import Control.Lens ((?~))
 import Data.Maybe (fromJust)
 import Data.Ratio ((%))
 import Data.Swagger qualified as Swagger
-import Data.Swagger.Internal.Schema qualified as Swagger
-import Data.Text qualified as T
 import Deriving.Aeson
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, getPartialOrdersInfos, partialOrders, placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.HTTP.Errors (
-  GYApiError (..),
-  IsGYApiError (..),
- )
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Types (OrderAssetPair (..), mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
-import GeniusYield.TxBuilder.Class
 import GeniusYield.Types
-import Network.HTTP.Types (status400)
-import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
 import RIO.Map qualified as Map
 import Servant
 
@@ -163,9 +153,7 @@ instance Swagger.ToSchema OrderBookInfo where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderResPrefix}
 
--- TODO: Rename it to `OrdersAPI`.
-
-type DEXPartialOrderAPI =
+type OrdersAPI =
   Summary "Build transaction to create order"
     :> Description "Build a transaction to create an order"
     :> "open"
@@ -196,8 +184,8 @@ type DEXPartialOrderAPI =
       :> QueryParam "address" GYAddressBech32
       :> Get '[JSON] OrderBookInfo
 
-handleDEXPartialOrder ∷ Ctx → ServerT DEXPartialOrderAPI IO
-handleDEXPartialOrder ctx =
+handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
+handleOrdersApi ctx =
   handlePlaceOrder ctx
     :<|> handlePlaceOrder ctx
     :<|> handleCancelOrder ctx

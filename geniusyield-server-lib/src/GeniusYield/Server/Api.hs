@@ -26,7 +26,7 @@ import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
-import GeniusYield.Server.Dex.PartialOrder (DEXPartialOrderAPI, handleDEXPartialOrder)
+import GeniusYield.Server.Dex.PartialOrder (OrdersAPI, handleOrdersApi)
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.Types
@@ -88,7 +88,7 @@ type AssetsAPI = Summary "Get assets information" :> Description "Get informatio
 
 type V0API =
   "settings" :> SettingsAPI
-    :<|> "orders" :> DEXPartialOrderAPI
+    :<|> "orders" :> OrdersAPI
     :<|> "markets" :> MarketsAPI
     :<|> "tx" :> TxAPI
     :<|> "trading_fees" :> TradingFeesAPI
@@ -124,7 +124,7 @@ geniusYieldAPISwagger =
     ?~ "API to interact with GeniusYield DEX."
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("tx" +> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> DEXPartialOrderAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading_fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
@@ -132,10 +132,10 @@ geniusYieldAPISwagger =
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
   handleSettings ctx
-    :<|> handleDEXPartialOrder ctx
+    :<|> handleOrdersApi ctx
     :<|> handleMarketsApi ctx
     :<|> handleTxApi ctx
-    :<|> handleTradingFees ctx
+    :<|> handleTradingFeesApi ctx
     :<|> handleAssetsApi ctx
 
 type MainAPI =
@@ -174,8 +174,8 @@ customShowNetworkId = show >>> removePrefix "GY" >>> removePrefix "Testnet" >>> 
   lowerFirstChar "" = ""
   lowerFirstChar (x : xs) = toLower x : xs
 
-handleTradingFees ∷ Ctx → IO TradingFees
-handleTradingFees ctx@Ctx {..} = do
+handleTradingFeesApi ∷ Ctx → IO TradingFees
+handleTradingFeesApi ctx@Ctx {..} = do
   logInfo ctx "Calculating trading fees."
   (_, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ dexPORefs $ ctxDexInfo
   pure
@@ -186,7 +186,6 @@ handleTradingFees ctx@Ctx {..} = do
         tfPercentageTakerFee = 100 * pociMakerFeeRatio pocd
       }
 
--- TODO: Is naming of API here appropriate? Check naming in other places as well.
 handleAssetsApi ∷ Ctx → GYAssetClass → IO AssetDetails
 handleAssetsApi ctx@Ctx {..} ac = do
   logInfo ctx $ "Fetching details of asset: " +|| ac ||+ ""
