@@ -8,8 +8,9 @@ module GeniusYield.Server.Api (
   geniusYieldAPISwagger,
 ) where
 
-import Control.Lens ((.~), (?~))
+import Control.Lens (at, (%~), (.~), (?~))
 import Data.Char (toLower)
+import Data.HashMap.Strict.InsOrd qualified as IOHM
 import Data.List (isPrefixOf)
 import Data.Maybe (fromJust)
 import Data.Swagger
@@ -25,6 +26,7 @@ import GeniusYield.Imports
 import GeniusYield.OrderBot.Domain.Assets
 import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
+import GeniusYield.Server.Auth (ApiKeyHeader, apiKeyHeaderText)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
@@ -35,6 +37,7 @@ import GeniusYield.Types
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import RIO.Map qualified as Map
 import Servant
+import Servant.Server.Experimental.Auth (AuthServerData)
 import Servant.Swagger
 
 -------------------------------------------------------------------------------
@@ -166,7 +169,9 @@ type V0API =
 type V0 ∷ Symbol
 type V0 = "v0"
 
-type GeniusYieldAPI = V0 :> V0API
+type APIKeyAuthProtect = AuthProtect ApiKeyHeader
+
+type GeniusYieldAPI = APIKeyAuthProtect :> V0 :> V0API
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
 geniusYieldAPI = Proxy
@@ -174,7 +179,37 @@ geniusYieldAPI = Proxy
 infixr 4 +>
 
 type family (+>) (api1 ∷ k) (api2 ∷ Type) where
-  (+>) api1 api2 = V0 :> api1 :> api2
+  (+>) api1 api2 = APIKeyAuthProtect :> V0 :> api1 :> api2
+
+apiKeySecurityScheme ∷ SecurityScheme
+apiKeySecurityScheme =
+  SecurityScheme
+    { _securitySchemeType = SecuritySchemeApiKey (ApiKeyParams apiKeyHeaderText ApiKeyHeader),
+      _securitySchemeDescription = Just "API key for accessing the server's API."
+    }
+
+type instance AuthServerData APIKeyAuthProtect = ()
+
+instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
+  toSwagger _ =
+    toSwagger (Proxy ∷ Proxy api)
+      & securityDefinitions
+      .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
+        & allOperations
+        . security
+      .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
+        & allOperations
+        . responses
+      %~ addCommonResponses
+
+addCommonResponses ∷ Responses → Responses
+addCommonResponses resps = resps & at 401 ?~ Inline response401 & at 403 ?~ Inline response403
+
+response401 ∷ Response
+response401 = mempty & description .~ "Unauthorized access - API key missing"
+
+response403 ∷ Response
+response403 = mempty & description .~ "Forbidden - The API key does not have permission to perform the request"
 
 geniusYieldAPISwagger ∷ Swagger
 geniusYieldAPISwagger =
@@ -201,13 +236,16 @@ geniusYieldAPISwagger =
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
-  handleSettings ctx
-    :<|> handleOrdersApi ctx
-    :<|> handleMarketsApi ctx
-    :<|> handleTxApi ctx
-    :<|> handleTradingFeesApi ctx
-    :<|> handleAssetsApi ctx
-    :<|> handleOrderBookApi ctx
+  ignoredAuthResult $
+    handleSettings ctx
+      :<|> handleOrdersApi ctx
+      :<|> handleMarketsApi ctx
+      :<|> handleTxApi ctx
+      :<|> handleTradingFeesApi ctx
+      :<|> handleAssetsApi ctx
+      :<|> handleOrderBookApi ctx
+ where
+  ignoredAuthResult f _authResult = f
 
 type MainAPI =
   GeniusYieldAPI

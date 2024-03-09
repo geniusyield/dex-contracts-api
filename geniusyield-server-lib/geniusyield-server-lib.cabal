@@ -56,6 +56,7 @@ library
   hs-source-dirs:  src
   exposed-modules:
     GeniusYield.Server.Api
+    GeniusYield.Server.Auth
     GeniusYield.Server.Constants
     GeniusYield.Server.Ctx
     GeniusYield.Server.Dex.Markets
@@ -79,7 +80,7 @@ library
     , aeson
     , aeson-pretty
     , atlas-cardano
-    , base                  ^>=4.16.4.0
+    , base                       ^>=4.16.4.0
     , binary
     , bytestring
     , deriving-aeson
@@ -90,20 +91,16 @@ library
     , geniusyield-orderbot
     , githash
     , http-types
+    , insert-ordered-containers
     , lens
     , mtl
     , optparse-applicative
-    , plutus-core
     , plutus-ledger-api
     , ply-core
     , rio
-    , servant-client
-    , servant-js
     , servant-server
     , servant-swagger
-    , string-conversions
     , swagger2
-    , template-haskell
     , text
     , time
     , time-manager
@@ -124,17 +121,6 @@ executable geniusyield-server
   main-is:        Main.hs
   ghc-options:    -O2 -threaded -rtsopts -with-rtsopts=-T
   build-depends:
-    , aeson-pretty
-    , atlas-cardano
     , base
-    , bytestring
     , geniusyield-server-lib
     , optparse-applicative
-    , servant-js
-    , servant-server
-    , string-conversions
-    , text
-    , time-manager
-    , transformers
-    , wai
-    , warp

@@ -18,20 +18,19 @@ import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroMarketsProvider (MaestroMarketsProvider))
 import GeniusYield.Providers (networkIdToMaestroEnv)
 import GeniusYield.Server.Api
+import GeniusYield.Server.Auth
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.ErrorMiddleware
 import GeniusYield.Server.RequestLoggerMiddleware (gcpReqLogger)
 import GeniusYield.Server.Utils
 import GeniusYield.Types
-import Maestro.Client.Env (mkMaestroEnv)
-import Maestro.Types.V1 (Dex (..))
 import Network.Wai qualified as Wai
 import Network.Wai.Handler.Warp qualified as Warp
 import Options.Applicative
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import Servant
-import Servant.JS (vanillaJS, writeJSForAPI)
+import Servant.Server.Experimental.Auth (AuthHandler)
 import Servant.Server.Internal.ServerError (responseServerError)
 import System.TimeManager (TimeoutThread (..))
 
@@ -84,7 +83,6 @@ runServeCommand (ServeCommand cfp mt) = do
     -- TODO: Are the directories where these files are written fine?
     BL8.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
     B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
-    writeJSForAPI geniusYieldAPI vanillaJS "web/dist/api.js"
     reqLoggerMiddleware ← gcpReqLogger
     let
       -- These are only meant to catch fatal exceptions, application thrown exceptions should be caught beforehand.
@@ -127,8 +125,11 @@ runServeCommand (ServeCommand cfp mt) = do
 
 app ∷ Ctx → Application
 app ctx =
-  serve mainAPI
-    $ hoistServer
-      mainAPI
-      (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
-    $ mainServer ctx
+  let context = apiKeyAuthHandler someKey :. EmptyContext
+      someKey = apiKeyFromText "ds"
+   in serveWithContext mainAPI context
+        $ hoistServerWithContext
+          mainAPI
+          (Proxy ∷ Proxy '[AuthHandler Wai.Request ()]) -- God bless https://stackoverflow.com/a/59605478/20330802.
+          (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
+        $ mainServer ctx

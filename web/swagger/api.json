@@ -384,8 +384,19 @@
                     },
                     "400": {
                         "description": "Invalid `asset`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Get assets information",
                 "tags": [
                     "Assets"
@@ -407,8 +418,19 @@
                             },
                             "type": "array"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Get markets information for the DEX.",
                 "tags": [
                     "Markets"
@@ -445,8 +467,19 @@
                     },
                     "400": {
                         "description": "Invalid `address` or `market-id`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Order book",
                 "tags": [
                     "Order Book"
@@ -481,8 +514,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Cancel order(s)",
                 "tags": [
                     "Orders"
@@ -515,8 +559,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Create an order",
                 "tags": [
                     "Orders"
@@ -551,8 +606,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Build transaction to cancel order(s)",
                 "tags": [
                     "Orders"
@@ -587,8 +653,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Build transaction to create order",
                 "tags": [
                     "Orders"
@@ -607,8 +684,19 @@
                         "schema": {
                             "$ref": "#/definitions/Settings"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Server settings",
                 "tags": [
                     "Settings"
@@ -627,8 +715,19 @@
                         "schema": {
                             "$ref": "#/definitions/TradingFees"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Trading fees",
                 "tags": [
                     "Trading Fees"
@@ -663,8 +762,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Sign a transaction",
                 "tags": [
                     "Transaction"
@@ -699,8 +809,19 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Sign and submit a transaction",
                 "tags": [
                     "Transaction"
@@ -735,13 +856,32 @@
                     },
                     "400": {
                         "description": "Invalid `body`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
                     }
                 },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
                 "summary": "Submit a transaction",
                 "tags": [
                     "Transaction"
                 ]
             }
+        }
+    },
+    "securityDefinitions": {
+        "api-key": {
+            "description": "API key for accessing the server's API.",
+            "in": "header",
+            "name": "api-key",
+            "type": "apiKey"
         }
     },
     "swagger": "2.0",
