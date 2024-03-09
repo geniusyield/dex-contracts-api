@@ -3,47 +3,9 @@ module GeniusYield.Server.Tx (
   handleTxApi,
 ) where
 
-import Control.Lens ((?~))
-import Data.Maybe (fromJust)
-import Data.Ratio ((%))
-import Data.Swagger qualified as Swagger
-import Data.Swagger.Internal.Schema qualified as Swagger
-import Data.Text qualified as T
-import Deriving.Aeson
-import GHC.TypeLits (Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, getPartialOrdersInfos, partialOrders, placePartialOrder')
-import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.HTTP.Errors (
-  GYApiError (..),
-  IsGYApiError (..),
- )
-import GeniusYield.Imports
-import GeniusYield.OrderBot.Types (OrderAssetPair (..), mkEquivalentAssetPair, mkOrderAssetPair)
-import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
-import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
-import GeniusYield.TxBuilder.Class
 import GeniusYield.Types
-import Network.HTTP.Types (status400)
-import PlutusLedgerApi.V1.Address (pubKeyHashAddress)
-import RIO.Map qualified as Map
 import Servant
-
-type TransactionSignPrefix ∷ Symbol
-type TransactionSignPrefix = "tf"
-
--- TODO: JSON & Swagger instances.
-data TransactionSign = TransactionSign
-  { tsTransaction ∷ !GYTx
-  }
-  deriving stock (Generic)
-  deriving
-    (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix TransactionSignPrefix, CamelToSnake]] TransactionSign
-
-instance Swagger.ToSchema TransactionSign where
-  declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @TransactionSignPrefix}
 
 type TxAPI =
   "sign"
@@ -51,7 +13,7 @@ type TxAPI =
     :> Description "Signs the given transaction using key configured in server."
     :> ReqBody '[JSON] GYTx
     :> Post '[JSON] GYTx
-    :<|> "sign_and_submit"
+    :<|> "sign-and-submit"
       :> Summary "Sign and submit a transaction"
       :> Description "Signs the given transaction using key configured in server and submits it to the network."
       :> ReqBody '[JSON] GYTx

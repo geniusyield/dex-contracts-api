@@ -1,19 +1,15 @@
-{-# LANGUAGE OverloadedLists #-}
-
 module GeniusYield.Server.Dex.PartialOrder (
   OrdersAPI,
   handleOrdersApi,
 ) where
 
-import Data.Maybe (fromJust)
 import Data.Ratio ((%))
 import Data.Swagger qualified as Swagger
 import Deriving.Aeson
 import GHC.TypeLits (Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, getPartialOrdersInfos, partialOrders, placePartialOrder')
+import GeniusYield.Api.Dex.PartialOrder (PORefs (..), cancelMultiplePartialOrders, getPartialOrdersInfos, placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Types (OrderAssetPair (..), mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
@@ -102,87 +98,27 @@ instance Swagger.ToSchema CancelOrderTransactionDetails where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @CancelOrderResPrefix}
 
-type OrderResPrefix ∷ Symbol
-type OrderResPrefix = "obi"
-
-type OrderInfoPrefix ∷ Symbol
-type OrderInfoPrefix = "oi"
-
-data OrderInfo = OrderInfo
-  { oiOfferAmount ∷ !GYNatural,
-    oiPrice ∷ !GYRational,
-    oiStart ∷ !(Maybe GYTime),
-    oiEnd ∷ !(Maybe GYTime),
-    oiOwnerAddress ∷ !GYAddressBech32,
-    oiOwnerKeyHash ∷ !GYPubKeyHash,
-    oiOutputReference ∷ !GYTxOutRef
-  }
-  deriving stock (Generic)
-  deriving
-    (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
-
-poiToOrderInfo ∷ PartialOrderInfo → OrderInfo
-poiToOrderInfo PartialOrderInfo {..} =
-  OrderInfo
-    { oiOfferAmount = naturalFromGHC poiOfferedAmount,
-      oiPrice = poiPrice,
-      oiStart = poiStart,
-      oiEnd = poiEnd,
-      oiOwnerAddress = addressToBech32 poiOwnerAddr,
-      oiOwnerKeyHash = poiOwnerKey,
-      oiOutputReference = poiRef
-    }
-
-instance Swagger.ToSchema OrderInfo where
-  declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
-
-data OrderBookInfo = OrderBookInfo
-  { obiMarketPairId ∷ !OrderAssetPair,
-    obiTimestamp ∷ !GYTime,
-    obiBids ∷ ![OrderInfo],
-    obiAsks ∷ ![OrderInfo]
-  }
-  deriving stock (Generic)
-  deriving
-    (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderResPrefix, CamelToSnake]] OrderBookInfo
-
-instance Swagger.ToSchema OrderBookInfo where
-  declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderResPrefix}
-
 type OrdersAPI =
   Summary "Build transaction to create order"
     :> Description "Build a transaction to create an order"
-    :> "open"
     :> "tx"
-    :> "generate"
+    :> "build-open"
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description "Create an order. This differs from earlier endpoint in that it would also sign & submit the built transaction"
-      :> "open"
+      :> Description "Create an order. This endpoint would also sign & submit the built transaction"
       :> ReqBody '[JSON] PlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
       :> Description "Build a transaction to cancel order(s)"
-      :> "cancel"
       :> "tx"
-      :> "generate"
+      :> "build-cancel"
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description "Cancel order(s). This differs from earlier endpoint in that it would also sign & submit the built transaction"
-      :> "cancel"
+      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction"
       :> ReqBody '[JSON] CancelOrderParameters
-      :> Post '[JSON] CancelOrderTransactionDetails
-    :<|> Summary "Get order(s)"
-      :> Description "Get on-chain order(s)"
-      :> Capture "market_id" OrderAssetPair
-      :> QueryParam "address" GYAddressBech32
-      :> Get '[JSON] OrderBookInfo
+      :> Delete '[JSON] CancelOrderTransactionDetails
 
 handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
 handleOrdersApi ctx =
@@ -190,7 +126,6 @@ handleOrdersApi ctx =
     :<|> handlePlaceOrder ctx
     :<|> handleCancelOrder ctx
     :<|> handleCancelOrder ctx
-    :<|> handleOrders ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
 handlePlaceOrder ctx@Ctx {..} PlaceOrderParameters {..} = do
@@ -242,38 +177,4 @@ handleCancelOrder ctx@Ctx {..} CancelOrderParameters {..} = do
       { cotdTransaction = unsignedTx txBody,
         cotdTransactionId = txBodyTxId txBody,
         cotdTransactionFee = fromIntegral $ txBodyFee txBody
-      }
-
-handleOrders ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBookInfo
-handleOrders ctx@Ctx {..} orderAssetPair mownAddress = do
-  logInfo ctx "Fetching order(s)."
-  let porefs = dexPORefs ctxDexInfo
-  gytime ← getCurrentGYTime
-  os ← runQuery ctx $ partialOrders porefs
-  let os' =
-        Map.filter
-          ( \PartialOrderInfo {..} →
-              let ap1 = mkOrderAssetPair poiOfferedAsset poiAskedAsset
-                  ap2 = mkEquivalentAssetPair ap1
-               in (ap1 == orderAssetPair || ap2 == orderAssetPair)
-                    && case mownAddress of Nothing → True; Just ownAddress → poiOwnerKey == fromJust (addressToPubKeyHash $ addressFromBech32 ownAddress) -- TODO: Get rid of `fromJust`.
-          )
-          os
-      -- TODO: Make it strict, likely there is memory leak here.
-      -- TODO: Check if it's implementation is correct.
-      (!bids, !asks) =
-        Map.foldl'
-          ( \(!accBids, !accAsks) poi@PartialOrderInfo {..} →
-              let buyAP = mkOrderAssetPair poiOfferedAsset poiAskedAsset
-                  poi' = poiToOrderInfo poi
-               in if buyAP == orderAssetPair then (poi' : accBids, accAsks) else (accBids, poi' : accAsks)
-          )
-          ([], [])
-          os'
-  pure $
-    OrderBookInfo
-      { obiMarketPairId = orderAssetPair,
-        obiTimestamp = gytime,
-        obiAsks = asks,
-        obiBids = bids
       }

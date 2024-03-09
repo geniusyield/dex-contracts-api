@@ -415,12 +415,50 @@
                 ]
             }
         },
-        "/v0/orders/cancel": {
-            "post": {
+        "/v0/order-book/{market-id}": {
+            "get": {
+                "description": "Get order book for a specific market.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "market-id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "format": "bech32",
+                        "in": "query",
+                        "name": "address",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/OrderBookInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `address` or `market-id`"
+                    }
+                },
+                "summary": "Order book",
+                "tags": [
+                    "Order Book"
+                ]
+            }
+        },
+        "/v0/orders": {
+            "delete": {
                 "consumes": [
                     "application/json;charset=utf-8"
                 ],
-                "description": "Cancel order(s). This differs from earlier endpoint in that it would also sign & submit the built transaction",
+                "description": "Cancel order(s). This endpoint would also sign & submit the built transaction",
                 "parameters": [
                     {
                         "in": "body",
@@ -449,9 +487,43 @@
                 "tags": [
                     "Orders"
                 ]
+            },
+            "post": {
+                "consumes": [
+                    "application/json;charset=utf-8"
+                ],
+                "description": "Create an order. This endpoint would also sign & submit the built transaction",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/PlaceOrderParameters"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/PlaceOrderTransactionDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `body`"
+                    }
+                },
+                "summary": "Create an order",
+                "tags": [
+                    "Orders"
+                ]
             }
         },
-        "/v0/orders/cancel/tx/generate": {
+        "/v0/orders/tx/build-cancel": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -487,43 +559,7 @@
                 ]
             }
         },
-        "/v0/orders/open": {
-            "post": {
-                "consumes": [
-                    "application/json;charset=utf-8"
-                ],
-                "description": "Create an order. This differs from earlier endpoint in that it would also sign & submit the built transaction",
-                "parameters": [
-                    {
-                        "in": "body",
-                        "name": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/PlaceOrderParameters"
-                        }
-                    }
-                ],
-                "produces": [
-                    "application/json;charset=utf-8"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/PlaceOrderTransactionDetails"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid `body`"
-                    }
-                },
-                "summary": "Create an order",
-                "tags": [
-                    "Orders"
-                ]
-            }
-        },
-        "/v0/orders/open/tx/generate": {
+        "/v0/orders/tx/build-open": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -559,44 +595,6 @@
                 ]
             }
         },
-        "/v0/orders/{market_id}": {
-            "get": {
-                "description": "Get on-chain order(s)",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "market_id",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "format": "bech32",
-                        "in": "query",
-                        "name": "address",
-                        "required": false,
-                        "type": "string"
-                    }
-                ],
-                "produces": [
-                    "application/json;charset=utf-8"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/OrderBookInfo"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid `address` or `market_id`"
-                    }
-                },
-                "summary": "Get order(s)",
-                "tags": [
-                    "Orders"
-                ]
-            }
-        },
         "/v0/settings": {
             "get": {
                 "description": "Get server settings such as network, version, and revision",
@@ -617,7 +615,7 @@
                 ]
             }
         },
-        "/v0/trading_fees": {
+        "/v0/trading-fees": {
             "get": {
                 "description": "Get trading fees of DEX.",
                 "produces": [
@@ -673,7 +671,7 @@
                 ]
             }
         },
-        "/v0/tx/sign_and_submit": {
+        "/v0/tx/sign-and-submit": {
             "post": {
                 "consumes": [
                     "application/json;charset=utf-8"
@@ -771,6 +769,10 @@
         {
             "description": "Endpoint to fetch asset details.",
             "name": "Assets"
+        },
+        {
+            "description": "Endpoint to fetch order book.",
+            "name": "Order Book"
         }
     ]
 }

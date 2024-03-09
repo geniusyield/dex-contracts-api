@@ -11,17 +11,19 @@ module GeniusYield.Server.Api (
 import Control.Lens ((.~), (?~))
 import Data.Char (toLower)
 import Data.List (isPrefixOf)
+import Data.Maybe (fromJust)
 import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
+import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.GYConfig (GYCoreConfig (cfgNetworkId))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Domain.Assets
+import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
@@ -31,8 +33,13 @@ import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.Types
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
+import RIO.Map qualified as Map
 import Servant
 import Servant.Swagger
+
+-------------------------------------------------------------------------------
+-- Settings.
+-------------------------------------------------------------------------------
 
 type SettingsPrefix ∷ Symbol
 type SettingsPrefix = "settings"
@@ -56,6 +63,10 @@ instance Swagger.ToSchema Settings where
 type TradingFeesPrefix ∷ Symbol
 type TradingFeesPrefix = "tf"
 
+-------------------------------------------------------------------------------
+-- Trading fees.
+-------------------------------------------------------------------------------
+
 -- TODO: JSON & Swagger instances.
 data TradingFees = TradingFees
   { tfFlatMakerFee ∷ !GYNatural,
@@ -74,7 +85,62 @@ instance Swagger.ToSchema TradingFees where
       & addSwaggerDescription "Trading fees of DEX."
 
 -------------------------------------------------------------------------------
--- Server's API
+-- Order book.
+-------------------------------------------------------------------------------
+
+type OrderResPrefix ∷ Symbol
+type OrderResPrefix = "obi"
+
+type OrderInfoPrefix ∷ Symbol
+type OrderInfoPrefix = "oi"
+
+data OrderInfo = OrderInfo
+  { oiOfferAmount ∷ !GYNatural,
+    oiPrice ∷ !GYRational,
+    oiStart ∷ !(Maybe GYTime),
+    oiEnd ∷ !(Maybe GYTime),
+    oiOwnerAddress ∷ !GYAddressBech32,
+    oiOwnerKeyHash ∷ !GYPubKeyHash,
+    oiOutputReference ∷ !GYTxOutRef
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
+
+poiToOrderInfo ∷ PartialOrderInfo → OrderInfo
+poiToOrderInfo PartialOrderInfo {..} =
+  OrderInfo
+    { oiOfferAmount = naturalFromGHC poiOfferedAmount,
+      oiPrice = poiPrice,
+      oiStart = poiStart,
+      oiEnd = poiEnd,
+      oiOwnerAddress = addressToBech32 poiOwnerAddr,
+      oiOwnerKeyHash = poiOwnerKey,
+      oiOutputReference = poiRef
+    }
+
+instance Swagger.ToSchema OrderInfo where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
+
+data OrderBookInfo = OrderBookInfo
+  { obiMarketPairId ∷ !OrderAssetPair,
+    obiTimestamp ∷ !GYTime,
+    obiBids ∷ ![OrderInfo],
+    obiAsks ∷ ![OrderInfo]
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderResPrefix, CamelToSnake]] OrderBookInfo
+
+instance Swagger.ToSchema OrderBookInfo where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderResPrefix}
+
+-------------------------------------------------------------------------------
+-- Server's API.
 -------------------------------------------------------------------------------
 
 type SettingsAPI = Summary "Server settings" :> Description "Get server settings such as network, version, and revision" :> Get '[JSON] Settings
@@ -86,13 +152,16 @@ type TradingFeesAPI =
 
 type AssetsAPI = Summary "Get assets information" :> Description "Get information for a specific asset." :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails
 
+type OrderBookAPI = Summary "Order book" :> Description "Get order book for a specific market." :> Capture "market-id" OrderAssetPair :> QueryParam "address" GYAddressBech32 :> Get '[JSON] OrderBookInfo
+
 type V0API =
   "settings" :> SettingsAPI
     :<|> "orders" :> OrdersAPI
     :<|> "markets" :> MarketsAPI
     :<|> "tx" :> TxAPI
-    :<|> "trading_fees" :> TradingFeesAPI
+    :<|> "trading-fees" :> TradingFeesAPI
     :<|> "assets" :> AssetsAPI
+    :<|> "order-book" :> OrderBookAPI
 
 type V0 ∷ Symbol
 type V0 = "v0"
@@ -126,8 +195,9 @@ geniusYieldAPISwagger =
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading_fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-book" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
@@ -137,6 +207,7 @@ geniusYieldServer ctx =
     :<|> handleTxApi ctx
     :<|> handleTradingFeesApi ctx
     :<|> handleAssetsApi ctx
+    :<|> handleOrderBookApi ctx
 
 type MainAPI =
   GeniusYieldAPI
@@ -190,3 +261,37 @@ handleAssetsApi ∷ Ctx → GYAssetClass → IO AssetDetails
 handleAssetsApi ctx@Ctx {..} ac = do
   logInfo ctx $ "Fetching details of asset: " +|| ac ||+ ""
   getAssetDetails ctxMarketsProvider ac
+
+handleOrderBookApi ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBookInfo
+handleOrderBookApi ctx@Ctx {..} orderAssetPair mownAddress = do
+  logInfo ctx "Fetching order(s)."
+  let porefs = dexPORefs ctxDexInfo
+  gytime ← getCurrentGYTime
+  os ← runQuery ctx $ partialOrders porefs
+  let os' =
+        Map.filter
+          ( \PartialOrderInfo {..} →
+              let ap1 = mkOrderAssetPair poiOfferedAsset poiAskedAsset
+                  ap2 = mkEquivalentAssetPair ap1
+               in (ap1 == orderAssetPair || ap2 == orderAssetPair)
+                    && case mownAddress of Nothing → True; Just ownAddress → poiOwnerKey == fromJust (addressToPubKeyHash $ addressFromBech32 ownAddress) -- TODO: Get rid of `fromJust`.
+          )
+          os
+      -- TODO: Make it strict, likely there is memory leak here.
+      -- TODO: Check if it's implementation is correct.
+      (!bids, !asks) =
+        Map.foldl'
+          ( \(!accBids, !accAsks) poi@PartialOrderInfo {..} →
+              let buyAP = mkOrderAssetPair poiOfferedAsset poiAskedAsset
+                  poi' = poiToOrderInfo poi
+               in if buyAP == orderAssetPair then (poi' : accBids, accAsks) else (accBids, poi' : accAsks)
+          )
+          ([], [])
+          os'
+  pure $
+    OrderBookInfo
+      { obiMarketPairId = orderAssetPair,
+        obiTimestamp = gytime,
+        obiAsks = asks,
+        obiBids = bids
+      }
