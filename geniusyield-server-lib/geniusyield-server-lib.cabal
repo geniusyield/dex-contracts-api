@@ -56,9 +56,11 @@ library
   hs-source-dirs:  src
   exposed-modules:
     GeniusYield.Server.Api
+    GeniusYield.Server.Assets
     GeniusYield.Server.Auth
     GeniusYield.Server.Constants
     GeniusYield.Server.Ctx
+    GeniusYield.Server.Dex.HistoricalPrices.Maestro
     GeniusYield.Server.Dex.Markets
     GeniusYield.Server.Dex.PartialOrder
     GeniusYield.Server.ErrorMiddleware

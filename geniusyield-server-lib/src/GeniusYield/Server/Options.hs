@@ -15,7 +15,7 @@ import Fmt
 import GeniusYield.GYConfig
 import GeniusYield.HTTP.Errors
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Adapter.Maestro (MaestroMarketsProvider (MaestroMarketsProvider))
+import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (MaestroProvider))
 import GeniusYield.Providers (networkIdToMaestroEnv)
 import GeniusYield.Server.Api
 import GeniusYield.Server.Auth
@@ -115,7 +115,7 @@ runServeCommand (ServeCommand cfp mt) = do
                 | cfgNetworkId coreCfg == GYMainnet → dexInfoDefaultMainnet
                 | cfgNetworkId coreCfg == GYTestnetPreprod → dexInfoDefaultPreprod
                 | otherwise → error "Only mainnet & preprod network are supported",
-            ctxMarketsProvider = MPMaestro (MaestroMarketsProvider menv)
+            ctxMaestroProvider = MaestroProvider menv
           }
 
     logInfoS $
@@ -130,6 +130,6 @@ app ctx =
    in serveWithContext mainAPI context
         $ hoistServerWithContext
           mainAPI
-          (Proxy ∷ Proxy '[AuthHandler Wai.Request ()]) -- God bless https://stackoverflow.com/a/59605478/20330802.
+          (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
           (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
         $ mainServer ctx

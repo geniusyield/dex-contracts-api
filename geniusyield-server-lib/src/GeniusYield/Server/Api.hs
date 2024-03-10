@@ -17,18 +17,18 @@ import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
 import Deriving.Aeson
-import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.GYConfig (GYCoreConfig (cfgNetworkId))
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Domain.Assets
 import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
+import GeniusYield.Server.Assets
 import GeniusYield.Server.Auth (ApiKeyHeader, apiKeyHeaderText)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
+import GeniusYield.Server.Dex.HistoricalPrices.Maestro
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
 import GeniusYield.Server.Dex.PartialOrder (OrdersAPI, handleOrdersApi)
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
@@ -153,8 +153,6 @@ type TradingFeesAPI =
     :> Description "Get trading fees of DEX."
     :> Get '[JSON] TradingFees
 
-type AssetsAPI = Summary "Get assets information" :> Description "Get information for a specific asset." :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails
-
 type OrderBookAPI = Summary "Order book" :> Description "Get order book for a specific market." :> Capture "market-id" OrderAssetPair :> QueryParam "address" GYAddressBech32 :> Get '[JSON] OrderBookInfo
 
 type V0API =
@@ -165,6 +163,7 @@ type V0API =
     :<|> "trading-fees" :> TradingFeesAPI
     :<|> "assets" :> AssetsAPI
     :<|> "order-book" :> OrderBookAPI
+    :<|> "historical-prices" :> "maestro" :> MaestroPriceHistoryAPI
 
 type V0 ∷ Symbol
 type V0 = "v0"
@@ -233,6 +232,7 @@ geniusYieldAPISwagger =
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-book" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> "maestro" :> MaestroPriceHistoryAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
@@ -244,22 +244,18 @@ geniusYieldServer ctx =
       :<|> handleTradingFeesApi ctx
       :<|> handleAssetsApi ctx
       :<|> handleOrderBookApi ctx
+      :<|> handleMaestroPriceHistoryApi ctx
  where
   ignoredAuthResult f _authResult = f
 
 type MainAPI =
   GeniusYieldAPI
-    :<|> "ui" :> Raw
-    :<|> "swagger" :> Raw
 
 mainAPI ∷ Proxy MainAPI
 mainAPI = Proxy
 
 mainServer ∷ Ctx → ServerT MainAPI IO
-mainServer ctx =
-  geniusYieldServer ctx
-    :<|> serveDirectoryFileServer "web/dist"
-    :<|> serveDirectoryFileServer "web/swagger"
+mainServer = geniusYieldServer
 
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
@@ -294,11 +290,6 @@ handleTradingFeesApi ctx@Ctx {..} = do
         tfPercentageMakerFee = 100 * pociMakerFeeRatio pocd,
         tfPercentageTakerFee = 100 * pociMakerFeeRatio pocd
       }
-
-handleAssetsApi ∷ Ctx → GYAssetClass → IO AssetDetails
-handleAssetsApi ctx@Ctx {..} ac = do
-  logInfo ctx $ "Fetching details of asset: " +|| ac ||+ ""
-  getAssetDetails ctxMarketsProvider ac
 
 handleOrderBookApi ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBookInfo
 handleOrderBookApi ctx@Ctx {..} orderAssetPair mownAddress = do

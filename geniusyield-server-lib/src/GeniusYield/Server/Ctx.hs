@@ -6,17 +6,13 @@ import Control.Monad.Reader (ReaderT (..))
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.GYConfig
 import GeniusYield.Imports
-import GeniusYield.OrderBot.Adapter.Maestro (MaestroMarketsProvider)
-import GeniusYield.OrderBot.Domain.Assets (HasAssets (getAssetDetails))
-import GeniusYield.OrderBot.Domain.Markets (HasMarkets (getMarkets))
+import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
 import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
 import GeniusYield.Server.Constants (poConfigAddrMainnet, poConfigAddrPreprod, poRefsMainnet, poRefsPreprod)
 import GeniusYield.Server.Files (nftPolicy, orderValidator)
 import GeniusYield.Transaction
 import GeniusYield.TxBuilder
 import GeniusYield.Types
-import Maestro.Client.V1 qualified as Maestro
-import Maestro.Types.V1 qualified as Maestro
 import PlutusLedgerApi.V1 (Address)
 import PlutusLedgerApi.V1.Scripts (ScriptHash)
 import PlutusLedgerApi.V1.Value (AssetClass)
@@ -58,20 +54,12 @@ dexInfoDefaultPreprod =
       dexPORefs = poRefsPreprod
     }
 
-newtype MarketsProvider = MPMaestro MaestroMarketsProvider
-
-instance HasMarkets MarketsProvider where
-  getMarkets (MPMaestro m) = getMarkets m
-
-instance HasAssets MarketsProvider where
-  getAssetDetails (MPMaestro m) = getAssetDetails m
-
 -- | Server context: configuration & shared state.
 data Ctx = Ctx
   { ctxGYCoreConfig ∷ !GYCoreConfig,
     ctxProviders ∷ !GYProviders,
     ctxDexInfo ∷ !DEXInfo,
-    ctxMarketsProvider ∷ !MarketsProvider
+    ctxMaestroProvider ∷ !MaestroProvider
   }
 
 -- | Create 'TxBody' from a 'GYTxSkeleton'.

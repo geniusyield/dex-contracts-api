@@ -53,7 +53,7 @@ handleMarketsApi = handleMarkets
 handleMarkets ∷ Ctx → IO [Market]
 handleMarkets ctx = do
   logInfo ctx "Fetching markets."
-  fmap fromOrderAssetPair <$> getMarkets (ctxMarketsProvider ctx)
+  fmap fromOrderAssetPair <$> getMarkets (ctxMaestroProvider ctx)
  where
   fromOrderAssetPair ∷ OrderAssetPair → Market
   fromOrderAssetPair oap = Market {marketId = oap, baseAsset = currencyAsset oap, targetAsset = commodityAsset oap}

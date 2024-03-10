@@ -6,7 +6,6 @@ import GeniusYield.OrderBot.Domain.Assets (adaAssetDetails)
 import GeniusYield.OrderBot.Domain.Assets qualified as Domain
 import GeniusYield.OrderBot.Domain.Markets qualified as Domain
 import GeniusYield.OrderBot.Types (mkOrderAssetPair)
-import GeniusYield.Providers.Common (silenceHeadersClientError)
 import GeniusYield.Types (GYAssetClass (..), mintingPolicyIdToText, parseAssetClassWithSep, tokenNameToHex)
 import Maestro.Client.V1
 import Maestro.Types.V1
@@ -20,23 +19,14 @@ data MaestroProviderException
   deriving stock (Show)
   deriving anyclass (Exception)
 
--- | Remove headers (if `MaestroError` contains `ClientError`).
-silenceHeadersMaestroClientError ∷ MaestroError → MaestroError
-silenceHeadersMaestroClientError (ServantClientError e) = ServantClientError $ silenceHeadersClientError e
-silenceHeadersMaestroClientError other = other
-
-throwMpeApiError ∷ Text → MaestroError → IO a
-throwMpeApiError locationInfo =
-  throwIO . MpeRequestException locationInfo . silenceHeadersMaestroClientError
-
--- | Utility function to handle Maestro errors, which also removes header (if present) so as to conceal API key.
+-- | Utility function to handle Maestro errors.
 handleMaestroError ∷ Text → Either MaestroError a → IO a
-handleMaestroError locationInfo = either (throwMpeApiError locationInfo) pure
+handleMaestroError locationInfo = either (throwIO . MpeRequestException locationInfo) pure
 
-newtype MaestroMarketsProvider = MaestroMarketsProvider (MaestroEnv 'V1)
+newtype MaestroProvider = MaestroProvider (MaestroEnv 'V1)
 
-instance Domain.HasAssets MaestroMarketsProvider where
-  getAssetDetails (MaestroMarketsProvider menv) ac = case ac of
+instance Domain.HasAssets MaestroProvider where
+  getAssetDetails (MaestroProvider menv) ac = case ac of
     GYLovelace → pure adaAssetDetails
     GYToken polId tkName → do
       AssetInfo {assetInfoTokenRegistryMetadata} ← try (getTimestampedData <$> assetInfo menv (NonAdaNativeToken (PolicyId . mintingPolicyIdToText $ polId) (TokenName . tokenNameToHex $ tkName))) >>= handleMaestroError (locationInfoPrefix <> "fetching particular token details")
@@ -46,8 +36,8 @@ instance Domain.HasAssets MaestroMarketsProvider where
    where
     locationInfoPrefix = "getAssetDetails: "
 
-instance Domain.HasMarkets MaestroMarketsProvider where
-  getMarkets (MaestroMarketsProvider menv) = do
+instance Domain.HasMarkets MaestroProvider where
+  getMarkets (MaestroProvider menv) = do
     DexPairResponse {dexPairResponsePairs} ← try (pairsFromDex menv GeniusYield) >>= handleMaestroError (locationInfoPrefix <> "fetching market pairs")
     traverse fromDexPairInfo dexPairResponsePairs
    where

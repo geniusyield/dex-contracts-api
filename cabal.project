@@ -47,8 +47,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/maestro-org/haskell-sdk
-  tag: 62af37aed4f69347c37faa855ac7d49871f11bdb
-  --sha256: sha256-7KPxqCSjBzO2Z0GzA4FuqQxBKzUoFXUKewUvxBo/zAM=
+  tag: 83a37d8e9fc8ee226522068b40c275bbb77b55f4
+  --sha256: TODO:
 
 -- Unfortunately, cardano-node 8.1.2 is constrained with plutus-ledger-api 1.5.0.0 and we would like at least 1.6.0.0.
 -- This is done in accordance with changes in https://github.com/input-output-hk/cardano-ledger/pull/3430/files.

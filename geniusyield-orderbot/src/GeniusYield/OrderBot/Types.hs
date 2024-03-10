@@ -1,3 +1,5 @@
+-- TODO: Delete this file. Rename OrderAssetPair to MarketPairId.
+
 {- |
 Module      : GeniusYield.OrderBot.Types
 Copyright   : (c) 2024 GYELD GMBH

@@ -135,6 +135,91 @@
             ],
             "type": "object"
         },
+        "MarketOHLC": {
+            "description": "Returns market activity in candlestick OHLC format for a specific DEX and token pair",
+            "example": {
+                "base_close": 0.207742,
+                "base_high": 0.207742,
+                "base_low": 0.207742,
+                "base_open": 0.207742,
+                "base_volume": 25.21128,
+                "count": 1,
+                "target_close": 4.813658,
+                "target_high": 4.813658,
+                "target_low": 4.813658,
+                "target_open": 4.813658,
+                "target_volume": 121.358488,
+                "timestamp": "2024-03-07T23:45:00Z"
+            },
+            "properties": {
+                "base_close": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "base_high": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "base_low": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "base_open": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "base_volume": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "count": {
+                    "exclusiveMinimum": false,
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "target_close": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "target_high": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "target_low": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "target_open": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "target_volume": {
+                    "format": "double",
+                    "type": "number"
+                },
+                "timestamp": {
+                    "description": "This is the posix time in ISO8601 format.",
+                    "example": "1970-01-01T00:00:00Z",
+                    "format": "ISO8601",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "base_close",
+                "base_high",
+                "base_low",
+                "base_open",
+                "base_volume",
+                "target_close",
+                "target_high",
+                "target_low",
+                "target_open",
+                "target_volume",
+                "count",
+                "timestamp"
+            ],
+            "type": "object"
+        },
         "OrderAssetPair": {
             "description": "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name.",
             "example": "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53",
@@ -400,6 +485,108 @@
                 "summary": "Get assets information",
                 "tags": [
                     "Assets"
+                ]
+            }
+        },
+        "/v0/historical-prices/maestro/{market-id}/{dex}": {
+            "get": {
+                "description": "This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "market-id",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "enum": [
+                            "genius-yield",
+                            "minswap"
+                        ],
+                        "in": "path",
+                        "name": "dex",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "enum": [
+                            "1m",
+                            "5m",
+                            "15m",
+                            "30m",
+                            "1h",
+                            "4h",
+                            "1d"
+                        ],
+                        "in": "query",
+                        "name": "resolution",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "format": "date",
+                        "in": "query",
+                        "name": "from",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "format": "date",
+                        "in": "query",
+                        "name": "to",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "maximum": 50000,
+                        "minimum": 1,
+                        "name": "limit",
+                        "required": false,
+                        "type": "integer"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "in": "query",
+                        "name": "sort",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "items": {
+                                "$ref": "#/definitions/MarketOHLC"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `sort` or `limit` or `to` or `from` or `resolution` or `dex` or `market-id`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
+                    }
+                },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
+                "summary": "Get price history using Maestro.",
+                "tags": [
+                    "Historical Prices"
                 ]
             }
         },
@@ -913,6 +1100,10 @@
         {
             "description": "Endpoint to fetch order book.",
             "name": "Order Book"
+        },
+        {
+            "description": "Endpoints to fetch historical prices.",
+            "name": "Historical Prices"
         }
     ]
 }

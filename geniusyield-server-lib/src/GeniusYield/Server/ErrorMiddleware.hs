@@ -37,10 +37,12 @@ import GeniusYield.Transaction.Common (BalancingError (..))
 import GeniusYield.TxBuilder
 import Network.HTTP.Types (
   Status (statusCode, statusMessage),
+  mkStatus,
   status400,
   status500,
  )
 import Network.Wai qualified as Wai
+import RIO.Text qualified as T
 import Servant.Server (ServerError (..))
 
 {- | This is used for turning non-json responses into JSON.
@@ -65,7 +67,7 @@ errorJsonWrapMiddleware app req respond = app req $ \res → do
 errorLoggerMiddleware ∷ (LT.Text → IO ()) → Wai.Middleware
 errorLoggerMiddleware errorLogger app req respond = app req $ \res → do
   let (status, _headers, body) = Wai.responseToStream res
-  when (statusCode status >= 500 && statusCode status < 600) $
+  when (statusCode status >= 400 && statusCode status < 600) $
     sinkStreamingBody body >>= errorLogger . lazyDecodeUtf8Lenient
   respond res
 
@@ -132,6 +134,8 @@ exceptionHandler =
                       gaeHttpStatus = status500,
                       gaeMsg = errBody
                     },
+      WH $ \case
+        ServerError {..} → GYApiError {gaeErrorCode = "SERVER_ERROR", gaeHttpStatus = mkStatus errHTTPCode (errReasonPhrase & T.pack & T.encodeUtf8), gaeMsg = LTE.decodeUtf8' errBody & either (const mempty) LT.toStrict},
       WH $ \case
         GYConversionException convErr → someBackendError $ tShow convErr
         GYQueryUTxOException txErr → someBackendError $ tShow txErr
