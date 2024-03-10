@@ -5,38 +5,22 @@ module GeniusYield.Server.Utils (
   isMatchedException,
   logInfo,
   logDebug,
-  pubKeyFromAddress,
   dropSymbolAndCamelToSnake,
   addSwaggerDescription,
   addSwaggerExample,
 ) where
 
 import Control.Exception
-import Control.Lens (mapped, (?~))
-import Data.Aeson (camelTo2)
-import Data.Swagger qualified as Swagger
-import GHC.TypeLits
 import GeniusYield.Imports
 import GeniusYield.Server.Ctx
 import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
 import GeniusYield.Types
-
-newtype NoPubKeyAddressError = NoPubKeyAddressError GYAddressBech32
-  deriving stock (Show)
-  deriving anyclass (Exception)
 
 logDebug ∷ HasCallStack ⇒ Ctx → String → IO ()
 logDebug ctx = gyLogDebug (ctxProviders ctx) mempty
 
 logInfo ∷ HasCallStack ⇒ Ctx → String → IO ()
 logInfo ctx = gyLogInfo (ctxProviders ctx) mempty
-
-pubKeyFromAddress ∷ GYAddress → IO GYPubKeyHash
-pubKeyFromAddress addr =
-  maybe
-    (throwIO $ NoPubKeyAddressError $ addressToBech32 addr)
-    return
-    (addressToPubKeyHash addr)
 
 type ExceptionTypes ∷ [Type] → Type
 data ExceptionTypes es where

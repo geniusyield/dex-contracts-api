@@ -56,10 +56,11 @@ dexInfoDefaultPreprod =
 
 -- | Server context: configuration & shared state.
 data Ctx = Ctx
-  { ctxGYCoreConfig ∷ !GYCoreConfig,
+  { ctxNetworkId ∷ !GYNetworkId,
     ctxProviders ∷ !GYProviders,
     ctxDexInfo ∷ !DEXInfo,
-    ctxMaestroProvider ∷ !MaestroProvider
+    ctxMaestroProvider ∷ !MaestroProvider,
+    ctxSigningKey ∷ !(Maybe GYSomePaymentSigningKey)
   }
 
 -- | Create 'TxBody' from a 'GYTxSkeleton'.
@@ -115,7 +116,7 @@ runSkeletonWithStrategyF
   → ReaderT DEXInfo GYTxMonadNode (t (GYTxSkeleton v))
   → IO (t GYTxBody)
 runSkeletonWithStrategyF cstrat ctx addrs addr mcollateral skeleton = do
-  let nid = cfgNetworkId $ ctxGYCoreConfig ctx
+  let nid = ctxNetworkId ctx
       providers = ctxProviders ctx
       di = ctxDexInfo ctx
       mcollateral' = do
@@ -129,6 +130,6 @@ runQuery ctx = runQueryWithReader ctx (ctxDexInfo ctx)
 
 runQueryWithReader ∷ Ctx → a → ReaderT a GYTxQueryMonadNode b → IO b
 runQueryWithReader ctx a q = do
-  let nid = cfgNetworkId $ ctxGYCoreConfig ctx
+  let nid = ctxNetworkId ctx
       providers = ctxProviders ctx
   runGYTxQueryMonadNode nid providers $ runReaderT q a

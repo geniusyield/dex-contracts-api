@@ -58,6 +58,7 @@ library
     GeniusYield.Server.Api
     GeniusYield.Server.Assets
     GeniusYield.Server.Auth
+    GeniusYield.Server.Config
     GeniusYield.Server.Constants
     GeniusYield.Server.Ctx
     GeniusYield.Server.Dex.HistoricalPrices.Maestro
@@ -86,6 +87,7 @@ library
     , binary
     , bytestring
     , deriving-aeson
+    , envy
     , fast-logger
     , file-embed
     , fmt

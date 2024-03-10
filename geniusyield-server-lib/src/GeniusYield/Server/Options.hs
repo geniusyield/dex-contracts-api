@@ -19,6 +19,7 @@ import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (MaestroProvider))
 import GeniusYield.Providers (networkIdToMaestroEnv)
 import GeniusYield.Server.Api
 import GeniusYield.Server.Auth
+import GeniusYield.Server.Config (ServerConfig (..), coreConfigFromServerConfig, optionalSigningKeyFromServerConfig, serverConfigOptionalFPIO)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.ErrorMiddleware
@@ -36,10 +37,7 @@ import System.TimeManager (TimeoutThread (..))
 
 newtype Command = Serve ServeCommand
 
-data ServeCommand = ServeCommand
-  { serveCommandAtlasConfigPath ∷ FilePath,
-    serveCommandMaestroKey ∷ Text
-  }
+newtype ServeCommand = ServeCommand (Maybe FilePath)
 
 parseCommand ∷ Parser Command
 parseCommand =
@@ -55,27 +53,26 @@ parseCommand =
 parseServeCommand ∷ Parser ServeCommand
 parseServeCommand =
   ServeCommand
-    <$> strOption
-      ( long "config"
-          <> metavar "CONFIG"
-          <> short 'c'
-          <> help "Path of Atlas configuration file"
-      )
-    <*> strOption
-      ( long "maestro-key"
-          <> metavar "MAESTRO-KEY"
-          <> short 'm'
-          <> help "Maestro key to get markets information"
+    <$> optional
+      ( strOption
+          ( long "config"
+              <> metavar "CONFIG"
+              <> short 'c'
+              <> help "Path of optional configuration file. If not provided, \"SERVER_CONFIG\" environment variable is used."
+          )
       )
 
 runCommand ∷ Command → IO ()
 runCommand (Serve serveCommand) = runServeCommand serveCommand
 
 runServeCommand ∷ ServeCommand → IO ()
-runServeCommand (ServeCommand cfp mt) = do
-  coreCfg ← coreConfigIO cfp
-  menv ← networkIdToMaestroEnv mt (cfgNetworkId coreCfg)
-  let port = 8082
+runServeCommand (ServeCommand mcfp) = do
+  serverConfig ← serverConfigOptionalFPIO mcfp
+  menv ← networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t → t) (scNetworkId serverConfig)
+  let optionalSigningKey = optionalSigningKeyFromServerConfig serverConfig
+      nid = scNetworkId serverConfig
+      port = 8082
+      coreCfg = coreConfigFromServerConfig serverConfig
   withCfgProviders coreCfg "server" $ \providers → do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty
@@ -109,27 +106,23 @@ runServeCommand (ServeCommand cfp mt) = do
       ctx =
         Ctx
           { ctxProviders = providers,
-            ctxGYCoreConfig = coreCfg,
+            ctxNetworkId = nid,
             ctxDexInfo =
               if
-                | cfgNetworkId coreCfg == GYMainnet → dexInfoDefaultMainnet
-                | cfgNetworkId coreCfg == GYTestnetPreprod → dexInfoDefaultPreprod
+                | nid == GYMainnet → dexInfoDefaultMainnet
+                | nid == GYTestnetPreprod → dexInfoDefaultPreprod
                 | otherwise → error "Only mainnet & preprod network are supported",
-            ctxMaestroProvider = MaestroProvider menv
+            ctxMaestroProvider = MaestroProvider menv,
+            ctxSigningKey = optionalSigningKey
           }
 
     logInfoS $
       "Starting GeniusYield server on port " +| port |+ "\nCore config:\n" +| indentF 4 (fromString $ show coreCfg) |+ ""
     Warp.runSettings settings . reqLoggerMiddleware . errLoggerMiddleware . errorJsonWrapMiddleware $
-      app ctx
-
-app ∷ Ctx → Application
-app ctx =
-  let context = apiKeyAuthHandler someKey :. EmptyContext
-      someKey = apiKeyFromText "ds"
-   in serveWithContext mainAPI context
-        $ hoistServerWithContext
-          mainAPI
-          (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
-          (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
-        $ mainServer ctx
+      let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t → apiKeyFromText t) :. EmptyContext
+       in serveWithContext mainAPI context
+            $ hoistServerWithContext
+              mainAPI
+              (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
+              (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
+            $ mainServer ctx

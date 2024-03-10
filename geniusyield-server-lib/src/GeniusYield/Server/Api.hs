@@ -21,7 +21,6 @@ import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.GYConfig (GYCoreConfig (cfgNetworkId))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
@@ -267,7 +266,7 @@ mainServer = geniusYieldServer
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
   logInfo ctx "Settings requested."
-  pure $ Settings {settingsNetwork = ctxGYCoreConfig & cfgNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb"}
+  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb"}
 
 -- >>> customShowNetworkId GYMainnet
 -- "mainnet"
