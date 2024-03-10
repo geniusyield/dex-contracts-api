@@ -115,6 +115,17 @@
             "pattern": "[0-9a-fA-F]{64}#\"d+",
             "type": "string"
         },
+        "GYValue": {
+            "additionalProperties": {
+                "type": "integer"
+            },
+            "description": "A multi asset quantity, represented as map where each key represents an asset: policy ID and token name in hex concatenated by a dot.",
+            "example": {
+                "ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44": 101,
+                "lovelace": 22
+            },
+            "type": "object"
+        },
         "Market": {
             "description": "Market information",
             "properties": {
@@ -485,6 +496,49 @@
                 "summary": "Get assets information",
                 "tags": [
                     "Assets"
+                ]
+            }
+        },
+        "/v0/balances/{address}": {
+            "get": {
+                "description": "Get token balances of an address.",
+                "parameters": [
+                    {
+                        "format": "bech32",
+                        "in": "path",
+                        "name": "address",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json;charset=utf-8"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/GYValue"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid `address`"
+                    },
+                    "401": {
+                        "description": "Unauthorized access - API key missing"
+                    },
+                    "403": {
+                        "description": "Forbidden - The API key does not have permission to perform the request"
+                    }
+                },
+                "security": [
+                    {
+                        "api-key": []
+                    }
+                ],
+                "summary": "Balances",
+                "tags": [
+                    "Balances"
                 ]
             }
         },
@@ -1104,6 +1158,10 @@
         {
             "description": "Endpoints to fetch historical prices.",
             "name": "Historical Prices"
+        },
+        {
+            "description": "Endpoint to fetch token balances.",
+            "name": "Balances"
         }
     ]
 }

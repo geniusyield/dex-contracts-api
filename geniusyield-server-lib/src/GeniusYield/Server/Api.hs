@@ -17,6 +17,7 @@ import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
 import Deriving.Aeson
+import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
@@ -33,6 +34,7 @@ import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
 import GeniusYield.Server.Dex.PartialOrder (OrdersAPI, handleOrdersApi)
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
+import GeniusYield.TxBuilder (GYTxQueryMonad (utxosAtAddress))
 import GeniusYield.Types
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import RIO.Map qualified as Map
@@ -155,6 +157,8 @@ type TradingFeesAPI =
 
 type OrderBookAPI = Summary "Order book" :> Description "Get order book for a specific market." :> Capture "market-id" OrderAssetPair :> QueryParam "address" GYAddressBech32 :> Get '[JSON] OrderBookInfo
 
+type BalancesAPI = Summary "Balances" :> Description "Get token balances of an address." :> Capture "address" GYAddressBech32 :> Get '[JSON] GYValue
+
 type V0API =
   "settings" :> SettingsAPI
     :<|> "orders" :> OrdersAPI
@@ -164,6 +168,7 @@ type V0API =
     :<|> "assets" :> AssetsAPI
     :<|> "order-book" :> OrderBookAPI
     :<|> "historical-prices" :> "maestro" :> MaestroPriceHistoryAPI
+    :<|> "balances" :> BalancesAPI
 
 type V0 ∷ Symbol
 type V0 = "v0"
@@ -233,6 +238,7 @@ geniusYieldAPISwagger =
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-book" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
       & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> "maestro" :> MaestroPriceHistoryAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & description ?~ "Endpoint to fetch token balances."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
@@ -245,6 +251,7 @@ geniusYieldServer ctx =
       :<|> handleAssetsApi ctx
       :<|> handleOrderBookApi ctx
       :<|> handleMaestroPriceHistoryApi ctx
+      :<|> handleBalancesApi ctx
  where
   ignoredAuthResult f _authResult = f
 
@@ -324,3 +331,10 @@ handleOrderBookApi ctx@Ctx {..} orderAssetPair mownAddress = do
         obiAsks = asks,
         obiBids = bids
       }
+
+handleBalancesApi ∷ Ctx → GYAddressBech32 → IO GYValue
+handleBalancesApi ctx addr = do
+  logInfo ctx $ "Fetching balance of address: " +|| addr ||+ ""
+  runQuery ctx $ do
+    utxos ← utxosAtAddress (addressFromBech32 addr) Nothing
+    pure $ foldMapUTxOs utxoValue utxos
