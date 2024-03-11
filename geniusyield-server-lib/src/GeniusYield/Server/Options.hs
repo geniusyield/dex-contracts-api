@@ -71,7 +71,6 @@ runServeCommand (ServeCommand mcfp) = do
   menv ← networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t → t) (scNetworkId serverConfig)
   let optionalSigningKey = optionalSigningKeyFromServerConfig serverConfig
       nid = scNetworkId serverConfig
-      port = 8082
       coreCfg = coreConfigFromServerConfig serverConfig
   withCfgProviders coreCfg "server" $ \providers → do
     let logInfoS = gyLogInfo providers mempty
@@ -99,7 +98,7 @@ runServeCommand (ServeCommand mcfp) = do
       onExceptionResponse _ = responseServerError . apiErrorToServerError $ someBackendError "Internal Server Error"
       settings =
         Warp.defaultSettings
-          & Warp.setPort port
+          & Warp.setPort (scPort serverConfig)
           & Warp.setOnException onException
           & Warp.setOnExceptionResponse onExceptionResponse
       errLoggerMiddleware = errorLoggerMiddleware $ logErrorS . LT.unpack
@@ -117,7 +116,7 @@ runServeCommand (ServeCommand mcfp) = do
           }
 
     logInfoS $
-      "Starting GeniusYield server on port " +| port |+ "\nCore config:\n" +| indentF 4 (fromString $ show coreCfg) |+ ""
+      "Starting GeniusYield server on port " +| scPort serverConfig |+ "\nCore config:\n" +| indentF 4 (fromString $ show coreCfg) |+ ""
     Warp.runSettings settings . reqLoggerMiddleware . errLoggerMiddleware . errorJsonWrapMiddleware $
       let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t → apiKeyFromText t) :. EmptyContext
        in serveWithContext mainAPI context
