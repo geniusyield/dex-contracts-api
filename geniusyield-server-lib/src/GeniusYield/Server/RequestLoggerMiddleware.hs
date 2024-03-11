@@ -3,16 +3,15 @@ module GeniusYield.Server.RequestLoggerMiddleware (gcpReqLogger) where
 import Data.Aeson ((.=))
 import Data.Aeson qualified as Aeson
 import Data.Binary.Builder (toLazyByteString)
-import Data.ByteString qualified as BS
-import Data.ByteString.Char8 qualified as BS8
-import Data.Text qualified as Txt
-import Data.Time (UTCTime)
-import Data.Time.Format (defaultTimeLocale, parseTimeOrError)
-import GeniusYield.Imports
+import GeniusYield.Imports (lazyDecodeUtf8Lenient)
+import GeniusYield.Server.Utils (bytestringToString)
 import Network.HTTP.Types (statusCode)
 import Network.Wai
 import Network.Wai.Middleware.RequestLogger
-import System.IO
+import RIO
+import RIO.ByteString qualified as BS
+import RIO.Text qualified as Txt
+import RIO.Time (UTCTime, defaultTimeLocale, parseTimeOrError)
 import System.Log.FastLogger
 
 -- See https://cloud.google.com/logging/docs/structured-logging. This Haskell code defines a middleware for logging HTTP requests in a Google Cloud Platform (GCP) compatible format.
@@ -37,7 +36,7 @@ gcpReqLogger =
                 "time" .= zonedDateToSensibleTime zonedDate,
                 "httpRequest"
                   .= Aeson.object
-                    [ "requestMethod" .= BS8.unpack method, -- We know 'Method' is always a valid BS8
+                    [ "requestMethod" .= bytestringToString method,
                       "requestUrl" .= decodeUtf8Lenient ("https://self" <> rawPathInfo req <> rawQueryString req),
                       "status" .= statCode,
                       "latency" .= show latency,
@@ -47,5 +46,5 @@ gcpReqLogger =
      in rawLog <> "\n" -- Manually adding new line as there doesn't seem to be one in the GCP logs when being monitored through google cloud.
 
 -- Why does wai use ZonedDate from fast-logger + unix-time?
-zonedDateToSensibleTime ∷ BS8.ByteString → UTCTime
-zonedDateToSensibleTime = parseTimeOrError False defaultTimeLocale (BS8.unpack simpleTimeFormat) . BS8.unpack
+zonedDateToSensibleTime ∷ ByteString → UTCTime
+zonedDateToSensibleTime = parseTimeOrError False defaultTimeLocale (bytestringToString simpleTimeFormat) . bytestringToString

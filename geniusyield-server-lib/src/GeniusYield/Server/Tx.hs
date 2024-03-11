@@ -3,8 +3,11 @@ module GeniusYield.Server.Tx (
   handleTxApi,
 ) where
 
+import Fmt
 import GeniusYield.Server.Ctx
+import GeniusYield.Server.Utils
 import GeniusYield.Types
+import RIO hiding (logDebug, logInfo)
 import Servant
 
 type TxAPI =
@@ -32,18 +35,19 @@ handleTxApi ctx =
 
 handleTxSign ∷ Ctx → GYTx → IO GYTx
 handleTxSign ctx@Ctx {..} tx = do
-  -- TODO: Add log.
-  -- TODO: add signature.
-  pure tx
+  logInfo ctx $ "Signing transaction: " +| txToHex tx |+ ""
+  case ctxSigningKey of
+    Just sk → pure $ signGYTx' tx [somePaymentSigningKeyToSomeSigningKey sk]
+    Nothing → throwIO $ err500 {errBody = "No signing key configured."}
 
 handleTxSignAndSubmit ∷ Ctx → GYTx → IO GYTxId
-handleTxSignAndSubmit ctx@Ctx {..} tx = do
-  -- TODO: Add log.
-  -- TODO: add logic.
-  pure $ "6c751d3e198c5608dfafdfdffe16aeac8a28f88f3a769cf22dd45e8bc84f47e8"
+handleTxSignAndSubmit ctx tx = do
+  logInfo ctx $ "Signing and submitting transaction: " +| txToHex tx |+ ""
+  signedTx ← handleTxSign ctx tx
+  handleTxSubmit ctx signedTx
 
 handleTxSubmit ∷ Ctx → GYTx → IO GYTxId
 handleTxSubmit ctx@Ctx {..} tx = do
-  -- TODO: Add log.
-  -- TODO: add logic.
-  pure $ "6c751d3e198c5608dfafdfdffe16aeac8a28f88f3a769cf22dd45e8bc84f47e8"
+  logInfo ctx $ "Submitting transaction: " +| txToHex tx |+ ""
+  void $ gySubmitTx ctxProviders tx
+  pure $ txBodyTxId $ getTxBody tx

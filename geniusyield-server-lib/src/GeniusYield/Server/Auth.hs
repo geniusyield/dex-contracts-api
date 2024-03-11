@@ -8,7 +8,7 @@ module GeniusYield.Server.Auth (
 
 import GHC.TypeLits (Symbol, symbolVal)
 import Network.Wai (Request (requestHeaders))
-import RIO (ByteString, Text, encodeUtf8, (&))
+import RIO
 import RIO.Text qualified as T
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, mkAuthHandler)

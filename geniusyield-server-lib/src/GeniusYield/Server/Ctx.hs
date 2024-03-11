@@ -2,9 +2,7 @@ module GeniusYield.Server.Ctx where
 
 -- TODO: Add explicit export list.
 
-import Control.Monad.Reader (ReaderT (..))
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
-import GeniusYield.GYConfig
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
 import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
@@ -17,6 +15,7 @@ import PlutusLedgerApi.V1 (Address)
 import PlutusLedgerApi.V1.Scripts (ScriptHash)
 import PlutusLedgerApi.V1.Value (AssetClass)
 import Ply (ScriptRole (..), TypedScript)
+import RIO
 
 -- | Type that encapsulates the scripts needed for the dex api.
 data DEXInfo = DEXInfo

@@ -7,9 +7,9 @@ module GeniusYield.Server.Constants (
 ) where
 
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
-import GeniusYield.Imports ((&))
 import GeniusYield.Types (GYAddress, unsafeAddressFromText)
 import GitHash
+import RIO
 
 poRefsMainnet ∷ PORefs
 poRefsMainnet =

@@ -13,8 +13,7 @@ import Deriving.Aeson
 import GHC.TypeLits (Symbol)
 import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
 import GeniusYield.Types (GYAssetClass (..))
-import RIO (Word64, (&))
-import RIO.Text (Text)
+import RIO
 import Web.HttpApiData (FromHttpApiData (..), ToHttpApiData (..))
 
 {- $setup

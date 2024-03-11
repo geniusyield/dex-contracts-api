@@ -7,12 +7,12 @@ module GeniusYield.Server.Dex.HistoricalPrices.Maestro (
 ) where
 
 import Control.Lens ((?~))
+import Data.Aeson (FromJSON (..), ToJSON (..))
 import Data.Swagger qualified as Swagger
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (Symbol)
-import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (..), handleMaestroError)
 import GeniusYield.OrderBot.Domain.Assets (AssetDetails (adAssetTicker), AssetTicker (..))
 import GeniusYield.OrderBot.Types (OrderAssetPair (..))
@@ -22,7 +22,7 @@ import GeniusYield.Server.Utils
 import GeniusYield.Types
 import Maestro.Client.V1 (pricesFromDex)
 import Maestro.Types.V1 (Dex, OHLCCandleInfo (..), Order, Resolution, TaggedText (TaggedText))
-import RIO (Word64, try)
+import RIO hiding (logDebug, logInfo)
 import RIO.Text (unpack)
 import RIO.Time (Day)
 import Servant

@@ -29,6 +29,7 @@ source-repository head
 common common
   default-language:   GHC2021
   default-extensions:
+    NoImplicitPrelude
     DataKinds
     DeriveAnyClass
     DerivingStrategies
@@ -98,7 +99,6 @@ library
     , http-types
     , insert-ordered-containers
     , lens
-    , mtl
     , optparse-applicative
     , plutus-ledger-api
     , ply-core
@@ -106,7 +106,6 @@ library
     , servant-server
     , servant-swagger
     , swagger2
-    , text
     , time
     , time-manager
     , transformers
@@ -126,6 +125,6 @@ executable geniusyield-server
   main-is:        Main.hs
   ghc-options:    -O2 -threaded -rtsopts -with-rtsopts=-T
   build-depends:
-    , base
     , geniusyield-server-lib
     , optparse-applicative
+    , rio

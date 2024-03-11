@@ -9,28 +9,11 @@ module GeniusYield.Server.ErrorMiddleware (
   missingSignatoryCheck,
 ) where
 
-import Control.Exception (
-  SomeException,
-  displayException,
-  fromException,
- )
 import Data.Aeson ((.=))
 import Data.Aeson qualified as Aeson
-import Data.ByteString.Builder qualified as B
-import Data.ByteString.Char8 qualified as BS8
-import Data.ByteString.Lazy qualified as LBS
-import Data.Char (toUpper)
-import Data.IORef (
-  modifyIORef',
-  newIORef,
-  readIORef,
- )
-import Data.Text (isInfixOf)
-import Data.Text qualified as Txt
-import Data.Text.Lazy qualified as LT
-import Data.Text.Lazy.Encoding qualified as LTE
+import Data.ByteString.Builder (toLazyByteString)
 import GeniusYield.HTTP.Errors
-import GeniusYield.Imports
+import GeniusYield.Imports (lazyDecodeUtf8Lenient)
 import GeniusYield.Providers.Common (SubmitTxException (SubmitTxException))
 import GeniusYield.Transaction (BuildTxException (..))
 import GeniusYield.Transaction.Common (BalancingError (..))
@@ -42,7 +25,14 @@ import Network.HTTP.Types (
   status500,
  )
 import Network.Wai qualified as Wai
+import RIO
+import RIO qualified as T
+import RIO.ByteString.Lazy qualified as LBS
+import RIO.Char (toUpper)
+import RIO.Text (isInfixOf)
 import RIO.Text qualified as T
+import RIO.Text qualified as Txt
+import RIO.Text.Lazy qualified as LT
 import Servant.Server (ServerError (..))
 
 {- | This is used for turning non-json responses into JSON.
@@ -59,7 +49,7 @@ errorJsonWrapMiddleware app req respond = app req $ \res → do
       lbs ←
         if statusCode status == 404
           then -- The body in a 404 Servant err is empty for some reason.
-            pure . LBS.fromStrict $ BS8.pack "Not Found"
+            pure . LBS.fromStrict $ "Not Found"
           else sinkStreamingBody body
       respond $ errorResponse status lbs
     else respond res
@@ -135,7 +125,7 @@ exceptionHandler =
                       gaeMsg = errBody
                     },
       WH $ \case
-        ServerError {..} → GYApiError {gaeErrorCode = "SERVER_ERROR", gaeHttpStatus = mkStatus errHTTPCode (errReasonPhrase & T.pack & T.encodeUtf8), gaeMsg = LTE.decodeUtf8' errBody & either (const mempty) LT.toStrict},
+        ServerError {..} → GYApiError {gaeErrorCode = "SERVER_ERROR", gaeHttpStatus = mkStatus errHTTPCode (errReasonPhrase & T.pack & T.encodeUtf8), gaeMsg = T.decodeUtf8Lenient (LBS.toStrict errBody)},
       WH $ \case
         GYConversionException convErr → someBackendError $ tShow convErr
         GYQueryUTxOException txErr → someBackendError $ tShow txErr
@@ -166,7 +156,7 @@ sinkStreamingBody ∷ ((Wai.StreamingBody → IO ()) → IO ()) → IO LBS.ByteS
 sinkStreamingBody k = do
   ref ← newIORef mempty
   k $ \f → f (\b → modifyIORef' ref (<> b)) (return ())
-  B.toLazyByteString <$> readIORef ref
+  toLazyByteString <$> readIORef ref
 
 errorResponse ∷ Status → LBS.ByteString → Wai.Response
 errorResponse status body =
@@ -176,10 +166,9 @@ errorResponse status body =
     $ Aeson.encode
     $ Aeson.object
       [ "errorCode" Aeson..= bsMsgToCode (statusMessage status),
-        "message" Aeson..= LTE.decodeLatin1 body
+        "message" Aeson..= T.decodeUtf8Lenient (LBS.toStrict body)
       ]
  where
-  -- bsMsgToCode "Not Found" = "NOT_FOUND"
   bsMsgToCode = Txt.map (\case ' ' → '_'; x → toUpper x) . decodeUtf8Lenient
 
 -- | Transform a 'GYApiError' to 'ServerError'.

@@ -34,7 +34,7 @@ package strict-containers
 source-repository-package
   type: git
   location: https://github.com/geniusyield/atlas
-  tag: 6da543d3b32ee6925c058402c90c89f1e1145c83
+  tag: 370da9228b6b92a94167ee23a9a683cd0e9bca4e
   --sha256: todo
 
 source-repository-package

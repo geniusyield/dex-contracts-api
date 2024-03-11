@@ -8,6 +8,7 @@ import GeniusYield.OrderBot.Domain.Assets
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils
 import GeniusYield.Types
+import RIO hiding (logDebug, logInfo)
 import Servant
 
 type AssetsAPI = Summary "Get assets information" :> Description "Get information for a specific asset." :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails

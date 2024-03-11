@@ -1,7 +1,5 @@
 module GeniusYield.OrderBot.Adapter.Maestro where
 
-import Control.Exception (try)
-import GeniusYield.Imports (Exception, Text, throwIO)
 import GeniusYield.OrderBot.Domain.Assets (adaAssetDetails)
 import GeniusYield.OrderBot.Domain.Assets qualified as Domain
 import GeniusYield.OrderBot.Domain.Markets qualified as Domain
@@ -9,6 +7,7 @@ import GeniusYield.OrderBot.Types (mkOrderAssetPair)
 import GeniusYield.Types (GYAssetClass (..), mintingPolicyIdToText, parseAssetClassWithSep, tokenNameToHex)
 import Maestro.Client.V1
 import Maestro.Types.V1
+import RIO
 import RIO.Text (pack)
 
 -- Exception utilities

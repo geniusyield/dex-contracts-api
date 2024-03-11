@@ -1,5 +1,6 @@
 import GeniusYield.Server.Options
 import Options.Applicative
+import RIO
 
 main ∷ IO ()
 main = runCommand =<< execParser opts

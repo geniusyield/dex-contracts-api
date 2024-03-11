@@ -4,7 +4,6 @@ module GeniusYield.Server.Files (
 ) where
 
 import Data.Aeson qualified as Aeson
-import Data.ByteString (ByteString)
 import Data.FileEmbed
 import PlutusLedgerApi.V1 (Address)
 import PlutusLedgerApi.V1.Scripts (ScriptHash)
@@ -15,6 +14,7 @@ import Ply (
  )
 import Ply.Core.Internal.Reify (ReifyRole, ReifyTypenames)
 import Ply.Core.TypedReader (mkTypedScript)
+import RIO
 
 readScript ∷ ∀ r l. (ReifyRole r, ReifyTypenames l) ⇒ ByteString → TypedScript r l
 readScript bs =

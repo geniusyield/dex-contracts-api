@@ -5,12 +5,14 @@ module GeniusYield.Server.Options where
 
 import GeniusYield.Server.Run (runServer)
 import Options.Applicative
+import RIO
 
 newtype Command = Serve ServeCommand
 
 newtype ServeCommand = ServeCommand (Maybe FilePath)
 
 parseCommand ∷ Parser Command
+
 parseCommand =
   subparser $
     mconcat
@@ -22,6 +24,7 @@ parseCommand =
       ]
 
 parseServeCommand ∷ Parser ServeCommand
+
 parseServeCommand =
   ServeCommand
     <$> optional
@@ -34,7 +37,9 @@ parseServeCommand =
       )
 
 runCommand ∷ Command → IO ()
+
 runCommand (Serve serveCommand) = runServeCommand serveCommand
 
 runServeCommand ∷ ServeCommand → IO ()
+
 runServeCommand (ServeCommand mcfp) = runServer mcfp

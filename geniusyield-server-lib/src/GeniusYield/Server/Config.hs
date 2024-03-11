@@ -11,11 +11,12 @@ import Data.Aeson (
  )
 import Data.Yaml qualified as Yaml
 import Deriving.Aeson
+import GHC.IO.Exception (userError)
 import GeniusYield.GYConfig (Confidential, GYCoreConfig (..), GYCoreProviderInfo)
 import GeniusYield.Types
 import Maestro.Types.Common (LowerFirst)
 import Network.Wai.Handler.Warp (Port)
-import RIO (Bifunctor (first), IsString (..), Text, Word32, fromMaybe, throwIO)
+import RIO
 import RIO.FilePath (takeExtension)
 import System.Envy
 

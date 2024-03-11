@@ -8,11 +8,9 @@ module GeniusYield.Server.Api (
   geniusYieldAPISwagger,
 ) where
 
-import Control.Lens (at, (%~), (.~), (?~))
-import Data.Char (toLower)
+import Control.Lens (at, (?~))
 import Data.HashMap.Strict.InsOrd qualified as IOHM
-import Data.List (isPrefixOf)
-import Data.Maybe (fromJust)
+import Data.Kind (Type)
 import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
@@ -21,7 +19,6 @@ import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.Imports
 import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Assets
@@ -36,7 +33,11 @@ import GeniusYield.Server.Utils
 import GeniusYield.TxBuilder (GYTxQueryMonad (utxosAtAddress))
 import GeniusYield.Types
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
+import RIO hiding (asks, logDebug, logInfo)
+import RIO.Char (toLower)
+import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
+import RIO.Partial (fromJust) -- TODO: Get rid of it.
 import Servant
 import Servant.Server.Experimental.Auth (AuthServerData)
 import Servant.Swagger
@@ -198,11 +199,11 @@ instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
     toSwagger (Proxy ∷ Proxy api)
       & securityDefinitions
       .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
-        & allOperations
-        . security
+      & allOperations
+      . security
       .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
-        & allOperations
-        . responses
+      & allOperations
+      . responses
       %~ addCommonResponses
 
 addCommonResponses ∷ Responses → Responses
@@ -220,11 +221,11 @@ geniusYieldAPISwagger =
     & info
     . title
     .~ "Genius Yield DEX Server API"
-      & info
-      . version
+    & info
+    . version
     .~ "1.0"
-      & info
-      . license
+    & info
+    . license
     ?~ ("Apache-2.0" & url ?~ URL "https://opensource.org/licenses/apache-2-0")
       & info
       . description

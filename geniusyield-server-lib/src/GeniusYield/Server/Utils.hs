@@ -8,13 +8,15 @@ module GeniusYield.Server.Utils (
   dropSymbolAndCamelToSnake,
   addSwaggerDescription,
   addSwaggerExample,
+  bytestringToString,
 ) where
 
-import Control.Exception
 import GeniusYield.Imports
 import GeniusYield.Server.Ctx
 import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
 import GeniusYield.Types
+import RIO hiding (logDebug, logInfo)
+import RIO.Text qualified as Text
 
 logDebug ∷ HasCallStack ⇒ Ctx → String → IO ()
 logDebug ctx = gyLogDebug (ctxProviders ctx) mempty
@@ -35,3 +37,6 @@ isMatchedException (etype :>> etypes) se = isJust (f etype) || isMatchedExceptio
  where
   f ∷ ∀ e. Exception e ⇒ Proxy e → Maybe e
   f _ = fromException @e se
+
+bytestringToString ∷ ByteString → String
+bytestringToString = RIO.decodeUtf8Lenient >>> Text.unpack

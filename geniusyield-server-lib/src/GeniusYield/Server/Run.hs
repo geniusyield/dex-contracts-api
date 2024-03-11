@@ -2,12 +2,8 @@ module GeniusYield.Server.Run (
   runServer,
 ) where
 
-import Control.Exception (SomeException (..), displayException, try)
-import Control.Monad.Trans.Except
+import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Aeson.Encode.Pretty (encodePretty)
-import Data.ByteString qualified as B
-import Data.ByteString.Lazy.Char8 qualified as BL8
-import Data.Text.Lazy qualified as LT
 import Data.Version (showVersion)
 import Data.Yaml.Pretty qualified as Yaml
 import Fmt
@@ -28,6 +24,10 @@ import GeniusYield.Types
 import Network.Wai qualified as Wai
 import Network.Wai.Handler.Warp qualified as Warp
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
+import RIO hiding (Handler, logDebug, logErrorS, logInfo, logInfoS, onException)
+import RIO.ByteString qualified as B
+import RIO.ByteString.Lazy qualified as BL
+import RIO.Text.Lazy qualified as LT
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler)
 import Servant.Server.Internal.ServerError (responseServerError)
@@ -44,8 +44,7 @@ runServer mfp = do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty
     logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ ""
-    -- TODO: Are the directories where these files are written fine?
-    BL8.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
+    BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
     B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
     reqLoggerMiddleware ← gcpReqLogger
     let
