@@ -68,6 +68,7 @@ library
     GeniusYield.Server.Files
     GeniusYield.Server.Options
     GeniusYield.Server.RequestLoggerMiddleware
+    GeniusYield.Server.Run
     GeniusYield.Server.Tx
     GeniusYield.Server.Utils
 
