@@ -1,6 +1,9 @@
 module GeniusYield.Server.Tx (
   TxAPI,
   handleTxApi,
+  handleTxSign,
+  handleTxSignAndSubmit,
+  handleTxSubmit,
 ) where
 
 import Fmt
@@ -49,5 +52,4 @@ handleTxSignAndSubmit ctx tx = do
 handleTxSubmit ∷ Ctx → GYTx → IO GYTxId
 handleTxSubmit ctx@Ctx {..} tx = do
   logInfo ctx $ "Submitting transaction: " +| txToHex tx |+ ""
-  void $ gySubmitTx ctxProviders tx
-  pure $ txBodyTxId $ getTxBody tx
+  gySubmitTx ctxProviders tx

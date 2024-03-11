@@ -6,11 +6,13 @@ module GeniusYield.Server.Dex.PartialOrder (
 import Data.Ratio ((%))
 import Data.Swagger qualified as Swagger
 import Deriving.Aeson
+import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), cancelMultiplePartialOrders, getPartialOrdersInfos, placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
+import GeniusYield.Server.Tx (handleTxSign, handleTxSubmit)
 import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
 import GeniusYield.Types
 import RIO hiding (logDebug, logInfo)
@@ -20,7 +22,6 @@ import Servant
 type PlaceOrderReqPrefix ∷ Symbol
 type PlaceOrderReqPrefix = "pop"
 
--- TODO: Review request and response swagger & json instances.
 data PlaceOrderParameters = PlaceOrderParameters
   { popAddress ∷ !GYAddressBech32,
     popCollateral ∷ !GYTxOutRef,
@@ -31,7 +32,7 @@ data PlaceOrderParameters = PlaceOrderParameters
     popStart ∷ !(Maybe GYTime),
     popEnd ∷ !(Maybe GYTime)
   }
-  deriving stock (Generic)
+  deriving stock (Show, Generic)
   deriving
     (FromJSON, ToJSON)
     via CustomJSON '[FieldLabelModifier '[StripPrefix PlaceOrderReqPrefix, CamelToSnake]] PlaceOrderParameters
@@ -65,13 +66,12 @@ instance Swagger.ToSchema PlaceOrderTransactionDetails where
 type CancelOrderReqPrefix ∷ Symbol
 type CancelOrderReqPrefix = "cop"
 
--- TODO: Review request and response swagger & json instances.
 data CancelOrderParameters = CancelOrderParameters
   { copAddress ∷ !GYAddressBech32,
     copCollateral ∷ !GYTxOutRef,
     copOrderReferences ∷ ![GYTxOutRef]
   }
-  deriving stock (Generic)
+  deriving stock (Show, Generic)
   deriving
     (FromJSON, ToJSON)
     via CustomJSON '[FieldLabelModifier '[StripPrefix CancelOrderReqPrefix, CamelToSnake]] CancelOrderParameters
@@ -100,13 +100,13 @@ instance Swagger.ToSchema CancelOrderTransactionDetails where
 
 type OrdersAPI =
   Summary "Build transaction to create order"
-    :> Description "Build a transaction to create an order"
+    :> Description "Build a transaction to create an order. Order is placed at a mangled address where staking credential is that of the given \"address\" field."
     :> "tx"
     :> "build-open"
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description "Create an order. This endpoint would also sign & submit the built transaction"
+      :> Description "Create an order. This endpoint would also sign & submit the built transaction. Order is placed at a mangled address where staking credential is that of the given \"address\" field."
       :> ReqBody '[JSON] PlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -123,14 +123,13 @@ type OrdersAPI =
 handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
 handleOrdersApi ctx =
   handlePlaceOrder ctx
-    :<|> handlePlaceOrder ctx
+    :<|> handlePlaceOrderAndSignSubmit ctx
     :<|> handleCancelOrder ctx
-    :<|> handleCancelOrder ctx
+    :<|> handleCancelOrderAndSignSubmit ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
-handlePlaceOrder ctx@Ctx {..} PlaceOrderParameters {..} = do
-  logInfo ctx "Placing an order."
-  -- TODO: To log request params here as well?
+handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
+  logInfo ctx $ "Placing an order. Parameters: " +|| pops ||+ ""
   let porefs = dexPORefs ctxDexInfo
       popAddress' = addressFromBech32 popAddress
   (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ porefs
@@ -163,10 +162,18 @@ handlePlaceOrder ctx@Ctx {..} PlaceOrderParameters {..} = do
         potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd
       }
 
+handlePlaceOrderAndSignSubmit ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
+handlePlaceOrderAndSignSubmit ctx pops = do
+  logInfo ctx "Placing an order and signing & submitting the transaction."
+  details ← handlePlaceOrder ctx pops
+  signedTx ← handleTxSign ctx $ potdTransaction details
+  txId ← handleTxSubmit ctx signedTx
+  -- Though transaction id would be same, but we are returning it again, just in case...
+  pure $ details {potdTransactionId = txId, potdTransaction = signedTx}
+
 handleCancelOrder ∷ Ctx → CancelOrderParameters → IO CancelOrderTransactionDetails
-handleCancelOrder ctx@Ctx {..} CancelOrderParameters {..} = do
-  logInfo ctx "Canceling order(s)."
-  -- TODO: To log request params here as well?
+handleCancelOrder ctx@Ctx {..} cops@CancelOrderParameters {..} = do
+  logInfo ctx $ "Canceling order(s). Parameters: " +|| cops ||+ ""
   let porefs = dexPORefs ctxDexInfo
       copAddress' = addressFromBech32 copAddress
   txBody ← runSkeletonI ctx (pure copAddress') copAddress' (Just copCollateral) $ do
@@ -178,3 +185,12 @@ handleCancelOrder ctx@Ctx {..} CancelOrderParameters {..} = do
         cotdTransactionId = txBodyTxId txBody,
         cotdTransactionFee = fromIntegral $ txBodyFee txBody
       }
+
+handleCancelOrderAndSignSubmit ∷ Ctx → CancelOrderParameters → IO CancelOrderTransactionDetails
+handleCancelOrderAndSignSubmit ctx cops = do
+  logInfo ctx "Canceling order(s) and signing & submitting the transaction."
+  details ← handleCancelOrder ctx cops
+  signedTx ← handleTxSign ctx $ cotdTransaction details
+  txId ← handleTxSubmit ctx signedTx
+  -- Though transaction id would be same, but we are returning it again, just in case...
+  pure $ details {cotdTransactionId = txId, cotdTransaction = signedTx}

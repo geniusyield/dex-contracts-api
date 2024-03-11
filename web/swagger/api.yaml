@@ -568,7 +568,8 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Create an order. This endpoint would also sign & submit the built
-        transaction
+        transaction. Order is placed at a mangled address where staking credential
+        is that of the given "address" field.
       parameters:
       - in: body
         name: body
@@ -628,7 +629,8 @@ paths:
     post:
       consumes:
       - application/json;charset=utf-8
-      description: Build a transaction to create an order
+      description: Build a transaction to create an order. Order is placed at a mangled
+        address where staking credential is that of the given "address" field.
       parameters:
       - in: body
         name: body
