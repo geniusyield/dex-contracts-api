@@ -16,7 +16,6 @@ import Servant.Server.Experimental.Auth (AuthHandler, mkAuthHandler)
 -- | The Api Key type.
 newtype ApiKey = ApiKey ByteString
 
--- TODO: Can it be inferred from bytestring?
 apiKeyFromText ∷ Text → ApiKey
 apiKeyFromText = ApiKey . encodeUtf8
 

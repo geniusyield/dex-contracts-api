@@ -1,7 +1,6 @@
 module GeniusYield.Server.Options where
 
 -- TODO: Explicit export list.
--- TODO: Don't use printf as it's not type safe.
 
 import GeniusYield.Server.Run (runServer)
 import Options.Applicative
@@ -12,7 +11,6 @@ newtype Command = Serve ServeCommand
 newtype ServeCommand = ServeCommand (Maybe FilePath)
 
 parseCommand ∷ Parser Command
-
 parseCommand =
   subparser $
     mconcat
@@ -24,7 +22,6 @@ parseCommand =
       ]
 
 parseServeCommand ∷ Parser ServeCommand
-
 parseServeCommand =
   ServeCommand
     <$> optional
@@ -37,9 +34,7 @@ parseServeCommand =
       )
 
 runCommand ∷ Command → IO ()
-
 runCommand (Serve serveCommand) = runServeCommand serveCommand
 
 runServeCommand ∷ ServeCommand → IO ()
-
 runServeCommand (ServeCommand mcfp) = runServer mcfp

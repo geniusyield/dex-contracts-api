@@ -105,6 +105,7 @@ library
     , rio
     , servant-server
     , servant-swagger
+    , strict
     , swagger2
     , time
     , time-manager

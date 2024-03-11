@@ -277,7 +277,9 @@
                     "type": "string"
                 },
                 "offer_amount": {
-                    "$ref": "#/definitions/GYNatural"
+                    "example": "0.125",
+                    "format": "float",
+                    "type": "string"
                 },
                 "output_reference": {
                     "$ref": "#/definitions/GYTxOutRef"

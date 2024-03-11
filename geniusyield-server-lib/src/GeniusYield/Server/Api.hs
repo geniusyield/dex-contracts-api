@@ -11,6 +11,8 @@ module GeniusYield.Server.Api (
 import Control.Lens (at, (?~))
 import Data.HashMap.Strict.InsOrd qualified as IOHM
 import Data.Kind (Type)
+import Data.List (sortBy)
+import Data.Strict.Tuple
 import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Version (showVersion)
@@ -19,7 +21,7 @@ import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.OrderBot.Types (OrderAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
+import GeniusYield.OrderBot.Types (OrderAssetPair (..), equivalentAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Assets
 import GeniusYield.Server.Auth (ApiKeyHeader, apiKeyHeaderText)
@@ -37,7 +39,6 @@ import RIO hiding (asks, logDebug, logInfo)
 import RIO.Char (toLower)
 import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
-import RIO.Partial (fromJust) -- TODO: Get rid of it.
 import Servant
 import Servant.Server.Experimental.Auth (AuthServerData)
 import Servant.Swagger
@@ -72,7 +73,6 @@ type TradingFeesPrefix = "tf"
 -- Trading fees.
 -------------------------------------------------------------------------------
 
--- TODO: JSON & Swagger instances.
 data TradingFees = TradingFees
   { tfFlatMakerFee ∷ !GYNatural,
     tfFlatTakerFee ∷ !GYNatural,
@@ -100,7 +100,7 @@ type OrderInfoPrefix ∷ Symbol
 type OrderInfoPrefix = "oi"
 
 data OrderInfo = OrderInfo
-  { oiOfferAmount ∷ !GYNatural,
+  { oiOfferAmount ∷ !GYRational,
     oiPrice ∷ !GYRational,
     oiStart ∷ !(Maybe GYTime),
     oiEnd ∷ !(Maybe GYTime),
@@ -113,17 +113,20 @@ data OrderInfo = OrderInfo
     (FromJSON, ToJSON)
     via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
 
-poiToOrderInfo ∷ PartialOrderInfo → OrderInfo
-poiToOrderInfo PartialOrderInfo {..} =
-  OrderInfo
-    { oiOfferAmount = naturalFromGHC poiOfferedAmount,
-      oiPrice = poiPrice,
-      oiStart = poiStart,
-      oiEnd = poiEnd,
-      oiOwnerAddress = addressToBech32 poiOwnerAddr,
-      oiOwnerKeyHash = poiOwnerKey,
-      oiOutputReference = poiRef
-    }
+poiToOrderInfo ∷ PartialOrderInfo → OrderAssetPair → Pair OrderInfo Bool
+poiToOrderInfo PartialOrderInfo {..} oap =
+  let isSell = commodityAsset oap == poiOfferedAsset
+      poiOfferedAmount' = fromIntegral poiOfferedAmount
+   in OrderInfo
+        { oiOfferAmount = if isSell then poiOfferedAmount' else poiOfferedAmount' * poiPrice,
+          oiPrice = if isSell then poiPrice else 1 / poiPrice,
+          oiStart = poiStart,
+          oiEnd = poiEnd,
+          oiOwnerAddress = addressToBech32 poiOwnerAddr,
+          oiOwnerKeyHash = poiOwnerKey,
+          oiOutputReference = poiRef
+        }
+        :!: isSell
 
 instance Swagger.ToSchema OrderInfo where
   declareNamedSchema =
@@ -300,36 +303,39 @@ handleTradingFeesApi ctx@Ctx {..} = do
 
 handleOrderBookApi ∷ Ctx → OrderAssetPair → Maybe GYAddressBech32 → IO OrderBookInfo
 handleOrderBookApi ctx@Ctx {..} orderAssetPair mownAddress = do
-  logInfo ctx "Fetching order(s)."
+  logInfo ctx $ "Fetching order(s) for pair: " +|| orderAssetPair ||+ ""
   let porefs = dexPORefs ctxDexInfo
   gytime ← getCurrentGYTime
   os ← runQuery ctx $ partialOrders porefs
   let os' =
         Map.filter
           ( \PartialOrderInfo {..} →
-              let ap1 = mkOrderAssetPair poiOfferedAsset poiAskedAsset
-                  ap2 = mkEquivalentAssetPair ap1
-               in (ap1 == orderAssetPair || ap2 == orderAssetPair)
-                    && case mownAddress of Nothing → True; Just ownAddress → poiOwnerKey == fromJust (addressToPubKeyHash $ addressFromBech32 ownAddress) -- TODO: Get rid of `fromJust`.
+              equivalentAssetPair (mkOrderAssetPair poiOfferedAsset poiAskedAsset) orderAssetPair
+                && case mownAddress of
+                  Nothing → True
+                  Just ownAddress →
+                    case addressToPubKeyHash $ addressFromBech32 ownAddress of
+                      Nothing → True
+                      Just apkh → poiOwnerKey == apkh
           )
           os
-      -- TODO: Make it strict, likely there is memory leak here.
-      -- TODO: Check if it's implementation is correct.
-      (!bids, !asks) =
+      -- Asks are sell orders.
+      bids :!: asks =
         Map.foldl'
-          ( \(!accBids, !accAsks) poi@PartialOrderInfo {..} →
-              let buyAP = mkOrderAssetPair poiOfferedAsset poiAskedAsset
-                  poi' = poiToOrderInfo poi
-               in if buyAP == orderAssetPair then (poi' : accBids, accAsks) else (accBids, poi' : accAsks)
+          ( \(accBids :!: accAsks) poi →
+              let poi' :!: isSell = poiToOrderInfo poi orderAssetPair
+               in -- If an order is offering lovelace then it is a buy order.
+                  if isSell then accBids :!: poi' : accAsks else poi' : accBids :!: accAsks
+                  -- Instead of inserting in lists, we could insert in a set but would need to write Ord instance...
           )
-          ([], [])
+          ([] :!: [])
           os'
   pure $
     OrderBookInfo
       { obiMarketPairId = orderAssetPair,
         obiTimestamp = gytime,
-        obiAsks = asks,
-        obiBids = bids
+        obiAsks = sortBy (\a b → compare (oiPrice a) (oiPrice b)) asks, -- sort by increasing price
+        obiBids = sortBy (\a b → compare (oiPrice b) (oiPrice a)) bids -- sort by decreasing price
       }
 
 handleBalancesApi ∷ Ctx → GYAddressBech32 → IO GYValue

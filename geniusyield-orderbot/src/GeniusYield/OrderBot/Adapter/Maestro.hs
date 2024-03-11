@@ -48,7 +48,7 @@ instance Domain.HasMarkets MaestroProvider where
       pure $ mkOrderAssetPair a b
 
     getAssetClass (PolicyId polId) (TokenName tkName) =
-      if polId == mempty -- TODO: Can this be polId <> tkName?
+      if polId == mempty
         then pure GYLovelace
         else case parseAssetClassWithSep '.' (polId <> "." <> tkName) of
           Left e → throwIO $ MpeDeserializationException (pack e)
