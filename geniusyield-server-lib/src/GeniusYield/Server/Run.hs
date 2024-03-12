@@ -29,6 +29,7 @@ import RIO.ByteString qualified as B
 import RIO.ByteString.Lazy qualified as BL
 import RIO.Text.Lazy qualified as LT
 import Servant
+-- import Servant.PY (requests, writePythonForAPI)
 import Servant.Server.Experimental.Auth (AuthHandler)
 import Servant.Server.Internal.ServerError (responseServerError)
 import System.TimeManager (TimeoutThread (..))
@@ -40,6 +41,7 @@ runServer mfp = do
   let optionalSigningKey = optionalSigningKeyFromServerConfig serverConfig
       nid = scNetworkId serverConfig
       coreCfg = coreConfigFromServerConfig serverConfig
+  -- writePythonForAPI (Proxy @MainAPI) requests "web/swagger/api.py"
   withCfgProviders coreCfg "server" $ \providers → do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty

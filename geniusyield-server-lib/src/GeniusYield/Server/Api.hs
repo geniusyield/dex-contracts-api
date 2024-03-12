@@ -40,6 +40,7 @@ import RIO.Char (toLower)
 import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
 import Servant
+import Servant.Foreign
 import Servant.Server.Experimental.Auth (AuthServerData)
 import Servant.Swagger
 
@@ -260,6 +261,19 @@ geniusYieldServer ctx =
 
 type MainAPI =
   GeniusYieldAPI
+
+-- `HasForeign` instance for `APIKeyAuthProtect :> api` is required to generate client code using libraries such as `servant-py`.
+-- This is written with help from https://github.com/haskell-servant/servant-auth/issues/8#issue-185541839.
+instance ∀ lang ftype api. (HasForeign lang ftype api, HasForeignType lang ftype Text) ⇒ HasForeign lang ftype (APIKeyAuthProtect :> api) where
+  type Foreign ftype (APIKeyAuthProtect :> api) = Foreign ftype api
+  foreignFor lang Proxy Proxy subR = foreignFor lang Proxy (Proxy ∷ Proxy api) subR'
+   where
+    subR' = subR {_reqHeaders = HeaderArg arg : _reqHeaders subR}
+    arg =
+      Arg
+        { _argName = "api-key",
+          _argType = typeFor lang (Proxy ∷ Proxy ftype) (Proxy ∷ Proxy Text)
+        }
 
 mainAPI ∷ Proxy MainAPI
 mainAPI = Proxy

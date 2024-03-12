@@ -103,6 +103,8 @@ library
     , plutus-ledger-api
     , ply-core
     , rio
+    , servant-foreign
+    , servant-py
     , servant-server
     , servant-swagger
     , strict
