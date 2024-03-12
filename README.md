@@ -11,11 +11,13 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 
 ## Structure of repository
 
-- [`geniusyield-dex-api`](./geniusyield-dex-api/) provides off-chain code to interact with our DEX.
+- [`geniusyield-dex-api`](./geniusyield-dex-api/) provides off-chain code to interact with our DEX. See it's [`README.md`](./geniusyield-dex-api/README.md) for more information about it.
 - [`geniusyield-server-lib`](./geniusyield-server-lib/) serves endpoints using our off-chain code to easily interact with GeniusYield DEX in language of user's choice.
 - [`geniusyield-orderbot`](./geniusyield-orderbot/) cater to additional requirements such as building up of an order-book, receiving price feed, etc.
 
 ## Spinning up server
+
+Endpoints made available by server are specified [here](./web/swagger/api.yaml).
 
 1. Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/how-to-build/) section of Atlas documentation for it.
 2. Prepare a configuration, which can be stored either in file or in `SERVER_CONFIG` environment variable. Structure of it is as follows:
@@ -27,15 +29,19 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
      # Maestro, `{ maestroToken: string, turboSubmit: boolean }`
      # Blockfrost, `{ blockfrostKey: string }`
      # Note that Blockfrost is not recommended as some of the operations performed aren't optimal with it.
-    coreProvider:  # This is a blockchain provider.
+    coreProvider:
       maestroToken: YOUR_MAESTRO_TOKEN
       turboSubmit: false
      # Network id, only `mainnet` and `preprod` are supported for at the moment.
     networkId: mainnet
+     # Logging configuration. It's an array to cater for potentially multiple scribes.
     logging:
       - type:
+           # TODO: Possible values of `tag` are to be documented.
           tag: stderr
+         # Possible values of `severity` are `Debug`, `Info`, `Warning` and `Error`.
         severity: Debug
+         # Possible values of `verbosity` are `V0`, `V1`, `V2`, `V3` and `V4`. Consult https://hackage.haskell.org/package/katip-0.8.8.0/docs/Katip.html#t:Verbosity for more information about it.
         verbosity: V2
      # Port to serve endpoints at.
     port: 8082
@@ -45,6 +51,14 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
     serverApiKey: YOUR_SECRET_KEY
     ```
 3. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`. Run `cabal run geniusyield-server -- -h` for help 😉.
+4. Test if server is running successfully by calling, say, `/settings` endpoint. Example `curl` request: `curl -H 'api-key: YOUR_SECRET_KEY' -X GET http://localhost:8082/v0/settings | jq`, assuming port was specified as `8082`. On success, it should return something akin to:
+    ```json
+    {
+      "network": "mainnet",
+      "version": "0.1.0",
+      "revision": "c2f8db2bc82a13c850c3b0088a1ce089bb1065b7",
+      "backend": "mmb"
+    }
 
 ## Contributing
 

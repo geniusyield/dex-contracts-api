@@ -1,6 +1,6 @@
-# GeniusYield DEX Contracts API
+# GeniusYield DEX Contracts Haskell API
 
-This repository hosts off-chain code to interact with DEX smart contracts.
+This package hosts off-chain code to interact with DEX smart contracts.
 
 Main file of interest is [`PartialOrder.hs`](./src/GeniusYield/Api/Dex/PartialOrder.hs) and provides various useful API functions among those related to interacting with order's contract.
 
