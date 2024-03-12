@@ -46,10 +46,20 @@ data ServerConfig = ServerConfig
     via CustomJSON '[FieldLabelModifier '[StripPrefix "sc", LowerFirst]] ServerConfig
 
 instance FromEnv ServerConfig where
-  fromEnv _ = forceFromJson <$> env "SERVER_CONFIG" -- ServerConfig <$>  (forceFromJson <$> env "CORE_PROVIDER") <*> (forceFromJson <$> env "NETWORK_ID") <*> (forceFromJson <$> env "LOGGING") <*> (forceFromJson <$> env "MAESTRO_TOKEN") <*> (forceFromJson <$> env "MNEMONIC")
+  fromEnv _ = forceFromJsonOrYaml <$> env "SERVER_CONFIG" -- ServerConfig <$>  (forceFromJson <$> env "CORE_PROVIDER") <*> (forceFromJson <$> env "NETWORK_ID") <*> (forceFromJson <$> env "LOGGING") <*> (forceFromJson <$> env "MAESTRO_TOKEN") <*> (forceFromJson <$> env "MNEMONIC")
    where
-    forceFromJson ∷ FromJSON a ⇒ String → a
-    forceFromJson = either error id . eitherDecodeStrict . fromString
+    forceFromJsonOrYaml ∷ FromJSON a ⇒ String → a
+    forceFromJsonOrYaml s =
+      let bs = fromString s
+          parseResults = eitherDecodeStrict bs :| [first show $ Yaml.decodeEither' bs]
+       in go parseResults
+     where
+      go (x :| []) = case x of
+        Left e → error e
+        Right a → a
+      go (x :| y : ys) = case x of
+        Left _ → go (y :| ys)
+        Right a → a
 
 eitherDecodeFileStrictJsonOrYaml ∷ FromJSON a ⇒ FilePath → IO (Either String a)
 eitherDecodeFileStrictJsonOrYaml fp =

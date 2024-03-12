@@ -21,7 +21,7 @@ import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
-import GeniusYield.OrderBot.Types (OrderAssetPair (..), equivalentAssetPair, mkEquivalentAssetPair, mkOrderAssetPair)
+import GeniusYield.OrderBot.Types (OrderAssetPair (..), equivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Assets
 import GeniusYield.Server.Auth (ApiKeyHeader, apiKeyHeaderText)
