@@ -132,7 +132,7 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
   logInfo ctx $ "Placing an order. Parameters: " +|| pops ||+ ""
   let porefs = dexPORefs ctxDexInfo
       popAddress' = addressFromBech32 popAddress
-  (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ porefs
+  (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft porefs
   let unitPrice =
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount

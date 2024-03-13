@@ -306,7 +306,7 @@ customShowNetworkId = show >>> removePrefix "GY" >>> removePrefix "Testnet" >>> 
 handleTradingFeesApi ∷ Ctx → IO TradingFees
 handleTradingFeesApi ctx@Ctx {..} = do
   logInfo ctx "Calculating trading fees."
-  (_, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ dexPORefs $ ctxDexInfo
+  (_, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ dexPORefs ctxDexInfo
   pure
     TradingFees
       { tfFlatMakerFee = fromIntegral $ pociMakerFeeFlat pocd,
