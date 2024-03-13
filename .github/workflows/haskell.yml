@@ -96,7 +96,10 @@ jobs:
     - name: Install fourmolu
       run: cabal install fourmolu --overwrite-policy=always
     - name: Run checks (fourmolu)
-      run: fourmolu --mode check src
+      run: |
+        fourmolu --mode check geniusyield-dex-api
+        fourmolu --mode check geniusyield-orderbot
+        fourmolu --mode check geniusyield-server-lib
     - name: Build dependencies (cabal)
       run: cabal build --only-dependencies --enable-tests --enable-benchmarks
     - name: Build all targets (cabal)
