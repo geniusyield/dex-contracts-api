@@ -56,11 +56,6 @@ instance FromJSON OrderAssetPair where
 -- "_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958"
 instance ToHttpApiData OrderAssetPair where
   toUrlPiece OAssetPair {..} = toUrlPiece currencyAsset <> "_" <> toUrlPiece commodityAsset
-   where
-
--- toUrlPiece' t = case toUrlPiece t of
---   "lovelace" → ""
---   anyOther → anyOther
 
 -- >>> parseUrlPiece "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958" :: Either Text OrderAssetPair
 -- Right (OAssetPair {currencyAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX", commodityAsset = GYToken "f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535" "AGIX"})
