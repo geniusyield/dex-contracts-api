@@ -2,19 +2,19 @@
 echo "======[geniusyield-server]======"
 echo "Startup checks...."
 # Check if SERVER_CONFIG environment variable is set
-if [ -z "$SERVER_CONFIG" ]; then
+if [ -z "./SERVER_CONFIG" ]; then
     echo "Error: SERVER_CONFIG environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
-if [ -z "$CORE_MAESTRO_API_KEY" ]; then
+if [ -z "./CORE_MAESTRO_API_KEY" ]; then
     echo "Error: CORE_MAESTRO_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
-if [ -z "$MAESTRO_API_KEY" ]; then
+if [ -z "./MAESTRO_API_KEY" ]; then
     echo "Error: MAESTRO_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
-if [ -z "$SERVER_API_KEY" ]; then
+if [ -z "./SERVER_API_KEY" ]; then
     echo "Error: SERVER_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
@@ -40,9 +40,6 @@ export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<CORE_MAESTRO_API_KEY>>%$
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<MAESTRO_API_KEY>>%$MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<SERVER_API_KEY>>%$SERVER_API_KEY%g")
 echo "[OK] Done. Replaced placeholders."
-echo "===================================="
-# TODO: remove
-echo $SERVER_CONFIG
 echo "===================================="
 echo "Starting geniusyield-server..."
 set -x

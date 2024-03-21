@@ -54,12 +54,9 @@ WORKDIR /DEX
 
 COPY . .
 RUN cabal update
-RUN cabal build all
+RUN cabal build all --enable-tests --enable-benchmarks
 
-# =============================[ DEX CONTRACTS API ]================================
+# =============================[ SERVER ]================================
 LABEL org.opencontainers.image.source="https://github.com/geniusyield/dex-contracts-api"
-
-# Default values:
-# TODO: Add
 
 ENTRYPOINT ["/bin/bash", "./start.sh"]
