@@ -50,11 +50,9 @@ ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 # ==================================[ BUILD ]========================================
 WORKDIR /DEX
 
-# COPY **/*.cabal ./
-# RUN cabal build --only-dependencies -j4 geniusyield-orderbot
+# TODO: first build only dependencies
 
 COPY . .
-
 RUN cabal update
 RUN cabal build all
 

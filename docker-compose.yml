@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  backend:
+    image: sha256:4e7f93853238619bc97207db356730e5d6b1f50b80f270d91e623b5867d26943
+    container_name: backend
+    secrets:
+    - CORE_MAESTRO_API_KEY
+    - MAESTRO_API_KEY
+    - SERVER_API_KEY
+    environment:
+      SERVER_CONFIG: |
+        coreProvider:
+          maestroToken: <<CORE_MAESTRO_API_KEY>>
+          turboSubmit: false
+        networkId: "mainnet" # supported: mainner ot preprod
+        logging:
+          - type: {tag: stderr}
+            severity: "Debug" # Debug, Info, Warning or Error
+            verbosity: V2 # Available: `V0`, `V1`, `V2`, `V3` and `V4` (See katip docs for details)
+        port: 8082
+        maestroToken: <<MAESTRO_API_KEY>>
+        serverApiKey: <<SERVER_API_KEY>>
+    restart: always
+secrets:
+  CORE_MAESTRO_API_KEY: { file: ./secrets/core_maestro_api_key }
+  MAESTRO_API_KEY: { file: ./secrets/maesto_api_key }
+  SERVER_API_KEY: { file: ./secrets/server_api_key }
