@@ -1,5 +1,14 @@
 FROM debian:bullseye-slim
 
+## CONFIG ############################
+ARG CABAL_VERSION=3.10.1.0
+ARG CABAL_VERSION_RELEASE_KEY=A970DF3AC3B9709706D74544B3D9F94B8DCAE210
+ARG GHC=9.2.8
+ARG GHC_RELEASE_KEY=88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4
+ARG LLVM_VERSION=12
+ARG LLVM_KEY=6084F3CF814B57C1CF12EFD515CF4D18AF4F7421
+######################################
+
 ENV LANG C.UTF-8
 
 # common haskell + stack dependencies
@@ -39,30 +48,27 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Cabal
-ARG CABAL_INSTALL=3.10.1.0
-ARG CABAL_INSTALL_RELEASE_KEY=A970DF3AC3B9709706D74544B3D9F94B8DCAE210
-
 RUN set -eux; \
     cd /tmp; \
     ARCH="$(dpkg-architecture --query DEB_BUILD_GNU_CPU)"; \
-    CABAL_INSTALL_TAR="cabal-install-$CABAL_INSTALL-$ARCH-linux-deb10.tar.xz"; \
-    CABAL_INSTALL_URL="https://downloads.haskell.org/~cabal/cabal-install-$CABAL_INSTALL/$CABAL_INSTALL_TAR"; \
-    CABAL_INSTALL_SHA256SUMS_URL="https://downloads.haskell.org/~cabal/cabal-install-$CABAL_INSTALL/SHA256SUMS"; \
-    # sha256 from https://downloads.haskell.org/~cabal/cabal-install-$CABAL_INSTALL/SHA256SUMS
+    CABAL_VERSION_TAR="cabal-install-$CABAL_VERSION-$ARCH-linux-deb10.tar.xz"; \
+    CABAL_VERSION_URL="https://downloads.haskell.org/~cabal/cabal-install-$CABAL_VERSION/$CABAL_VERSION_TAR"; \
+    CABAL_VERSION_SHA256SUMS_URL="https://downloads.haskell.org/~cabal/cabal-install-$CABAL_VERSION/SHA256SUMS"; \
+    # sha256 from https://downloads.haskell.org/~cabal/cabal-install-$CABAL_VERSION/SHA256SUMS
     case "$ARCH" in \
         'aarch64') \
-            CABAL_INSTALL_SHA256='d9acee67d4308bc5c22d27bee034d388cc4192a25deff9e7e491e2396572b030'; \
+            CABAL_VERSION_SHA256='d9acee67d4308bc5c22d27bee034d388cc4192a25deff9e7e491e2396572b030'; \
             ;; \
         'x86_64') \
-            CABAL_INSTALL_SHA256='9c89f7150a6d09e653ca7d08d22922be2d9f750d0314d9a0a7e2103fac021fac'; \
+            CABAL_VERSION_SHA256='9c89f7150a6d09e653ca7d08d22922be2d9f750d0314d9a0a7e2103fac021fac'; \
             ;; \
         *) echo >&2 "error: unsupported architecture '$ARCH'"; exit 1 ;; \
     esac; \
-    curl -fSL "$CABAL_INSTALL_URL" -o cabal-install.tar.gz; \
-    echo "$CABAL_INSTALL_SHA256 cabal-install.tar.gz" | sha256sum --strict --check; \
+    curl -fSL "$CABAL_VERSION_URL" -o cabal-install.tar.gz; \
+    echo "$CABAL_VERSION_SHA256 cabal-install.tar.gz" | sha256sum --strict --check; \
     \
-    curl -sSLO "$CABAL_INSTALL_SHA256SUMS_URL"; \
-    curl -sSLO "$CABAL_INSTALL_SHA256SUMS_URL.sig"; \
+    curl -sSLO "$CABAL_VERSION_SHA256SUMS_URL"; \
+    curl -sSLO "$CABAL_VERSION_SHA256SUMS_URL.sig"; \
     GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
     \
     tar -xf cabal-install.tar.gz -C /usr/local/bin; \
@@ -72,8 +78,6 @@ RUN set -eux; \
     cabal --version
 
 # GHC 8.10 requires LLVM version 9 - 12 on aarch64
-ARG LLVM_VERSION=12
-ARG LLVM_KEY=6084F3CF814B57C1CF12EFD515CF4D18AF4F7421
 
 RUN set -eux; \
     if [ "$(dpkg-architecture --query DEB_BUILD_GNU_CPU)" = "aarch64" ]; then \
@@ -87,9 +91,6 @@ RUN set -eux; \
         gpgconf --kill all; \
         rm -rf "$GNUPGHOME" /var/lib/apt/lists/*; \
     fi
-
-ARG GHC=9.2.8
-ARG GHC_RELEASE_KEY=88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4
 
 RUN set -eux; \
     cd /tmp; \
