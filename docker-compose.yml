@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   server:
-    image: ghcr.io/geniusyield/server:latest
+    image: ghcr.io/geniusyield/dex-contracts-api:latest
     container_name: server
     env_file:
      - path: ./secrets/default.env
