@@ -35,7 +35,7 @@ RUN set -eux; \
     rm -rf /tmp/*; \
     cabal --version
 
-ARG GHC=9.8.2
+ARG GHC=9.2.8
 
 RUN set -eux; \
     cd /tmp; \
