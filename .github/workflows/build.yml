@@ -3,8 +3,7 @@ name: Validate
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main", "21-bot-api-server" ]
+  pull_request: {} # run for all pull requests targeting any branch
 
 permissions:
   contents: read
