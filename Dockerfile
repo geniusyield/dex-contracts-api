@@ -184,6 +184,8 @@ WORKDIR /DEX
 # TODO: first build only dependencies
 
 COPY . .
+
+RUN git init
 RUN cabal update
 RUN cabal build all --enable-tests --enable-benchmarks
 
