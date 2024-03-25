@@ -9,3 +9,6 @@ pull:
 start:
 	docker pull ghcr.io/geniusyield/dex-contracts-api:latest
 	docker compose up
+
+stop:
+	docker compose down
