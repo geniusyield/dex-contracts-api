@@ -185,6 +185,7 @@ WORKDIR /DEX
 
 COPY . .
 
+# TODO: Fix revision information [Broken revision information in the bot backend #28]
 RUN git init && \
     git config --global user.email "ci@github.com" && \
     git config --global user.name "CI" && \
