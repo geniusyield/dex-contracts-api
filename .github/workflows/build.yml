@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ steps.docker-metadata.outputs.tags }}
+          tags: preview
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
