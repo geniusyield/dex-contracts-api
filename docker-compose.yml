@@ -3,8 +3,6 @@ services:
   server:
     image: ghcr.io/geniusyield/dex-contracts-api:latest
     container_name: server
-    env_file:
-     - path: ./secrets/default.env
     environment:
       CORE_MAESTRO_API_KEY: ${CORE_MAESTRO_API_KEY}
       MAESTRO_API_KEY: ${MAESTRO_API_KEY}
