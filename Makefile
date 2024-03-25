@@ -1,4 +1,6 @@
-.PHONY: build
+all : build pull start stop
+.PHONY : all
+
 
 build:
 	docker build -t ghcr.io/geniusyield/dex-contracts-api:latest .
