@@ -186,7 +186,9 @@ WORKDIR /DEX
 COPY . .
 
 RUN git init && \
-    git add .  && \
+    git config --global user.email "ci@github.com" && \
+    git config --global user.name "CI" && \
+    git add . && \
     git commit -m "Dummy commit"
 RUN cabal update
 RUN cabal build all --enable-tests --enable-benchmarks
