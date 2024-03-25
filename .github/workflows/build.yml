@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "push" ]
   pull_request: {} # run for all pull requests targeting any branch
 
 permissions:
@@ -50,10 +50,10 @@ jobs:
           tags: |
             # latest tag for the default branch:
             type=raw,value=latest,enable={{is_default_branch}}
-      - name: ${{ github.ref == 'refs/heads/main' && 'Build and Push Docker image' || 'Build Docker image' }}
+      - name: ${{ github.ref == 'refs/heads/24-dockerize-3' && 'Build and Push Docker image' || 'Build Docker image' }}
         uses: docker/build-push-action@v5
         with:
-          push: ${{ github.ref == 'refs/heads/main'}}
+          push: ${{ github.ref == 'refs/heads/24-dockerize-3'}}
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: type=gha
