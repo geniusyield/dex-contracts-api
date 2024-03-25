@@ -185,7 +185,9 @@ WORKDIR /DEX
 
 COPY . .
 
-RUN git init
+RUN git init && \
+    git add .  && \
+    git commit -m "Dummy commit"
 RUN cabal update
 RUN cabal build all --enable-tests --enable-benchmarks
 
