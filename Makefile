@@ -3,14 +3,13 @@ all : build pull start stop
 
 
 build:
-	docker build -t ghcr.io/geniusyield/dex-contracts-api:preview .
+	docker build -t ghcr.io/geniusyield/dex-contracts-api .
 
 pull:
-	docker pull ghcr.io/geniusyield/dex-contracts-api:preview
+	docker compose pull
 
 start:
-	docker pull ghcr.io/geniusyield/dex-contracts-api:preview
-	docker compose up
+	docker compose up --no-recreate
 
 stop:
 	docker compose down
