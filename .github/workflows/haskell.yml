@@ -102,26 +102,3 @@ jobs:
         fourmolu --mode check geniusyield-server-lib
     - name: Build all targets (cabal)
       run: cabal build all --enable-tests --enable-benchmarks
-    # TODO: [CI] Add cabal check #9
-    #- name: Run checks (cabal)
-    #  run: cabal check
-    #- name: Create source distribution file (cabal)
-    #  run: cabal sdist
-    - name: Identify version (cabal)
-      id: get_version
-      run: |
-        export VERSION=$(cabal info . | awk '{print $2 ;exit}') ;
-        echo "VERSION: $VERSION"
-        echo "VERSION=${VERSION}" >> $GITHUB_ENV
-        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-    - name: Generate documentation (cabal haddock)
-      run: cabal haddock --html --hyperlink-source --haddock-options="--use-unicode" --haddock-quickjump
-    - name: Upload haddock documentation
-      uses: actions/upload-pages-artifact@v1.0.8
-      with:
-        path: ./dist-newstyle/build/x86_64-linux/ghc-9.2.8/${{env.VERSION}}/doc/html/geniusyield-dex-api/
-    #- name: Upload artifacts
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: source-distribution-file
-    #    path: ./dist-newstyle/sdist/${{env.VERSION}}.tar.gz
