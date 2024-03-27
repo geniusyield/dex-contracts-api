@@ -1,9 +1,5 @@
 Dockerfile
-.*
 secrets
 secrets/*
 dist-newstyle
-.git
-.github
-.dockerignore
-.gitignore
+.*
