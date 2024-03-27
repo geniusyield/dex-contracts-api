@@ -38,8 +38,8 @@ runServer ∷ Maybe FilePath → IO ()
 runServer mfp = do
   serverConfig ← serverConfigOptionalFPIO mfp
   menv ← networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t → t) (scNetworkId serverConfig)
-  let optionalSigningKey = optionalSigningKeyFromServerConfig serverConfig
-      nid = scNetworkId serverConfig
+  optionalSigningKey ← optionalSigningKeyFromServerConfig serverConfig
+  let nid = scNetworkId serverConfig
       coreCfg = coreConfigFromServerConfig serverConfig
   -- writePythonForAPI (Proxy @MainAPI) requests "web/swagger/api.py"
   withCfgProviders coreCfg "server" $ \providers → do
@@ -77,9 +77,9 @@ runServer mfp = do
             ctxNetworkId = nid,
             ctxDexInfo =
               if
-                  | nid == GYMainnet → dexInfoDefaultMainnet
-                  | nid == GYTestnetPreprod → dexInfoDefaultPreprod
-                  | otherwise → error "Only mainnet & preprod network are supported",
+                | nid == GYMainnet → dexInfoDefaultMainnet
+                | nid == GYTestnetPreprod → dexInfoDefaultPreprod
+                | otherwise → error "Only mainnet & preprod network are supported",
             ctxMaestroProvider = MaestroProvider menv,
             ctxSigningKey = optionalSigningKey
           }

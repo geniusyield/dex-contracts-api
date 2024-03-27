@@ -20,7 +20,21 @@ import RIO
 import RIO.FilePath (takeExtension)
 import System.Envy
 
-data MnemonicWallet = MnemonicWallet
+{- $setup
+
+>>> :set -XOverloadedStrings -XTypeApplications
+>>> import qualified Data.Aeson                 as Aeson
+>>> import qualified Data.ByteString.Lazy.Char8 as LBS8
+>>> import           Data.Proxy
+-}
+
+-- >>> Aeson.encode (MnemonicWallet (MnemonicWalletDetails ["hello"] (Just 1) (Just 2)))
+-- "{\"tag\":\"mnemonicWallet\",\"contents\":{\"mnemonic\":[\"hello\"],\"acc_ix\":1,\"addr_ix\":2}}"
+data UserWallet = MnemonicWallet !MnemonicWalletDetails | KeyPathWallet !FilePath
+  deriving stock (Generic)
+  deriving (FromJSON, ToJSON) via CustomJSON '[ConstructorTagModifier '[LowerFirst]] UserWallet
+
+data MnemonicWalletDetails = MnemonicWalletDetails
   { -- | Mnemonic (seed phrase).
     mnemonic ∷ !Mnemonic,
     -- | Account index.
@@ -28,8 +42,8 @@ data MnemonicWallet = MnemonicWallet
     -- | Payment address index.
     addrIx ∷ !(Maybe Word32)
   }
-  deriving stock (Generic, Show, Eq)
-  deriving (FromJSON, ToJSON) via CustomJSON '[FieldLabelModifier '[CamelToSnake]] MnemonicWallet
+  deriving stock (Generic)
+  deriving (FromJSON, ToJSON) via CustomJSON '[FieldLabelModifier '[CamelToSnake]] MnemonicWalletDetails
 
 data ServerConfig = ServerConfig
   { scCoreProvider ∷ !GYCoreProviderInfo,
@@ -37,7 +51,7 @@ data ServerConfig = ServerConfig
     scLogging ∷ ![GYLogScribeConfig],
     scMaestroToken ∷ !(Confidential Text),
     scPort ∷ !Port,
-    scMnemmonic ∷ !(Maybe MnemonicWallet),
+    scWallet ∷ !(Maybe UserWallet),
     scServerApiKey ∷ !(Confidential Text)
   }
   deriving stock (Generic)
@@ -81,12 +95,14 @@ coreConfigFromServerConfig ServerConfig {..} =
       cfgLogging = scLogging
     }
 
-optionalSigningKeyFromServerConfig ∷ ServerConfig → Maybe GYSomePaymentSigningKey
+optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe GYSomePaymentSigningKey)
 optionalSigningKeyFromServerConfig ServerConfig {..} = do
-  case scMnemmonic of
-    Nothing → Nothing
-    Just MnemonicWallet {..} →
+  case scWallet of
+    Nothing → pure Nothing
+    Just (MnemonicWallet (MnemonicWalletDetails {..})) →
       let wk' = walletKeysFromMnemonicIndexed mnemonic (fromMaybe 0 accIx) (fromMaybe 0 addrIx)
-       in case wk' of
+       in pure $ case wk' of
             Left _ → Nothing
             Right wk → Just $ AGYExtendedPaymentSigningKey $ walletKeysToExtendedPaymentSigningKey wk
+    Just (KeyPathWallet fp) → do
+      Just <$> readSomePaymentSigningKey fp

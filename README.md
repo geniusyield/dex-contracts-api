@@ -49,6 +49,39 @@ Endpoints made available by server are specified [here](./web/swagger/api.yaml).
     maestroToken: YOUR_MAESTRO_TOKEN
      # API key to protect server endpoints with. It's value must be provided under `api-key` header of request.
     serverApiKey: YOUR_SECRET_KEY
+     # Optionally, wallet key details if one wants server to be able to sign transactions using this key.
+    wallet:
+      tag: mnemonicWallet
+      contents:
+        mnemonic:
+          - health
+          - unable
+          - dog
+          - lend
+          - artefact
+          - arctic
+          - dinner
+          - energy
+          - silent
+          - wealth
+          - shock
+          - safe
+          - glad
+          - mail
+          - gas
+          - flag
+          - beauty
+          - penalty
+          - mixed
+          - garbage
+          - erupt
+          - wonder
+          - magnet
+          - around
+        # Account index.
+        accIx: 0
+        # Payment address index.
+        addrIx: 0
     ```
 3. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`. Run `cabal run geniusyield-server -- -h` for help 😉.
 4. Test if server is running successfully by calling, say, `/settings` endpoint. Example `curl` request: `curl -H 'api-key: YOUR_SECRET_KEY' -X GET http://localhost:8082/v0/settings | jq`, assuming port was specified as `8082`. On success, it should return something akin to:
