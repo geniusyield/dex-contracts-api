@@ -193,6 +193,7 @@ RUN git init && \
     git commit -m "Dummy commit"
 RUN cabal update
 RUN cabal build all --enable-tests --enable-benchmarks
+RUN cabal install geniusyield-server
 
 # =============================[ SERVER ]================================
 LABEL org.opencontainers.image.source="https://github.com/geniusyield/dex-contracts-api"
