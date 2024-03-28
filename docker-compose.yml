@@ -21,4 +21,12 @@ services:
         port: 8082
         maestroToken: <<MAESTRO_API_KEY>>
         serverApiKey: <<SERVER_API_KEY>>
+        wallet:
+          tag: mnemonicWallet
+          contents:
+            mnemonic: <<MNEMONIC>>
+            # Account index.
+            accIx: 0
+            # Payment address index.
+            addrIx: 0
     restart: always

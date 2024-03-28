@@ -39,6 +39,7 @@ echo "Replace placeholders...."
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<CORE_MAESTRO_API_KEY>>%$CORE_MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<MAESTRO_API_KEY>>%$MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<SERVER_API_KEY>>%$SERVER_API_KEY%g")
+export MNEMONIC=$(echo "$MNEMONIC" | sed "s%<<MNEMONIC>>%$MNEMONIC%g")
 echo "[OK] Done. Replaced placeholders."
 echo "===================================="
 echo "Starting geniusyield-server..."
