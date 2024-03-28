@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "push-image" ]
   pull_request: {} # run for all pull requests targeting any branch
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
   deploy-haddock:
     runs-on: ubuntu-latest
     needs: validate
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/push-image'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -49,11 +49,11 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             # latest tag for the default branch:
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: ${{ github.ref == 'refs/heads/main' && 'Build and Push Docker image' || 'Build Docker image' }}
+            type=raw,value=latest
+      - name: ${{ github.ref == 'refs/heads/push-image' && 'Build and Push Docker image' || 'Build Docker image' }}
         uses: docker/build-push-action@v5
         with:
-          push: ${{ github.ref == 'refs/heads/main'}}
+          push: ${{ github.ref == 'refs/heads/push-image'}}
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: type=gha
