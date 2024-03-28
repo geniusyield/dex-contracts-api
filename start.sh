@@ -18,8 +18,8 @@ if [ -z "$SERVER_API_KEY" ]; then
     echo "Error: SERVER_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
-if [ -z "$MNEMONIC" ]; then
-    echo "Error: MNEMONIC environment variable is not set." >&2
+if [ -z "$SEED_PHRASE" ]; then
+    echo "Error: SEED_PHRASE environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
 
@@ -43,7 +43,7 @@ echo "Replace placeholders...."
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<CORE_MAESTRO_API_KEY>>%$CORE_MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<MAESTRO_API_KEY>>%$MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<SERVER_API_KEY>>%$SERVER_API_KEY%g")
-export SERVER_CONFIG=$(echo "$MNEMONIC" | sed "s%<<MNEMONIC>>%$MNEMONIC%g")
+export SERVER_CONFIG=$(echo "$SEED_PHRASE" | sed "s%<<SEED_PHRASE>>%$SEED_PHRASE%g")
 echo "[OK] Done. Replaced placeholders."
 # Attempt to parse SERVER_CONFIG as YAML after replacing the placholders
 echo "$SERVER_CONFIG" | yq eval . - > /dev/null 2>&1
