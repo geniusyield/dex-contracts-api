@@ -43,7 +43,7 @@ instance IsGYApiError PocdException where
     GYApiError
       { gaeErrorCode = "PARTIAL_ORDER_CONFIG_NOT_FOUND",
         gaeHttpStatus = status400,
-        gaeMsg = Txt.pack $ printf "Partial order config not found for NFT: %s" nftToken
+        gaeMsg = Txt.pack $ "Partial order config not found for NFT: " <> show nftToken
       }
 
 -- partialOrderConfigAddr' ∷ GYDexApiQueryMonad m a ⇒ GYAssetClass → m GYAddress

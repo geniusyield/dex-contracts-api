@@ -1,0 +1,5 @@
+Dockerfile
+secrets
+secrets/*
+dist-newstyle
+.*
