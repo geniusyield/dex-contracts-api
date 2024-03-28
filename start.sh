@@ -18,6 +18,10 @@ if [ -z "$SERVER_API_KEY" ]; then
     echo "Error: SERVER_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
+if [ -z "$MNEMONIC" ]; then
+    echo "Error: MNEMONIC environment variable is not set." >&2
+    exit 1 # Exit code 1 for unset variable
+fi
 
 # Check if yq is installed
 if ! command -v yq &> /dev/null; then
@@ -39,7 +43,14 @@ echo "Replace placeholders...."
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<CORE_MAESTRO_API_KEY>>%$CORE_MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<MAESTRO_API_KEY>>%$MAESTRO_API_KEY%g")
 export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<SERVER_API_KEY>>%$SERVER_API_KEY%g")
+export SERVER_CONFIG=$(echo "$MNEMONIC" | sed "s%<<MNEMONIC>>%$MNEMONIC%g")
 echo "[OK] Done. Replaced placeholders."
+# Attempt to parse SERVER_CONFIG as YAML after replacing the placholders
+echo "$SERVER_CONFIG" | yq eval . - > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error: SERVER_CONFIG does not contain a valid YAML document after replacing the placeholders ." >&2
+    exit 4 # Exit code 4 for invalid YAML content after replacing the placeholders
+fi
 echo "===================================="
 echo "Starting geniusyield-server..."
 set -x
