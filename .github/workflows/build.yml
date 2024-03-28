@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: [ "main", "push" ]
+    branches: [ "main" ]
   pull_request: {} # run for all pull requests targeting any branch
 
 permissions:
