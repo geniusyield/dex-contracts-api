@@ -18,6 +18,10 @@ if [ -z "$SERVER_API_KEY" ]; then
     echo "Error: SERVER_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
+if [ -z "$MNEMONIC" ]; then
+    echo "Error: MNEMONIC environment variable is not set." >&2
+    exit 1 # Exit code 1 for unset variable
+fi
 
 # Check if yq is installed
 if ! command -v yq &> /dev/null; then
