@@ -9,6 +9,7 @@ services:
       CORE_MAESTRO_API_KEY: ${CORE_MAESTRO_API_KEY}
       MAESTRO_API_KEY: ${MAESTRO_API_KEY}
       SERVER_API_KEY: ${SERVER_API_KEY}
+      SEED_PHRASE: ${SEED_PHRASE}
       SERVER_CONFIG: |
         coreProvider:
           maestroToken: <<CORE_MAESTRO_API_KEY>>
@@ -24,9 +25,5 @@ services:
         wallet:
           tag: mnemonicWallet
           contents:
-            mnemonic: <<MNEMONIC>>
-            # Account index.
-            accIx: 0
-            # Payment address index.
-            addrIx: 0
+            mnemonic: <<SEED_PHRASE>>
     restart: always
