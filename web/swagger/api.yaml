@@ -346,12 +346,16 @@ definitions:
     - percentage_taker_fee
     type: object
 info:
+  contact:
+    email: support@geniusyield.co
+    name: GeniusYield Technical Support
+    url: https://www.geniusyield.co/
   description: API to interact with GeniusYield DEX.
   license:
     name: Apache-2.0
     url: https://opensource.org/licenses/apache-2-0
-  title: Genius Yield DEX Server API
-  version: '1.0'
+  title: GeniusYield DEX Server API
+  version: 0.0.1
 paths:
   /v0/assets/{asset}:
     get:

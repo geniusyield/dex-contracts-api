@@ -190,13 +190,23 @@ geniusYieldAPISwagger =
   toSwagger geniusYieldAPI
     & info
       . title
-      .~ "Genius Yield DEX Server API"
+      .~ "GeniusYield DEX Server API"
     & info
       . version
-      .~ "1.0"
+      .~ "0.0.1"
     & info
       . license
       ?~ ("Apache-2.0" & url ?~ URL "https://opensource.org/licenses/apache-2-0")
+    & info
+      . contact
+      ?~ ( mempty
+            & url
+              ?~ URL "https://www.geniusyield.co/"
+            & email
+              ?~ "support@geniusyield.co"
+            & name
+              ?~ "GeniusYield Technical Support"
+         )
     & info
       . description
       ?~ "API to interact with GeniusYield DEX."
