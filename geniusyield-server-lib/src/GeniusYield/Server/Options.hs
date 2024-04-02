@@ -1,6 +1,11 @@
-module GeniusYield.Server.Options where
-
--- TODO: Explicit export list.
+module GeniusYield.Server.Options (
+  Command (..),
+  ServeCommand (..),
+  parseCommand,
+  parseServeCommand,
+  runCommand,
+  runServeCommand,
+) where
 
 import GeniusYield.Server.Run (runServer)
 import Options.Applicative
