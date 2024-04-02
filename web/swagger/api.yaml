@@ -417,8 +417,8 @@ paths:
         required: true
         type: string
       - enum:
-        - genius-yield
         - minswap
+        - genius-yield
         in: path
         name: dex
         required: true
@@ -431,6 +431,8 @@ paths:
         - 1h
         - 4h
         - 1d
+        - 1w
+        - 1mo
         in: query
         name: resolution
         required: false

@@ -8,8 +8,7 @@ module GeniusYield.Server.Api (
   geniusYieldAPISwagger,
 ) where
 
-import Control.Lens (at, (?~))
-import Data.HashMap.Strict.InsOrd qualified as IOHM
+import Control.Lens ((?~))
 import Data.Kind (Type)
 import Data.List (sortBy)
 import Data.Strict.Tuple
@@ -24,7 +23,7 @@ import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.OrderBot.Types (OrderAssetPair (..), equivalentAssetPair, mkOrderAssetPair)
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Assets
-import GeniusYield.Server.Auth (ApiKeyHeader, apiKeyHeaderText)
+import GeniusYield.Server.Auth (APIKeyAuthProtect)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.HistoricalPrices.Maestro
@@ -40,8 +39,6 @@ import RIO.Char (toLower)
 import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
 import Servant
-import Servant.Foreign
-import Servant.Server.Experimental.Auth (AuthServerData)
 import Servant.Swagger
 
 -------------------------------------------------------------------------------
@@ -177,8 +174,6 @@ type V0API =
 type V0 ∷ Symbol
 type V0 = "v0"
 
-type APIKeyAuthProtect = AuthProtect ApiKeyHeader
-
 type GeniusYieldAPI = APIKeyAuthProtect :> V0 :> V0API
 
 geniusYieldAPI ∷ Proxy GeniusYieldAPI
@@ -189,60 +184,30 @@ infixr 4 +>
 type family (+>) (api1 ∷ k) (api2 ∷ Type) where
   (+>) api1 api2 = APIKeyAuthProtect :> V0 :> api1 :> api2
 
-apiKeySecurityScheme ∷ SecurityScheme
-apiKeySecurityScheme =
-  SecurityScheme
-    { _securitySchemeType = SecuritySchemeApiKey (ApiKeyParams apiKeyHeaderText ApiKeyHeader),
-      _securitySchemeDescription = Just "API key for accessing the server's API."
-    }
-
-type instance AuthServerData APIKeyAuthProtect = ()
-
-instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
-  toSwagger _ =
-    toSwagger (Proxy ∷ Proxy api)
-      & securityDefinitions
-        .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
-      & allOperations
-        . security
-        .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
-      & allOperations
-        . responses
-        %~ addCommonResponses
-
-addCommonResponses ∷ Responses → Responses
-addCommonResponses resps = resps & at 401 ?~ Inline response401 & at 403 ?~ Inline response403
-
-response401 ∷ Response
-response401 = mempty & description .~ "Unauthorized access - API key missing"
-
-response403 ∷ Response
-response403 = mempty & description .~ "Forbidden - The API key does not have permission to perform the request"
-
 geniusYieldAPISwagger ∷ Swagger
 geniusYieldAPISwagger =
   toSwagger geniusYieldAPI
     & info
-      . title
-      .~ "Genius Yield DEX Server API"
+    . title
+    .~ "Genius Yield DEX Server API"
     & info
-      . version
-      .~ "1.0"
+    . version
+    .~ "1.0"
     & info
-      . license
-      ?~ ("Apache-2.0" & url ?~ URL "https://opensource.org/licenses/apache-2-0")
-    & info
+    . license
+    ?~ ("Apache-2.0" & url ?~ URL "https://opensource.org/licenses/apache-2-0")
+      & info
       . description
-      ?~ "API to interact with GeniusYield DEX."
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("tx" +> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-book" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> "maestro" :> MaestroPriceHistoryAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & description ?~ "Endpoint to fetch token balances."]
+    ?~ "API to interact with GeniusYield DEX."
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("tx" +> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-book" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> "maestro" :> MaestroPriceHistoryAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & description ?~ "Endpoint to fetch token balances."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
@@ -261,19 +226,6 @@ geniusYieldServer ctx =
 
 type MainAPI =
   GeniusYieldAPI
-
--- `HasForeign` instance for `APIKeyAuthProtect :> api` is required to generate client code using libraries such as `servant-py`.
--- This is written with help from https://github.com/haskell-servant/servant-auth/issues/8#issue-185541839.
-instance ∀ lang ftype api. (HasForeign lang ftype api, HasForeignType lang ftype Text) ⇒ HasForeign lang ftype (APIKeyAuthProtect :> api) where
-  type Foreign ftype (APIKeyAuthProtect :> api) = Foreign ftype api
-  foreignFor lang Proxy Proxy subR = foreignFor lang Proxy (Proxy ∷ Proxy api) subR'
-   where
-    subR' = subR {_reqHeaders = HeaderArg arg : _reqHeaders subR}
-    arg =
-      Arg
-        { _argName = "api-key",
-          _argType = typeFor lang (Proxy ∷ Proxy ftype) (Proxy ∷ Proxy Text)
-        }
 
 mainAPI ∷ Proxy MainAPI
 mainAPI = Proxy

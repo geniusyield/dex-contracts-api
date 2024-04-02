@@ -556,8 +556,8 @@
                     },
                     {
                         "enum": [
-                            "genius-yield",
-                            "minswap"
+                            "minswap",
+                            "genius-yield"
                         ],
                         "in": "path",
                         "name": "dex",
@@ -572,7 +572,9 @@
                             "30m",
                             "1h",
                             "4h",
-                            "1d"
+                            "1d",
+                            "1w",
+                            "1mo"
                         ],
                         "in": "query",
                         "name": "resolution",

@@ -61,13 +61,11 @@ library
 
   build-depends:
     , aeson
-    , base                 ^>=4.16.4.0
+    , base            ^>=4.16.4.0
     , deriving-aeson
-    , geniusyield-dex-api
     , http-api-data
     , lens
     , rio
-    , strict
     , swagger2
 
   -- Dependencies whose version is fixed by @cabal.project@ file.

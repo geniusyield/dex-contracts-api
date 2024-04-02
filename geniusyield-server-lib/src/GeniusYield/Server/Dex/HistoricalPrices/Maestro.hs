@@ -8,7 +8,9 @@ module GeniusYield.Server.Dex.HistoricalPrices.Maestro (
 
 import Control.Lens ((?~))
 import Data.Aeson (FromJSON (..), ToJSON (..))
+import Data.Kind (Type)
 import Data.Swagger qualified as Swagger
+import Data.Swagger.Internal qualified as Swagger
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Deriving.Aeson
 import Fmt
@@ -87,32 +89,47 @@ instance Swagger.ToParamSchema Limit where
 instance Swagger.ToSchema Limit where
   declareNamedSchema p = pure $ Swagger.NamedSchema (Just "Limit") $ Swagger.paramSchemaToSchema p & Swagger.example ?~ toJSON (Limit 1)
 
-instance Swagger.ToParamSchema Order where
-  toParamSchema _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ ["asc", "desc"]
+newtype MaestroOrder = MaestroOrder {unMaestroOrder ∷ Order}
+  deriving stock (Show)
+  deriving newtype (ToHttpApiData, FromHttpApiData, Enum, Bounded, ToJSON)
 
-instance Swagger.ToParamSchema Resolution where
-  toParamSchema _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ ["1m", "5m", "15m", "30m", "1h", "4h", "1d"]
+commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
+commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
 
-instance Swagger.ToParamSchema Dex where
-  toParamSchema _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ ["genius-yield", "minswap"] -- TODO: Compute it using bounded & show instance. Same goes for @Resolution@ and @Order@. Also need to give their `ToSchema` instances...
+instance Swagger.ToParamSchema MaestroOrder where
+  toParamSchema = commonEnumParamSchemaRecipe
+
+newtype MaestroResolution = MaestroResolution {unMaestroResolution ∷ Resolution}
+  deriving stock (Show)
+  deriving newtype (ToHttpApiData, FromHttpApiData, FromJSON, ToJSON, Enum, Bounded)
+
+instance Swagger.ToParamSchema MaestroResolution where
+  toParamSchema = commonEnumParamSchemaRecipe
+
+newtype MaestroDex = MaestroDex {unMaestroDex ∷ Dex}
+  deriving stock (Show)
+  deriving newtype (ToHttpApiData, FromHttpApiData, FromJSON, ToJSON, Enum, Bounded)
+
+instance Swagger.ToParamSchema MaestroDex where
+  toParamSchema = commonEnumParamSchemaRecipe
 
 type MaestroPriceHistoryAPI =
   Summary "Get price history using Maestro."
     :> Description "This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint."
     :> Capture "market-id" OrderAssetPair
-    :> Capture "dex" Dex
-    :> QueryParam "resolution" Resolution
+    :> Capture "dex" MaestroDex
+    :> QueryParam "resolution" MaestroResolution
     :> QueryParam "from" Day
     :> QueryParam "to" Day
     :> QueryParam "limit" Limit
-    :> QueryParam "sort" Order
+    :> QueryParam "sort" MaestroOrder
     :> Get '[JSON] [MarketOHLC]
 
 handleMaestroPriceHistoryApi ∷ Ctx → ServerT MaestroPriceHistoryAPI IO
 handleMaestroPriceHistoryApi = handleMaestroPriceHistory
 
-handleMaestroPriceHistory ∷ Ctx → OrderAssetPair → Dex → Maybe Resolution → Maybe Day → Maybe Day → Maybe Limit → Maybe Order → IO [MarketOHLC]
-handleMaestroPriceHistory ctx marketId dex mresolution mfrom mto mlimit msort = do
+handleMaestroPriceHistory ∷ Ctx → OrderAssetPair → MaestroDex → Maybe MaestroResolution → Maybe Day → Maybe Day → Maybe Limit → Maybe MaestroOrder → IO [MarketOHLC]
+handleMaestroPriceHistory ctx marketId (unMaestroDex → dex) (fmap unMaestroResolution → mresolution) mfrom mto mlimit (fmap unMaestroOrder → msort) = do
   logInfo ctx $ "Fetching price history. Market: " +|| marketId ||+ ", DEX: " +|| dex ||+ ", Resolution: " +|| mresolution ||+ ", From: " +|| mfrom ||+ ", To: " +|| mto ||+ ", Limit: " +|| mlimit ||+ ", Sort: " +|| msort ||+ ""
   let MaestroProvider menv = ctxMaestroProvider ctx
   currencyTicker ← adAssetTicker <$> handleAssetsApi ctx (currencyAsset marketId)
