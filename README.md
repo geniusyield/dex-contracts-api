@@ -13,7 +13,7 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 
 - [`geniusyield-dex-api`](./geniusyield-dex-api/) provides off-chain code to interact with our DEX. See it's [`README.md`](./geniusyield-dex-api/README.md) for more information about it.
 - [`geniusyield-server-lib`](./geniusyield-server-lib/) serves endpoints using our off-chain code to easily interact with GeniusYield DEX in language of user's choice.
-- [`geniusyield-orderbot`](./geniusyield-orderbot/) cater to additional requirements such as building up of an order-book, receiving price feed, etc.
+- [`geniusyield-orderbot-lib`](./geniusyield-orderbot-lib/) cater to additional requirements such as building up of an order-book, receiving price feed, etc.
 
 ## Spinning up server
 

@@ -87,7 +87,7 @@ library
     , fast-logger
     , fmt
     , geniusyield-dex-api
-    , geniusyield-orderbot
+    , geniusyield-orderbot-lib
     , githash
     , http-types
     , insert-ordered-containers

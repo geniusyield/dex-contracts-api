@@ -18,7 +18,7 @@ index-state:
 
 packages:
   geniusyield-dex-api
-  geniusyield-orderbot
+  geniusyield-orderbot-lib
   geniusyield-server-lib
 
 -- TODO: Default value should be @direct@ in upcoming 3.10 version of cabal, omit this line then.

@@ -98,7 +98,7 @@ jobs:
     - name: Run checks (fourmolu)
       run: |
         fourmolu --mode check geniusyield-dex-api
-        fourmolu --mode check geniusyield-orderbot
+        fourmolu --mode check geniusyield-orderbot-lib
         fourmolu --mode check geniusyield-server-lib
     - name: Build all targets (cabal)
       run: cabal build all --enable-tests --enable-benchmarks
