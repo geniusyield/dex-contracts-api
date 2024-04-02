@@ -4,10 +4,10 @@ module GeniusYield.Scripts.Dex.Data (
 ) where
 
 import Data.Aeson qualified as Aeson
+import Data.ByteString (ByteString)
 import Data.FileEmbed
 import PlutusLedgerApi.V1 (Address)
 import PlutusLedgerApi.V1.Scripts (ScriptHash)
-import Data.ByteString (ByteString)
 import PlutusLedgerApi.V1.Value (AssetClass)
 import Ply (
   ScriptRole (..),

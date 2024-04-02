@@ -51,13 +51,13 @@ instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
   toSwagger _ =
     toSwagger (Proxy ∷ Proxy api)
       & securityDefinitions
-      .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
+        .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
       & allOperations
-      . security
-      .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
+        . security
+        .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
       & allOperations
-      . responses
-      %~ addCommonResponses
+        . responses
+        %~ addCommonResponses
    where
     apiKeySecurityScheme ∷ SecurityScheme
     apiKeySecurityScheme =
