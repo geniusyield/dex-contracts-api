@@ -17,7 +17,7 @@ import Fmt
 import GHC.TypeLits (Symbol)
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (..), handleMaestroError)
 import GeniusYield.OrderBot.Domain.Assets (AssetDetails (adAssetTicker), AssetTicker (..))
-import GeniusYield.OrderBot.Types (OrderAssetPair (..))
+import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
 import GeniusYield.Server.Assets (handleAssetsApi)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils

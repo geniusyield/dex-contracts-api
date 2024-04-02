@@ -57,7 +57,6 @@ library
     GeniusYield.OrderBot.Adapter.Maestro
     GeniusYield.OrderBot.Domain.Assets
     GeniusYield.OrderBot.Domain.Markets
-    GeniusYield.OrderBot.Types
 
   build-depends:
     , aeson

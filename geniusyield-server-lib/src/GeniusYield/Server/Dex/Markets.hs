@@ -6,8 +6,7 @@ module GeniusYield.Server.Dex.Markets (
 import Data.Aeson (camelTo2)
 import Data.Swagger qualified as Swagger
 import Deriving.Aeson
-import GeniusYield.OrderBot.Domain.Markets (HasMarkets (getMarkets))
-import GeniusYield.OrderBot.Types (OrderAssetPair (commodityAsset, currencyAsset))
+import GeniusYield.OrderBot.Domain.Markets (HasMarkets (getMarkets), OrderAssetPair (commodityAsset, currencyAsset))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils (addSwaggerDescription, logInfo)
 import GeniusYield.Types

@@ -3,7 +3,6 @@ module GeniusYield.OrderBot.Adapter.Maestro where
 import GeniusYield.OrderBot.Domain.Assets (adaAssetDetails)
 import GeniusYield.OrderBot.Domain.Assets qualified as Domain
 import GeniusYield.OrderBot.Domain.Markets qualified as Domain
-import GeniusYield.OrderBot.Types (mkOrderAssetPair)
 import GeniusYield.Types (GYAssetClass (..), mintingPolicyIdToText, parseAssetClassWithSep, tokenNameToHex)
 import Maestro.Client.V1
 import Maestro.Types.V1
@@ -45,7 +44,7 @@ instance Domain.HasMarkets MaestroProvider where
     fromDexPairInfo DexPairInfo {..} = do
       a ← getAssetClass dexPairInfoCoinAPolicy dexPairInfoCoinAAssetName
       b ← getAssetClass dexPairInfoCoinBPolicy dexPairInfoCoinBAssetName
-      pure $ mkOrderAssetPair a b
+      pure $ Domain.mkOrderAssetPair a b
 
     getAssetClass (PolicyId polId) (TokenName tkName) =
       if polId == mempty
