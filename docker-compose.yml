@@ -15,7 +15,7 @@ services:
         coreProvider:
           maestroToken: <<CORE_MAESTRO_API_KEY>>
           turboSubmit: false
-          networkId: mainnet
+        networkId: mainnet
         logging: [{type: {tag: stderr}, severity: "Debug", verbosity: "V2"}]
         maestroToken: <<MAESTRO_API_KEY>>
         serverApiKey: <<SERVER_API_KEY>>
