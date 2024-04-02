@@ -37,7 +37,7 @@ apiKeyAuthHandler ∷ ApiKey → AuthHandler Request ()
 apiKeyAuthHandler (ApiKey key) = mkAuthHandler handler
  where
   handler req = case lookup "api-key" (requestHeaders req) of
-    Nothing → throwError err401 {errBody = "Missing API key"}
+    Nothing → throwError err401 {errBody = "Missing API key (please pass the api key in the api-key HTTP header)"}
     Just key' →
       if key' == key
         then pure ()
