@@ -99,7 +99,7 @@ optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe GYSomePaymentS
 optionalSigningKeyFromServerConfig ServerConfig {..} = do
   case scWallet of
     Nothing → pure Nothing
-    Just (MnemonicWallet (MnemonicWalletDetails {..})) →
+    Just (MnemonicWallet MnemonicWalletDetails {..}) →
       let wk' = walletKeysFromMnemonicIndexed mnemonic (fromMaybe 0 accIx) (fromMaybe 0 addrIx)
        in pure $ case wk' of
             Left _ → Nothing
