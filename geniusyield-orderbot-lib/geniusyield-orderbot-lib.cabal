@@ -1,9 +1,11 @@
 cabal-version:   3.6
 name:            geniusyield-orderbot-lib
 version:         0.1.0
-synopsis:        Orderbot framework to interaction with GeniusYield DEX.
+synopsis:
+  GeniusYield orderbot library, providing common utilities which different orderbots such as market-maker, smart-order-router, etc. can use.
+
 description:
-  Orderbot framework to interaction with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
+  GeniusYield orderbot library, providing common utilities which different orderbots such as market-maker, smart-order-router, etc. can use. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
 
 license:         Apache-2.0
 license-file:    LICENSE
