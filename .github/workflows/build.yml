@@ -50,10 +50,10 @@ jobs:
           tags: |
             # latest tag for the default branch:
             type=raw,value=latest
-      - name: ${{ github.ref == 'refs/heads/push-image' && 'Build and Push Docker image' || 'Build Docker image' }}
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
-          push: ${{ github.ref == 'refs/heads/push-image'}}
+          push: true
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: type=gha
