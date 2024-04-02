@@ -6,6 +6,8 @@ if [ -z "$SERVER_CONFIG" ]; then
     echo "Error: SERVER_CONFIG environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
+
+
 if [ -z "$CORE_MAESTRO_API_KEY" ]; then
     echo "Error: CORE_MAESTRO_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
@@ -40,12 +42,15 @@ fi
 echo "SERVER_CONFIG is set and contains a valid YAML document."
 echo "===================================="
 echo "Replace placeholders...."
-export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<CORE_MAESTRO_API_KEY>>%$CORE_MAESTRO_API_KEY%g")
-export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<MAESTRO_API_KEY>>%$MAESTRO_API_KEY%g")
-export SERVER_CONFIG=$(echo "$SERVER_CONFIG" | sed "s%<<SERVER_API_KEY>>%$SERVER_API_KEY%g")
-export SERVER_CONFIG=$(echo "$SEED_PHRASE" | sed "s%<<SEED_PHRASE>>%$SEED_PHRASE%g")
+echo "$SERVER_CONFIG" > ./server_config.yaml
+sed -i "s|<<CORE_MAESTRO_API_KEY>>|${CORE_MAESTRO_API_KEY}|" server_config.yaml
+sed -i "s|<<MAESTRO_API_KEY>>|${MAESTRO_API_KEY}|" server_config.yaml
+sed -i "s|<<SERVER_API_KEY>>|${SERVER_API_KEY}|" server_config.yaml
+sed -i "s|<<SEED_PHRASE>>|${SEED_PHRASE}|" server_config.yaml
+export SERVER_CONFIG=$(cat server_config.yaml)
 echo "[OK] Done. Replaced placeholders."
-# Attempt to parse SERVER_CONFIG as YAML after replacing the placholders
+
+# Attempt to parse SERVER_CONFIG as YAML after replacing the placholde
 echo "$SERVER_CONFIG" | yq eval . - > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo "Error: SERVER_CONFIG does not contain a valid YAML document after replacing the placeholders ." >&2
