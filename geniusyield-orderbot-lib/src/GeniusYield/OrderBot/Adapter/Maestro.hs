@@ -1,4 +1,7 @@
-module GeniusYield.OrderBot.Adapter.Maestro where
+module GeniusYield.OrderBot.Adapter.Maestro (
+  MaestroProvider (..),
+  handleMaestroError,
+) where
 
 import GeniusYield.OrderBot.Domain.Assets (adaAssetDetails)
 import GeniusYield.OrderBot.Domain.Assets qualified as Domain
