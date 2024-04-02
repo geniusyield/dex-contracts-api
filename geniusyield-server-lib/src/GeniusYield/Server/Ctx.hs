@@ -6,8 +6,8 @@ import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
 import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
+import GeniusYield.Scripts.Dex.Data (nftPolicy, orderValidator)
 import GeniusYield.Server.Constants (poConfigAddrMainnet, poConfigAddrPreprod, poRefsMainnet, poRefsPreprod)
-import GeniusYield.Server.Files (nftPolicy, orderValidator)
 import GeniusYield.Transaction
 import GeniusYield.TxBuilder
 import GeniusYield.Types

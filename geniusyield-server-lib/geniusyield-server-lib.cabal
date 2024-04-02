@@ -11,11 +11,6 @@ maintainer:      support@geniusyield.co
 copyright:       2024 GYELD GMBH
 build-type:      Simple
 category:        Blockchain, Cardano
-data-dir:        ./../data/
-data-files:
-  compiled-scripts/minting-policy.txt
-  compiled-scripts/partial-order.txt
-
 extra-doc-files:
   CHANGELOG.md
   README.md
@@ -66,7 +61,6 @@ library
     GeniusYield.Server.Dex.Markets
     GeniusYield.Server.Dex.PartialOrder
     GeniusYield.Server.ErrorMiddleware
-    GeniusYield.Server.Files
     GeniusYield.Server.Options
     GeniusYield.Server.RequestLoggerMiddleware
     GeniusYield.Server.Run
@@ -91,7 +85,6 @@ library
     , deriving-aeson
     , envy
     , fast-logger
-    , file-embed
     , fmt
     , geniusyield-dex-api
     , geniusyield-orderbot
