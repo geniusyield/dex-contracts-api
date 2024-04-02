@@ -52,7 +52,8 @@ data ServerConfig = ServerConfig
     scMaestroToken ∷ !(Confidential Text),
     scPort ∷ !Port,
     scWallet ∷ !(Maybe UserWallet),
-    scServerApiKey ∷ !(Confidential Text)
+    scServerApiKey ∷ !(Confidential Text),
+    scCollateral ∷ !(Maybe GYTxOutRef)
   }
   deriving stock (Generic)
   deriving
@@ -60,7 +61,7 @@ data ServerConfig = ServerConfig
     via CustomJSON '[FieldLabelModifier '[StripPrefix "sc", LowerFirst]] ServerConfig
 
 instance FromEnv ServerConfig where
-  fromEnv _ = forceFromJsonOrYaml <$> env "SERVER_CONFIG" -- ServerConfig <$>  (forceFromJson <$> env "CORE_PROVIDER") <*> (forceFromJson <$> env "NETWORK_ID") <*> (forceFromJson <$> env "LOGGING") <*> (forceFromJson <$> env "MAESTRO_TOKEN") <*> (forceFromJson <$> env "MNEMONIC")
+  fromEnv _ = forceFromJsonOrYaml <$> env "SERVER_CONFIG"
    where
     forceFromJsonOrYaml ∷ FromJSON a ⇒ String → a
     forceFromJsonOrYaml s =

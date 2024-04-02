@@ -68,7 +68,8 @@ data Ctx = Ctx
     ctxProviders ∷ !GYProviders,
     ctxDexInfo ∷ !DEXInfo,
     ctxMaestroProvider ∷ !MaestroProvider,
-    ctxSigningKey ∷ !(Maybe GYSomePaymentSigningKey)
+    ctxSigningKey ∷ !(Maybe GYSomePaymentSigningKey),
+    ctxCollateral ∷ !(Maybe GYTxOutRef)
   }
 
 -- | Create 'TxBody' from a 'GYTxSkeleton'.
@@ -129,7 +130,7 @@ runSkeletonWithStrategyF cstrat ctx addrs addr mcollateral skeleton = do
       di = ctxDexInfo ctx
       mcollateral' = do
         collateral ← mcollateral
-        pure (collateral, True)
+        pure (collateral, False)
 
   runGYTxMonadNodeF cstrat nid providers (addr : addrs) addr mcollateral' $ runReaderT skeleton di
 

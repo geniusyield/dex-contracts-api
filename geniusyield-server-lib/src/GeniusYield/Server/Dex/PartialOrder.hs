@@ -7,7 +7,7 @@ import Data.Ratio ((%))
 import Data.Swagger qualified as Swagger
 import Deriving.Aeson
 import Fmt
-import GHC.TypeLits (Symbol)
+import GHC.TypeLits (AppendSymbol, Symbol)
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..), cancelMultiplePartialOrders, getPartialOrdersInfos, placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
@@ -24,7 +24,7 @@ type PlaceOrderReqPrefix = "pop"
 
 data PlaceOrderParameters = PlaceOrderParameters
   { popAddress ∷ !GYAddressBech32,
-    popCollateral ∷ !GYTxOutRef,
+    popCollateral ∷ !(Maybe GYTxOutRef),
     popOfferToken ∷ !GYAssetClass,
     popOfferAmount ∷ !GYNatural,
     popPriceToken ∷ !GYAssetClass,
@@ -68,7 +68,7 @@ type CancelOrderReqPrefix = "cop"
 
 data CancelOrderParameters = CancelOrderParameters
   { copAddress ∷ !GYAddressBech32,
-    copCollateral ∷ !GYTxOutRef,
+    copCollateral ∷ !(Maybe GYTxOutRef),
     copOrderReferences ∷ ![GYTxOutRef]
   }
   deriving stock (Show, Generic)
@@ -98,25 +98,31 @@ instance Swagger.ToSchema CancelOrderTransactionDetails where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @CancelOrderResPrefix}
 
+type CommonCollateralText ∷ Symbol
+type CommonCollateralText = "Note that if \"collateral\" field is not provided, then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
+
+type CommonCollateralTextForSign ∷ Symbol
+type CommonCollateralTextForSign = "Note that if \"collateral\" field is not provided, then the default collateral provided in the configuration is used and if collateral is not provided in the configuration also then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
+
 type OrdersAPI =
   Summary "Build transaction to create order"
-    :> Description "Build a transaction to create an order. Order is placed at a mangled address where staking credential is that of the given \"address\" field."
+    :> Description ("Build a transaction to create an order. Order is placed at a mangled address where staking credential is that of the given \"address\" field. " `AppendSymbol` CommonCollateralText)
     :> "tx"
     :> "build-open"
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description "Create an order. This endpoint would also sign & submit the built transaction. Order is placed at a mangled address where staking credential is that of the given \"address\" field."
+      :> Description ("Create an order. This endpoint would also sign & submit the built transaction. Order is placed at a mangled address where staking credential is that of the given \"address\" field. " `AppendSymbol` CommonCollateralTextForSign)
       :> ReqBody '[JSON] PlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
-      :> Description "Build a transaction to cancel order(s)"
+      :> Description ("Build a transaction to cancel order(s). " `AppendSymbol` CommonCollateralText)
       :> "tx"
       :> "build-cancel"
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction"
+      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonCollateralTextForSign)
       :> ReqBody '[JSON] CancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
 
@@ -137,7 +143,7 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount
   txBody ←
-    runSkeletonI ctx (pure popAddress') popAddress' (Just popCollateral) $
+    runSkeletonI ctx (pure popAddress') popAddress' (popCollateral <|> ctxCollateral) $
       placePartialOrder'
         porefs
         popAddress'
@@ -176,7 +182,7 @@ handleCancelOrder ctx@Ctx {..} cops@CancelOrderParameters {..} = do
   logInfo ctx $ "Canceling order(s). Parameters: " +|| cops ||+ ""
   let porefs = dexPORefs ctxDexInfo
       copAddress' = addressFromBech32 copAddress
-  txBody ← runSkeletonI ctx (pure copAddress') copAddress' (Just copCollateral) $ do
+  txBody ← runSkeletonI ctx (pure copAddress') copAddress' (copCollateral <|> ctxCollateral) $ do
     pois ← Map.elems <$> getPartialOrdersInfos porefs copOrderReferences
     cancelMultiplePartialOrders porefs pois
   pure

@@ -52,7 +52,8 @@ data Settings = Settings
   { settingsNetwork ∷ !String,
     settingsVersion ∷ !String,
     settingsRevision ∷ !String,
-    settingsBackend ∷ !String
+    settingsBackend ∷ !String,
+    settingsCollateral ∷ !(Maybe GYTxOutRef)
   }
   deriving stock (Show, Eq, Generic)
   deriving
@@ -149,7 +150,7 @@ instance Swagger.ToSchema OrderBookInfo where
 -- Server's API.
 -------------------------------------------------------------------------------
 
-type SettingsAPI = Summary "Server settings" :> Description "Get server settings such as network, version, and revision" :> Get '[JSON] Settings
+type SettingsAPI = Summary "Server settings" :> Description "Get server settings such as network, version, and revision. Optionally if a collateral UTxO reference is configured in the server (provided server is spun up locally), then it's details are also returned." :> Get '[JSON] Settings
 
 type TradingFeesAPI =
   Summary "Trading fees"
@@ -236,7 +237,7 @@ mainServer = geniusYieldServer
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
   logInfo ctx "Settings requested."
-  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb"}
+  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsCollateral = ctxCollateral}
 
 -- >>> customShowNetworkId GYMainnet
 -- "mainnet"

@@ -45,7 +45,7 @@ runServer mfp = do
   withCfgProviders coreCfg "server" $ \providers → do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty
-    logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ ""
+    logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ "\nOptional collateral configuration: " +|| scCollateral serverConfig ||+ ""
     BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
     B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
     reqLoggerMiddleware ← gcpReqLogger
@@ -81,7 +81,8 @@ runServer mfp = do
                   | nid == GYTestnetPreprod → dexInfoDefaultPreprod
                   | otherwise → error "Only mainnet & preprod network are supported",
             ctxMaestroProvider = MaestroProvider menv,
-            ctxSigningKey = optionalSigningKey
+            ctxSigningKey = optionalSigningKey,
+            ctxCollateral = scCollateral serverConfig
           }
 
     logInfoS $

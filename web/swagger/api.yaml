@@ -35,7 +35,6 @@ definitions:
         type: array
     required:
     - address
-    - collateral
     - order_references
     type: object
   CancelOrderTransactionDetails:
@@ -270,7 +269,6 @@ definitions:
         type: string
     required:
     - address
-    - collateral
     - offer_token
     - offer_amount
     - price_token
@@ -312,6 +310,8 @@ definitions:
     properties:
       backend:
         type: string
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
       network:
         type: string
       revision:
@@ -542,7 +542,11 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Cancel order(s). This endpoint would also sign & submit the built
-        transaction
+        transaction. Note that if "collateral" field is not provided, then the default
+        collateral provided in the configuration is used and if collateral is not
+        provided in the configuration also then framework would try to pick collateral
+        UTxO on it's own and in that case would also be free to spend it (i.e., would
+        be made available to coin balancer).
       parameters:
       - in: body
         name: body
@@ -573,7 +577,11 @@ paths:
       - application/json;charset=utf-8
       description: Create an order. This endpoint would also sign & submit the built
         transaction. Order is placed at a mangled address where staking credential
-        is that of the given "address" field.
+        is that of the given "address" field. Note that if "collateral" field is not
+        provided, then the default collateral provided in the configuration is used
+        and if collateral is not provided in the configuration also then framework
+        would try to pick collateral UTxO on it's own and in that case would also
+        be free to spend it (i.e., would be made available to coin balancer).
       parameters:
       - in: body
         name: body
@@ -603,7 +611,10 @@ paths:
     post:
       consumes:
       - application/json;charset=utf-8
-      description: Build a transaction to cancel order(s)
+      description: Build a transaction to cancel order(s) Note that if "collateral"
+        field is not provided, then framework would try to pick collateral UTxO on
+        it's own and in that case would also be free to spend it (i.e., would be made
+        available to coin balancer).
       parameters:
       - in: body
         name: body
@@ -634,7 +645,10 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Build a transaction to create an order. Order is placed at a mangled
-        address where staking credential is that of the given "address" field.
+        address where staking credential is that of the given "address" field. Note
+        that if "collateral" field is not provided, then framework would try to pick
+        collateral UTxO on it's own and in that case would also be free to spend it
+        (i.e., would be made available to coin balancer).
       parameters:
       - in: body
         name: body
@@ -662,7 +676,9 @@ paths:
       - Orders
   /v0/settings:
     get:
-      description: Get server settings such as network, version, and revision
+      description: Get server settings such as network, version, and revision. Optionally
+        if a collateral UTxO reference is configured in the server (provided server
+        is spun up locally), then it's details are also returned.
       produces:
       - application/json;charset=utf-8
       responses:
