@@ -24,7 +24,7 @@ import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
 import GeniusYield.OrderBot.Domain.Markets
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Assets
-import GeniusYield.Server.Auth (APIKeyAuthProtect)
+import GeniusYield.Server.Auth (APIKeyAuthProtect, V0)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.HistoricalPrices.Maestro
@@ -173,9 +173,6 @@ type V0API =
     :<|> "order-book" :> OrderBookAPI
     :<|> "historical-prices" :> "maestro" :> MaestroPriceHistoryAPI
     :<|> "balances" :> BalancesAPI
-
-type V0 ∷ Symbol
-type V0 = "v0"
 
 type GeniusYieldAPI = APIKeyAuthProtect :> V0 :> V0API
 

@@ -573,6 +573,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error - Corresponding signing key is not configured
       security:
       - api-key: []
       summary: Cancel order(s)
@@ -608,6 +610,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error - Corresponding signing key is not configured
       security:
       - api-key: []
       summary: Create an order

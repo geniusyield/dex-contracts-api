@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module GeniusYield.Server.Auth (
+  V0,
   ApiKey,
   apiKeyFromText,
   ApiKeyHeader,
@@ -9,7 +10,7 @@ module GeniusYield.Server.Auth (
   APIKeyAuthProtect,
 ) where
 
-import Control.Lens (at, (?~))
+import Control.Lens (at, (?~), _Just)
 import Data.HashMap.Strict.InsOrd qualified as IOHM
 import Data.Swagger
 import GHC.TypeLits (Symbol, symbolVal)
@@ -20,6 +21,9 @@ import Servant
 import Servant.Foreign
 import Servant.Server.Experimental.Auth (AuthHandler, AuthServerData, mkAuthHandler)
 import Servant.Swagger
+
+type V0 ∷ Symbol
+type V0 = "v0"
 
 -- | The Api Key type.
 newtype ApiKey = ApiKey ByteString
@@ -52,6 +56,20 @@ instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
     toSwagger (Proxy ∷ Proxy api)
       & securityDefinitions
         .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
+      & paths
+        . at signingKeyReqEndpoint
+        . _Just
+        . post
+        . _Just
+        . responses
+        %~ add500SigningKeyFailureResponse
+      & paths
+        . at signingKeyReqEndpoint
+        . _Just
+        . delete
+        . _Just
+        . responses
+        %~ add500SigningKeyFailureResponse
       & allOperations
         . security
         .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
@@ -68,11 +86,19 @@ instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
     addCommonResponses ∷ Responses → Responses
     addCommonResponses resps = resps & at 401 ?~ Inline response401 & at 403 ?~ Inline response403
 
+    add500SigningKeyFailureResponse ∷ Responses → Responses
+    add500SigningKeyFailureResponse resps = resps & at 500 ?~ Inline response500SigningKeyFailure
+
     response401 ∷ Response
     response401 = mempty & description .~ "Unauthorized access - API key missing"
 
     response403 ∷ Response
     response403 = mempty & description .~ "Forbidden - The API key does not have permission to perform the request"
+
+    response500SigningKeyFailure ∷ Response
+    response500SigningKeyFailure = mempty & description .~ "Internal server error - Corresponding signing key is not configured"
+
+    signingKeyReqEndpoint = "/" <> symbolVal (Proxy ∷ Proxy V0) <> "/orders"
 
 -- `HasForeign` instance for `APIKeyAuthProtect :> api` is required to generate client code using libraries such as `servant-py`.
 -- This is written with help from https://github.com/haskell-servant/servant-auth/issues/8#issue-185541839.
