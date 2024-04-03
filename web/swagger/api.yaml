@@ -519,7 +519,7 @@ paths:
       summary: Get markets information for the DEX.
       tags:
       - Markets
-  /v0/order-book/{market-id}:
+  /v0/order-books/{market-id}:
     get:
       description: Get order book for a specific market.
       parameters:
