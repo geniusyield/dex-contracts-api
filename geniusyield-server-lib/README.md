@@ -1,3 +1,3 @@
 # GeniusYield API Server
 
- <!-- TODO:  -->
+Library used to serve API endpoints in relation to GeniusYield DEX.
