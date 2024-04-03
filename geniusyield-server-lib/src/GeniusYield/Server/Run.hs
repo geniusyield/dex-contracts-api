@@ -3,7 +3,8 @@ module GeniusYield.Server.Run (
 ) where
 
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
-import Data.Aeson.Encode.Pretty (encodePretty)
+-- import Data.Aeson.Encode.Pretty (encodePretty)
+import Data.Strict qualified as Strict
 import Data.Version (showVersion)
 import Data.Yaml.Pretty qualified as Yaml
 import Fmt
@@ -26,7 +27,7 @@ import Network.Wai.Handler.Warp qualified as Warp
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import RIO hiding (Handler, logDebug, logErrorS, logInfo, logInfoS, onException)
 import RIO.ByteString qualified as B
-import RIO.ByteString.Lazy qualified as BL
+-- import RIO.ByteString.Lazy qualified as BL
 import RIO.Text.Lazy qualified as LT
 import Servant
 -- import Servant.PY (requests, writePythonForAPI)
@@ -45,8 +46,8 @@ runServer mfp = do
   withCfgProviders coreCfg "server" $ \providers → do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty
-    logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ "\nOptional collateral configuration: " +|| scCollateral serverConfig ||+ ""
-    BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
+    logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ "\nOptional collateral configuration: " +|| scCollateral serverConfig ||+ "\nAddress of optional wallet: " +|| fmap Strict.snd optionalSigningKey ||+ ""
+    -- BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
     B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
     reqLoggerMiddleware ← gcpReqLogger
     let

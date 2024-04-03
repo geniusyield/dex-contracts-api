@@ -11,6 +11,7 @@ module GeniusYield.Server.Ctx (
   runQueryWithReader,
 ) where
 
+import Data.Strict.Tuple (Pair (..))
 import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
@@ -68,7 +69,7 @@ data Ctx = Ctx
     ctxProviders ∷ !GYProviders,
     ctxDexInfo ∷ !DEXInfo,
     ctxMaestroProvider ∷ !MaestroProvider,
-    ctxSigningKey ∷ !(Maybe GYSomePaymentSigningKey),
+    ctxSigningKey ∷ !(Maybe (Pair GYSomePaymentSigningKey GYAddress)),
     ctxCollateral ∷ !(Maybe GYTxOutRef)
   }
 

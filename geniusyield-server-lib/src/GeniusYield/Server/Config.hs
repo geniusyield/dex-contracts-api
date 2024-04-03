@@ -5,10 +5,12 @@ module GeniusYield.Server.Config (
   optionalSigningKeyFromServerConfig,
 ) where
 
+import Cardano.Api qualified as Api
 import Data.Aeson (
   eitherDecodeFileStrict,
   eitherDecodeStrict,
  )
+import Data.Strict.Tuple (Pair (..))
 import Data.Yaml qualified as Yaml
 import Deriving.Aeson
 import GHC.IO.Exception (userError)
@@ -19,6 +21,7 @@ import Network.Wai.Handler.Warp (Port)
 import RIO
 import RIO.FilePath (takeExtension)
 import System.Envy
+import Unsafe.Coerce (unsafeCoerce)
 
 {- $setup
 
@@ -96,7 +99,7 @@ coreConfigFromServerConfig ServerConfig {..} =
       cfgLogging = scLogging
     }
 
-optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe GYSomePaymentSigningKey)
+optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe (Pair GYSomePaymentSigningKey GYAddress))
 optionalSigningKeyFromServerConfig ServerConfig {..} = do
   case scWallet of
     Nothing → pure Nothing
@@ -104,6 +107,15 @@ optionalSigningKeyFromServerConfig ServerConfig {..} = do
       let wk' = walletKeysFromMnemonicIndexed mnemonic (fromMaybe 0 accIx) (fromMaybe 0 addrIx)
        in pure $ case wk' of
             Left _ → Nothing
-            Right wk → Just $ AGYExtendedPaymentSigningKey $ walletKeysToExtendedPaymentSigningKey wk
+            Right wk → Just (AGYExtendedPaymentSigningKey (walletKeysToExtendedPaymentSigningKey wk) :!: walletKeysToAddress wk scNetworkId)
     Just (KeyPathWallet fp) → do
-      Just <$> readSomePaymentSigningKey fp
+      skey ← readSomePaymentSigningKey fp
+      pure $ Just (skey :!: addressFromSomePaymentSigningKey scNetworkId skey)
+ where
+  addressFromSomePaymentSigningKey ∷ GYNetworkId → GYSomePaymentSigningKey → GYAddress
+  addressFromSomePaymentSigningKey nid skey =
+    let pkh =
+          case skey of
+            AGYPaymentSigningKey skey' → paymentKeyHash . paymentVerificationKey $ skey'
+            AGYExtendedPaymentSigningKey skey' → extendedPaymentSigningKeyToApi skey' & Api.getVerificationKey & Api.verificationKeyHash & unsafeCoerce & paymentKeyHashFromApi -- Usage of `unsafeCoerce` here as Atlas's key hash types need an overhaul since it is not powerful enough to cater for all the relevant cases.
+     in addressFromPaymentKeyHash nid pkh

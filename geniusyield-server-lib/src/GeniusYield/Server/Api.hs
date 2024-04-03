@@ -11,6 +11,7 @@ module GeniusYield.Server.Api (
 import Control.Lens ((?~))
 import Data.Kind (Type)
 import Data.List (sortBy)
+import Data.Strict qualified as Strict
 import Data.Strict.Tuple
 import Data.Swagger
 import Data.Swagger qualified as Swagger
@@ -53,6 +54,7 @@ data Settings = Settings
     settingsVersion ∷ !String,
     settingsRevision ∷ !String,
     settingsBackend ∷ !String,
+    settingsAddress ∷ !(Maybe GYAddressBech32),
     settingsCollateral ∷ !(Maybe GYTxOutRef)
   }
   deriving stock (Show, Eq, Generic)
@@ -150,7 +152,7 @@ instance Swagger.ToSchema OrderBookInfo where
 -- Server's API.
 -------------------------------------------------------------------------------
 
-type SettingsAPI = Summary "Server settings" :> Description "Get server settings such as network, version, and revision. Optionally if a collateral UTxO reference is configured in the server (provided server is spun up locally), then it's details are also returned." :> Get '[JSON] Settings
+type SettingsAPI = Summary "Server settings" :> Description "Get server settings such as network, version, and revision. Optionally if a collateral UTxO reference and signing key are individually configured in the server (provided server is spun up locally), then it's details are also returned." :> Get '[JSON] Settings
 
 type TradingFeesAPI =
   Summary "Trading fees"
@@ -247,7 +249,7 @@ mainServer = geniusYieldServer
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
   logInfo ctx "Settings requested."
-  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsCollateral = ctxCollateral}
+  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsAddress = fmap (addressToBech32 . Strict.snd) ctxSigningKey, settingsCollateral = ctxCollateral}
 
 -- >>> customShowNetworkId GYMainnet
 -- "mainnet"

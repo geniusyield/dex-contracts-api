@@ -77,11 +77,11 @@ library
 
   build-depends:
     , aeson
-    , aeson-pretty
     , atlas-cardano
     , base                       ^>=4.16.4.0
     , binary
     , bytestring
+    , cardano-api
     , deriving-aeson
     , envy
     , fast-logger
