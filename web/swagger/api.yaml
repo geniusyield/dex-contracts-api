@@ -381,6 +381,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Get assets information
@@ -409,6 +411,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Balances
@@ -483,6 +487,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Get price history using Maestro.
@@ -506,6 +512,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Get markets information for the DEX.
@@ -538,6 +546,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Order book
@@ -574,7 +584,7 @@ paths:
           description: Forbidden - The API key does not have permission to perform
             the request
         '500':
-          description: Internal server error - Corresponding signing key is not configured
+          description: Internal server error
       security:
       - api-key: []
       summary: Cancel order(s)
@@ -611,7 +621,7 @@ paths:
           description: Forbidden - The API key does not have permission to perform
             the request
         '500':
-          description: Internal server error - Corresponding signing key is not configured
+          description: Internal server error
       security:
       - api-key: []
       summary: Create an order
@@ -645,6 +655,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Build transaction to cancel order(s)
@@ -679,6 +691,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Build transaction to create order
@@ -702,6 +716,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Server settings
@@ -722,6 +738,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Trading fees
@@ -752,6 +770,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Sign a transaction
@@ -783,6 +803,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Sign and submit a transaction
@@ -813,6 +835,8 @@ paths:
         '403':
           description: Forbidden - The API key does not have permission to perform
             the request
+        '500':
+          description: Internal server error
       security:
       - api-key: []
       summary: Submit a transaction
