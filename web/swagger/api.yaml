@@ -351,6 +351,8 @@ definitions:
         type: string
       maker_offered_percent_fee_amount:
         $ref: '#/definitions/GYNatural'
+      order_ref:
+        $ref: '#/definitions/GYTxOutRef'
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
@@ -367,6 +369,7 @@ definitions:
     - maker_offered_percent_fee
     - maker_offered_percent_fee_amount
     - lovelace_deposit
+    - order_ref
     type: object
   Settings:
     description: Genius Yield Server settings.

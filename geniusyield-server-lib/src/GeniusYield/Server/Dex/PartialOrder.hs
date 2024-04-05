@@ -91,7 +91,8 @@ data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
     potdMakerLovelaceFlatFee ∷ !Natural,
     potdMakerOfferedPercentFee ∷ !GYRational,
     potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
-    potdLovelaceDeposit ∷ !GYNatural
+    potdLovelaceDeposit ∷ !GYNatural,
+    potdOrderRef ∷ !GYTxOutRef
   }
   deriving stock (Generic)
   deriving
@@ -211,15 +212,17 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         (fmap (stakeAddressToCredential . stakeAddressFromBech32) popStakeAddress)
         cfgRef
         pocd
+  let txId = txBodyTxId txBody
   pure
     PlaceOrderTransactionDetails
       { potdTransaction = unsignedTx txBody,
-        potdTransactionId = txBodyTxId txBody,
+        potdTransactionId = txId,
         potdTransactionFee = fromIntegral $ txBodyFee txBody,
         potdMakerLovelaceFlatFee = fromIntegral $ pociMakerFeeFlat pocd,
         potdMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
         potdMakerOfferedPercentFeeAmount = ceiling $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
-        potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd
+        potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd,
+        potdOrderRef = txOutRefFromTuple (txId, 0)
       }
 
 resolveCtxSigningKeyInfo ∷ Ctx → IO (Strict.Pair GYSomePaymentSigningKey GYAddress)
