@@ -56,7 +56,8 @@ data ServerConfig = ServerConfig
     scPort ∷ !Port,
     scWallet ∷ !(Maybe UserWallet),
     scServerApiKey ∷ !(Confidential Text),
-    scCollateral ∷ !(Maybe GYTxOutRef)
+    scCollateral ∷ !(Maybe GYTxOutRef),
+    scStakeAddress ∷ !(Maybe GYStakeAddressBech32)
   }
   deriving stock (Generic)
   deriving

@@ -70,7 +70,8 @@ data Ctx = Ctx
     ctxDexInfo ∷ !DEXInfo,
     ctxMaestroProvider ∷ !MaestroProvider,
     ctxSigningKey ∷ !(Maybe (Pair GYSomePaymentSigningKey GYAddress)),
-    ctxCollateral ∷ !(Maybe GYTxOutRef)
+    ctxCollateral ∷ !(Maybe GYTxOutRef),
+    ctxStakeAddress ∷ !(Maybe GYStakeAddressBech32)
   }
 
 -- | Create 'TxBody' from a 'GYTxSkeleton'.

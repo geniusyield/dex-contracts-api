@@ -55,6 +55,7 @@ data Settings = Settings
     settingsRevision ∷ !String,
     settingsBackend ∷ !String,
     settingsAddress ∷ !(Maybe GYAddressBech32),
+    settingsStakeAddress ∷ !(Maybe GYStakeAddressBech32),
     settingsCollateral ∷ !(Maybe GYTxOutRef)
   }
   deriving stock (Show, Eq, Generic)
@@ -246,7 +247,7 @@ mainServer = geniusYieldServer
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
   logInfo ctx "Settings requested."
-  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsAddress = fmap (addressToBech32 . Strict.snd) ctxSigningKey, settingsCollateral = ctxCollateral}
+  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsAddress = fmap (addressToBech32 . Strict.snd) ctxSigningKey, settingsStakeAddress = ctxStakeAddress, settingsCollateral = ctxCollateral}
 
 -- >>> customShowNetworkId GYMainnet
 -- "mainnet"

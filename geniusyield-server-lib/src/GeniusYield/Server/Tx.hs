@@ -4,6 +4,7 @@ module GeniusYield.Server.Tx (
   handleTxSign,
   handleTxSignAndSubmit,
   handleTxSubmit,
+  throwNoSigningKeyError,
 ) where
 
 import Data.Strict qualified as Strict
@@ -37,12 +38,15 @@ handleTxApi ctx =
     :<|> handleTxSignAndSubmit ctx
     :<|> handleTxSubmit ctx
 
+throwNoSigningKeyError ∷ IO a
+throwNoSigningKeyError = throwIO $ err500 {errBody = "No signing key configured."}
+
 handleTxSign ∷ Ctx → GYTx → IO GYTx
 handleTxSign ctx@Ctx {..} tx = do
   logInfo ctx $ "Signing transaction: " +| txToHex tx |+ ""
   case ctxSigningKey of
     Just sk → pure $ signGYTx' tx [somePaymentSigningKeyToSomeSigningKey $ Strict.fst sk]
-    Nothing → throwIO $ err500 {errBody = "No signing key configured."}
+    Nothing → throwNoSigningKeyError
 
 handleTxSignAndSubmit ∷ Ctx → GYTx → IO GYTxId
 handleTxSignAndSubmit ctx tx = do

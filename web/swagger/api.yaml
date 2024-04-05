@@ -22,19 +22,63 @@ definitions:
     description: Ticker of an asset.
     example: ADA
     type: string
+  BotCancelOrderParameters:
+    description: Cancel order request parameters specialized towards configured bot.
+    properties:
+      order_references:
+        items:
+          $ref: '#/definitions/GYTxOutRef'
+        minItems: 1
+        type: array
+    required:
+    - order_references
+    type: object
+  BotPlaceOrderParameters:
+    description: Place order request parameters specialized towards configured bot.
+    properties:
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      offer_amount:
+        $ref: '#/definitions/GYNatural'
+      offer_token:
+        $ref: '#/definitions/GYAssetClass'
+      price_amount:
+        $ref: '#/definitions/GYNatural'
+      price_token:
+        $ref: '#/definitions/GYAssetClass'
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_token
+    - offer_amount
+    - price_token
+    - price_amount
+    type: object
   CancelOrderParameters:
     description: Cancel order request parameters.
     properties:
-      address:
-        $ref: '#/definitions/GYAddressBech32'
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
       collateral:
         $ref: '#/definitions/GYTxOutRef'
       order_references:
         items:
           $ref: '#/definitions/GYTxOutRef'
+        minItems: 1
         type: array
     required:
-    - address
+    - addresses
     - order_references
     type: object
   CancelOrderTransactionDetails:
@@ -52,6 +96,13 @@ definitions:
     - transaction_id
     - transaction_fee
     type: object
+  ChangeAddress:
+    description: An address, serialised as Bech32. This is used as a change address
+      by our balancer to send left over funds from selected inputs. If not provided,
+      first address from given addresses list is used instead.
+    example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+    format: bech32
+    type: string
   GYAddressBech32:
     description: An address, serialised as Bech32.
     example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
@@ -73,6 +124,11 @@ definitions:
     format: hex
     maxLength: 56
     minLength: 56
+    type: string
+  GYStakeAddressBech32:
+    description: A stake address, serialised as Bech32.
+    example: stake_test1upa805fqh85x4hw88zxmhvdaydgyjzmazs9tydqrscerxnghfq4t3
+    format: bech32
     type: string
   GYTx:
     description: Transaction cbor hex string
@@ -245,8 +301,13 @@ definitions:
   PlaceOrderParameters:
     description: Place order request parameters.
     properties:
-      address:
-        $ref: '#/definitions/GYAddressBech32'
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
       collateral:
         $ref: '#/definitions/GYTxOutRef'
       end:
@@ -262,13 +323,15 @@ definitions:
         $ref: '#/definitions/GYNatural'
       price_token:
         $ref: '#/definitions/GYAssetClass'
+      stake_address:
+        $ref: '#/definitions/GYStakeAddressBech32'
       start:
         description: This is the posix time in ISO8601 format.
         example: 1970-01-01T00:00:00Z
         format: ISO8601
         type: string
     required:
-    - address
+    - addresses
     - offer_token
     - offer_amount
     - price_token
@@ -318,6 +381,8 @@ definitions:
         type: string
       revision:
         type: string
+      stake_address:
+        $ref: '#/definitions/GYStakeAddressBech32'
       version:
         type: string
     required:
@@ -558,17 +623,13 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Cancel order(s). This endpoint would also sign & submit the built
-        transaction. Note that if "collateral" field is not provided, then the default
-        collateral provided in the configuration is used and if collateral is not
-        provided in the configuration also then framework would try to pick collateral
-        UTxO on it's own and in that case would also be free to spend it (i.e., would
-        be made available to coin balancer).
+        transaction.
       parameters:
       - in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/CancelOrderParameters'
+          $ref: '#/definitions/BotCancelOrderParameters'
       produces:
       - application/json;charset=utf-8
       responses:
@@ -594,18 +655,13 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Create an order. This endpoint would also sign & submit the built
-        transaction. Order is placed at a mangled address where staking credential
-        is that of the given "address" field. Note that if "collateral" field is not
-        provided, then the default collateral provided in the configuration is used
-        and if collateral is not provided in the configuration also then framework
-        would try to pick collateral UTxO on it's own and in that case would also
-        be free to spend it (i.e., would be made available to coin balancer).
+        transaction.
       parameters:
       - in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/PlaceOrderParameters'
+          $ref: '#/definitions/BotPlaceOrderParameters'
       produces:
       - application/json;charset=utf-8
       responses:
@@ -666,11 +722,11 @@ paths:
     post:
       consumes:
       - application/json;charset=utf-8
-      description: Build a transaction to create an order. Order is placed at a mangled
-        address where staking credential is that of the given "address" field. Note
-        that if "collateral" field is not provided, then framework would try to pick
-        collateral UTxO on it's own and in that case would also be free to spend it
-        (i.e., would be made available to coin balancer).
+      description: Build a transaction to create an order. In case "stakeAddress"
+        field is provided then order is placed at a mangled address having the given
+        staking credential. Note that if "collateral" field is not provided, then
+        framework would try to pick collateral UTxO on it's own and in that case would
+        also be free to spend it (i.e., would be made available to coin balancer).
       parameters:
       - in: body
         name: body

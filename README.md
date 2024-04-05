@@ -82,6 +82,8 @@ Endpoints made available by server are specified [here](./web/swagger/api.yaml).
         accIx: 0
         # Payment address index.
         addrIx: 0
+     # Optionally, a stake address which is used to place orders at a mangled address, i.e., an address having payment component of the order validator but staking component from the given stake address. It has to bech32 encoded, with prefix "stake_test" for testnet and "stake" for mainnet.
+    stakeAddress: stake1...
      # Optionally, one can specify collateral in the configuration to avoid sending it's information in the endpoints which require it.
     collateral: 15522d2518b36bdeb8e2e4829aff7ae9e5afbf74387d756543c5e955e83a9434#2
     ```
