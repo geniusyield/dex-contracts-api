@@ -197,7 +197,7 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount
   txBody ←
-    runSkeletonI ctx (NonEmpty.toList popAddresses') changeAddr (popCollateral <|> ctxCollateral) $
+    runSkeletonI ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
       placePartialOrder'
         porefs
         changeAddr
@@ -244,7 +244,7 @@ handleCancelOrder ctx@Ctx {..} cops@CancelOrderParameters {..} = do
   let porefs = dexPORefs ctxDexInfo
       copAddresses' = addressFromBech32 <$> copAddresses
       changeAddr = maybe (NonEmpty.head copAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) copChangeAddress
-  txBody ← runSkeletonI ctx (NonEmpty.toList copAddresses') changeAddr (copCollateral <|> ctxCollateral) $ do
+  txBody ← runSkeletonI ctx (NonEmpty.toList copAddresses') changeAddr copCollateral $ do
     pois ← Map.elems <$> getPartialOrdersInfos porefs (NonEmpty.toList copOrderReferences)
     cancelMultiplePartialOrders porefs pois
   pure
