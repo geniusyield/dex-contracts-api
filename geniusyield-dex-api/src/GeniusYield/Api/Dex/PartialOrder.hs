@@ -348,7 +348,7 @@ partialOrders
 partialOrders por = do
   addr ← partialOrderAddr por
   let paymentCred = addressToPaymentCredential addr & fromJust
-  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred
+  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred Nothing
   policyId ← partialOrderNftPolicyId por
   let datums = utxosDatumsPure utxosWithDatums
   iwither

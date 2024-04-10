@@ -34,8 +34,8 @@ package strict-containers
 source-repository-package
   type: git
   location: https://github.com/geniusyield/atlas
-  tag: 370da9228b6b92a94167ee23a9a683cd0e9bca4e
-  --sha256: todo
+  tag: 5d351ed509de7974048a9acbe03780bb705d560f
+  --sha256: sha256-2BFxzqQBQN1Cu+cyPFeYEMmEjrQERC47PCvi3BcvnGk=
 
 source-repository-package
   type: git
@@ -47,8 +47,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/maestro-org/haskell-sdk
-  tag: bdab74cfffee5a11eccb68b9e2b8f8feba656950
-  --sha256: TODO:
+  tag: 609515b3f8861efaa17adf4e599aa1b845775a6d
+  --sha256: sha256-8se+xlIB1BDEuKGwjaldmW5G4LpCujD1ABgBaY0cY6Y=
 
 -- Unfortunately, cardano-node 8.1.2 is constrained with plutus-ledger-api 1.5.0.0 and we would like at least 1.6.0.0.
 -- This is done in accordance with changes in https://github.com/input-output-hk/cardano-ledger/pull/3430/files.
