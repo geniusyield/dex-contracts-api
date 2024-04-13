@@ -60,7 +60,7 @@ RUN git clone https://github.com/bitcoin-core/secp256k1 && \
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-# Install ghcup using official command from https://www.haskell.org/ghcup/
+# Install ghcup using official command from https://www.haskell.org/ghcup/. Following stackoverflow discussion had been helpful in regards to GHC installation https://stackoverflow.com/q/67680726/20330802.
 ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 RUN bash -c "curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh"
 
