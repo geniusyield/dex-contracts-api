@@ -74,11 +74,6 @@ RUN ghcup set ghc 9.2.8
 RUN ghcup install cabal 3.10.2.0
 RUN ghcup set cabal 3.10.2.0
 
-# Update Path to include Cabal and GHC exports
-RUN bash -c "echo PATH="$HOME/.local/bin:$PATH" >> $HOME/.bashrc"
-RUN bash -c "echo export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH" >> $HOME/.bashrc"
-RUN bash -c "source $HOME/.bashrc"
-
 # ==================================[ BUILD ]========================================
 WORKDIR /DEX
 
