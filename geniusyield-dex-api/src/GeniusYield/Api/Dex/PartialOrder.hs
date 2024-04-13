@@ -27,6 +27,8 @@ module GeniusYield.Api.Dex.PartialOrder (
 
   -- * Queries
   partialOrders,
+  partialOrdersHavingAsset,
+  orderByNft,
   getPartialOrderInfo,
   getPartialOrdersInfos,
 
@@ -345,10 +347,17 @@ partialOrders
   ∷ GYDexApiQueryMonad m a
   ⇒ PORefs
   → m (Map.Map GYTxOutRef PartialOrderInfo)
-partialOrders por = do
+partialOrders = flip partialOrdersHavingAsset Nothing
+
+partialOrdersHavingAsset
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → Maybe GYAssetClass
+  → m (Map.Map GYTxOutRef PartialOrderInfo)
+partialOrdersHavingAsset por hasAsset = do
   addr ← partialOrderAddr por
   let paymentCred = addressToPaymentCredential addr & fromJust
-  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred Nothing
+  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred hasAsset
   policyId ← partialOrderNftPolicyId por
   let datums = utxosDatumsPure utxosWithDatums
   iwither
@@ -357,6 +366,17 @@ partialOrders por = do
           <$> runExceptT (makePartialOrderInfo policyId oref vod)
     )
     datums
+
+orderByNft
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → GYAssetClass
+  → m (Maybe PartialOrderInfo)
+orderByNft por orderNft = do
+  ois ← partialOrdersHavingAsset por (Just orderNft)
+  case Map.elems ois of
+    [oi] → pure $ Just oi
+    _ → pure Nothing
 
 getPartialOrderInfo
   ∷ GYDexApiQueryMonad m a

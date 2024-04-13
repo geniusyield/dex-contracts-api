@@ -29,7 +29,7 @@ import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.HistoricalPrices.Maestro
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
-import GeniusYield.Server.Dex.PartialOrder (OrdersAPI, handleOrdersApi)
+import GeniusYield.Server.Dex.PartialOrder (OrderInfo (..), OrdersAPI, handleOrdersApi, poiToOrderInfo)
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.TxBuilder (GYTxQueryMonad (utxosAtAddress))
@@ -97,42 +97,6 @@ instance Swagger.ToSchema TradingFees where
 
 type OrderResPrefix ∷ Symbol
 type OrderResPrefix = "obi"
-
-type OrderInfoPrefix ∷ Symbol
-type OrderInfoPrefix = "oi"
-
-data OrderInfo = OrderInfo
-  { oiOfferAmount ∷ !GYRational,
-    oiPrice ∷ !GYRational,
-    oiStart ∷ !(Maybe GYTime),
-    oiEnd ∷ !(Maybe GYTime),
-    oiOwnerAddress ∷ !GYAddressBech32,
-    oiOwnerKeyHash ∷ !GYPubKeyHash,
-    oiOutputReference ∷ !GYTxOutRef
-  }
-  deriving stock (Generic)
-  deriving
-    (FromJSON, ToJSON)
-    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
-
-poiToOrderInfo ∷ PartialOrderInfo → OrderAssetPair → Pair OrderInfo Bool
-poiToOrderInfo PartialOrderInfo {..} oap =
-  let isSell = commodityAsset oap == poiOfferedAsset
-      poiOfferedAmount' = fromIntegral poiOfferedAmount
-   in OrderInfo
-        { oiOfferAmount = if isSell then poiOfferedAmount' else poiOfferedAmount' * poiPrice,
-          oiPrice = if isSell then poiPrice else 1 / poiPrice,
-          oiStart = poiStart,
-          oiEnd = poiEnd,
-          oiOwnerAddress = addressToBech32 poiOwnerAddr,
-          oiOwnerKeyHash = poiOwnerKey,
-          oiOutputReference = poiRef
-        }
-        :!: isSell
-
-instance Swagger.ToSchema OrderInfo where
-  declareNamedSchema =
-    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
 
 data OrderBookInfo = OrderBookInfo
   { obiMarketPairId ∷ !OrderAssetPair,

@@ -272,6 +272,8 @@ definitions:
         example: 1970-01-01T00:00:00Z
         format: ISO8601
         type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
       offer_amount:
         example: '0.125'
         format: float
@@ -297,6 +299,64 @@ definitions:
     - owner_address
     - owner_key_hash
     - output_reference
+    - nft_token
+    type: object
+  OrderInfoDetailed:
+    properties:
+      asked_asset:
+        $ref: '#/definitions/GYAssetClass'
+      contained_asked_tokens:
+        exclusiveMinimum: false
+        minimum: 0
+        type: integer
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
+      offer_amount:
+        exclusiveMinimum: false
+        minimum: 0
+        type: integer
+      offer_asset:
+        $ref: '#/definitions/GYAssetClass'
+      original_offer_amount:
+        exclusiveMinimum: false
+        minimum: 0
+        type: integer
+      output_reference:
+        $ref: '#/definitions/GYTxOutRef'
+      owner_address:
+        $ref: '#/definitions/GYAddressBech32'
+      owner_key_hash:
+        $ref: '#/definitions/GYPubKeyHash'
+      partial_fills:
+        exclusiveMinimum: false
+        minimum: 0
+        type: integer
+      price:
+        example: '0.125'
+        format: float
+        type: string
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_amount
+    - original_offer_amount
+    - offer_asset
+    - asked_asset
+    - price
+    - partial_fills
+    - contained_asked_tokens
+    - owner_address
+    - owner_key_hash
+    - output_reference
+    - nft_token
     type: object
   PlaceOrderParameters:
     description: Place order request parameters.
@@ -657,21 +717,26 @@ paths:
     post:
       consumes:
       - application/json;charset=utf-8
-      description: Create an order. This endpoint would also sign & submit the built
-        transaction.
+      description: Get details of order(s) using their unique NFT token. Note that
+        each order is identified uniquely by an associated NFT token which can then
+        later be used to retrieve it's details across partial fills.
       parameters:
       - in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/BotPlaceOrderParameters'
+          items:
+            $ref: '#/definitions/GYAssetClass'
+          type: array
       produces:
       - application/json;charset=utf-8
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/PlaceOrderTransactionDetails'
+            items:
+              $ref: '#/definitions/OrderInfoDetailed'
+            type: array
         '400':
           description: Invalid `body`
         '401':
@@ -683,7 +748,7 @@ paths:
           description: Internal server error
       security:
       - api-key: []
-      summary: Create an order
+      summary: Get order(s) details
       tags:
       - Orders
   /v0/orders/tx/build-cancel:

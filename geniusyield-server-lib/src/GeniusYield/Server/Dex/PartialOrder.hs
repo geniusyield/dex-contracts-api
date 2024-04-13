@@ -1,26 +1,113 @@
 module GeniusYield.Server.Dex.PartialOrder (
   OrdersAPI,
   handleOrdersApi,
+  OrderInfo (..),
+  poiToOrderInfo,
 ) where
 
 import Data.Ratio ((%))
+import Data.Strict.Tuple (Pair (..))
 import Data.Strict.Tuple qualified as Strict
 import Data.Swagger qualified as Swagger
 import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), cancelMultiplePartialOrders, getPartialOrdersInfos, placePartialOrder')
+import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, getPartialOrdersInfos, orderByNft, placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
+import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Tx (handleTxSign, handleTxSubmit, throwNoSigningKeyError)
-import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
+import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logDebug, logInfo)
 import GeniusYield.Types
 import RIO hiding (logDebug, logInfo)
 import RIO.Map qualified as Map
 import RIO.NonEmpty qualified as NonEmpty
 import Servant
+
+type OrderInfoPrefix ∷ Symbol
+type OrderInfoPrefix = "oi"
+
+data OrderInfo = OrderInfo
+  { oiOfferAmount ∷ !GYRational,
+    oiPrice ∷ !GYRational,
+    oiStart ∷ !(Maybe GYTime),
+    oiEnd ∷ !(Maybe GYTime),
+    oiOwnerAddress ∷ !GYAddressBech32,
+    oiOwnerKeyHash ∷ !GYPubKeyHash,
+    oiOutputReference ∷ !GYTxOutRef,
+    oiNFTToken ∷ !GYAssetClass
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
+
+instance Swagger.ToSchema OrderInfo where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
+
+type OrderInfoDetailedPrefix ∷ Symbol
+type OrderInfoDetailedPrefix = "oid"
+
+data OrderInfoDetailed = OrderInfoDetailed
+  { oidOfferAmount ∷ !Natural,
+    oidOriginalOfferAmount ∷ !Natural,
+    oidOfferAsset ∷ !GYAssetClass,
+    oidAskedAsset ∷ !GYAssetClass,
+    oidPrice ∷ !GYRational,
+    oidPartialFills ∷ !Natural,
+    oidContainedAskedTokens ∷ !Natural,
+    oidStart ∷ !(Maybe GYTime),
+    oidEnd ∷ !(Maybe GYTime),
+    oidOwnerAddress ∷ !GYAddressBech32,
+    oidOwnerKeyHash ∷ !GYPubKeyHash,
+    oidOutputReference ∷ !GYTxOutRef,
+    oidNFTToken ∷ !GYAssetClass
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoDetailedPrefix, CamelToSnake]] OrderInfoDetailed
+
+instance Swagger.ToSchema OrderInfoDetailed where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoDetailedPrefix}
+
+poiToOrderInfo ∷ PartialOrderInfo → OrderAssetPair → Pair OrderInfo Bool
+poiToOrderInfo PartialOrderInfo {..} oap =
+  let isSell = commodityAsset oap == poiOfferedAsset
+      poiOfferedAmount' = fromIntegral poiOfferedAmount
+   in OrderInfo
+        { oiOfferAmount = if isSell then poiOfferedAmount' else poiOfferedAmount' * poiPrice,
+          oiPrice = if isSell then poiPrice else 1 / poiPrice,
+          oiStart = poiStart,
+          oiEnd = poiEnd,
+          oiOwnerAddress = addressToBech32 poiOwnerAddr,
+          oiOwnerKeyHash = poiOwnerKey,
+          oiOutputReference = poiRef,
+          oiNFTToken = GYToken poiNFTCS poiNFT
+        }
+        :!: isSell
+
+poiToOrderInfoDetailed ∷ PartialOrderInfo → OrderInfoDetailed
+poiToOrderInfoDetailed PartialOrderInfo {..} =
+  OrderInfoDetailed
+    { oidOfferAmount = poiOfferedAmount,
+      oidOriginalOfferAmount = poiOfferedOriginalAmount,
+      oidOfferAsset = poiOfferedAsset,
+      oidAskedAsset = poiAskedAsset,
+      oidPrice = poiPrice,
+      oidPartialFills = poiPartialFills,
+      oidContainedAskedTokens = poiContainedPayment,
+      oidStart = poiStart,
+      oidEnd = poiEnd,
+      oidOwnerAddress = addressToBech32 poiOwnerAddr,
+      oidOwnerKeyHash = poiOwnerKey,
+      oidOutputReference = poiRef,
+      oidNFTToken = GYToken poiNFTCS poiNFT
+    }
 
 type BotPlaceOrderReqPrefix ∷ Symbol
 type BotPlaceOrderReqPrefix = "bpop"
@@ -166,7 +253,7 @@ type OrdersAPI =
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description ("Create an order. This endpoint would also sign & submit the built transaction.")
+      :> Description "Create an order. This endpoint would also sign & submit the built transaction."
       :> ReqBody '[JSON] BotPlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -176,9 +263,13 @@ type OrdersAPI =
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction.")
+      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction."
       :> ReqBody '[JSON] BotCancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
+    :<|> Summary "Get order(s) details"
+      :> Description "Get details of order(s) using their unique NFT token. Note that each order is identified uniquely by an associated NFT token which can then later be used to retrieve it's details across partial fills."
+      :> ReqBody '[JSON] [GYAssetClass]
+      :> Post '[JSON] [OrderInfoDetailed]
 
 handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
 handleOrdersApi ctx =
@@ -186,6 +277,7 @@ handleOrdersApi ctx =
     :<|> handlePlaceOrderAndSignSubmit ctx
     :<|> handleCancelOrder ctx
     :<|> handleCancelOrderAndSignSubmit ctx
+    :<|> handleOrdersDetails ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
 handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
@@ -266,3 +358,13 @@ handleCancelOrderAndSignSubmit ctx BotCancelOrderParameters {..} = do
   txId ← handleTxSubmit ctx signedTx
   -- Though transaction id would be same, but we are returning it again, just in case...
   pure $ details {cotdTransactionId = txId, cotdTransaction = signedTx}
+
+handleOrdersDetails ∷ Ctx → [GYAssetClass] → IO [OrderInfoDetailed]
+handleOrdersDetails ctx@Ctx {..} acs = do
+  logInfo ctx $ "Getting orders details for NFT tokens: " +|| acs ||+ ""
+  let porefs = dexPORefs ctxDexInfo
+  os ← forM acs $ \ac → do
+    logDebug ctx $ "Getting order details for NFT token: " +|| ac ||+ ""
+    runQuery ctx $
+      fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
+  pure $ catMaybes os
