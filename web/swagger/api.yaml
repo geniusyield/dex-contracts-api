@@ -86,9 +86,7 @@ definitions:
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       transaction_id:
         $ref: '#/definitions/GYTxId'
     required:
@@ -152,9 +150,7 @@ definitions:
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       transaction_id:
         $ref: '#/definitions/GYTxId'
     required:
@@ -368,9 +364,7 @@ definitions:
       asked_asset:
         $ref: '#/definitions/GYAssetClass'
       contained_asked_tokens:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       end:
         description: This is the posix time in ISO8601 format.
         example: 1970-01-01T00:00:00Z
@@ -379,15 +373,11 @@ definitions:
       nft_token:
         $ref: '#/definitions/GYAssetClass'
       offer_amount:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       offer_asset:
         $ref: '#/definitions/GYAssetClass'
       original_offer_amount:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       output_reference:
         $ref: '#/definitions/GYTxOutRef'
       owner_address:
@@ -395,9 +385,7 @@ definitions:
       owner_key_hash:
         $ref: '#/definitions/GYPubKeyHash'
       partial_fills:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       price:
         example: '0.125'
         format: float
@@ -464,9 +452,7 @@ definitions:
       lovelace_deposit:
         $ref: '#/definitions/GYNatural'
       maker_lovelace_flat_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       maker_offered_percent_fee:
         example: '0.125'
         format: float
@@ -478,9 +464,7 @@ definitions:
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       transaction_id:
         $ref: '#/definitions/GYTxId'
     required:

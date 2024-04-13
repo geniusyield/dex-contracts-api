@@ -32,7 +32,7 @@ import RIO.Text qualified as T
 import Servant
 
 -- | Number of orders that we at most allow to be filled in a single transaction.
-maxFillOrders ∷ Natural
+maxFillOrders ∷ GYNatural
 maxFillOrders = 5
 
 data PodServerException
@@ -83,13 +83,13 @@ type OrderInfoDetailedPrefix ∷ Symbol
 type OrderInfoDetailedPrefix = "oid"
 
 data OrderInfoDetailed = OrderInfoDetailed
-  { oidOfferAmount ∷ !Natural,
-    oidOriginalOfferAmount ∷ !Natural,
+  { oidOfferAmount ∷ !GYNatural,
+    oidOriginalOfferAmount ∷ !GYNatural,
     oidOfferAsset ∷ !GYAssetClass,
     oidAskedAsset ∷ !GYAssetClass,
     oidPrice ∷ !GYRational,
-    oidPartialFills ∷ !Natural,
-    oidContainedAskedTokens ∷ !Natural,
+    oidPartialFills ∷ !GYNatural,
+    oidContainedAskedTokens ∷ !GYNatural,
     oidStart ∷ !(Maybe GYTime),
     oidEnd ∷ !(Maybe GYTime),
     oidOwnerAddress ∷ !GYAddressBech32,
@@ -125,13 +125,13 @@ poiToOrderInfo PartialOrderInfo {..} oap =
 poiToOrderInfoDetailed ∷ PartialOrderInfo → OrderInfoDetailed
 poiToOrderInfoDetailed PartialOrderInfo {..} =
   OrderInfoDetailed
-    { oidOfferAmount = poiOfferedAmount,
-      oidOriginalOfferAmount = poiOfferedOriginalAmount,
+    { oidOfferAmount = naturalFromGHC poiOfferedAmount,
+      oidOriginalOfferAmount = naturalFromGHC poiOfferedOriginalAmount,
       oidOfferAsset = poiOfferedAsset,
       oidAskedAsset = poiAskedAsset,
       oidPrice = poiPrice,
-      oidPartialFills = poiPartialFills,
-      oidContainedAskedTokens = poiContainedPayment,
+      oidPartialFills = naturalFromGHC poiPartialFills,
+      oidContainedAskedTokens = naturalFromGHC poiContainedPayment,
       oidStart = poiStart,
       oidEnd = poiEnd,
       oidOwnerAddress = addressToBech32 poiOwnerAddr,
@@ -205,8 +205,8 @@ type PlaceOrderResPrefix = "potd"
 data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
   { potdTransaction ∷ !GYTx,
     potdTransactionId ∷ !GYTxId,
-    potdTransactionFee ∷ !Natural,
-    potdMakerLovelaceFlatFee ∷ !Natural, -- FIXME: This should be GYNatural.
+    potdTransactionFee ∷ !GYNatural,
+    potdMakerLovelaceFlatFee ∷ !GYNatural,
     potdMakerOfferedPercentFee ∷ !GYRational,
     potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
     potdLovelaceDeposit ∷ !GYNatural,
@@ -262,7 +262,7 @@ type CancelOrderResPrefix = "cotd"
 data CancelOrderTransactionDetails = CancelOrderTransactionDetails
   { cotdTransaction ∷ !GYTx,
     cotdTransactionId ∷ !GYTxId,
-    cotdTransactionFee ∷ !Natural
+    cotdTransactionFee ∷ !GYNatural
   }
   deriving stock (Generic)
   deriving
@@ -299,7 +299,7 @@ type FillOrderResPrefix = "fotd"
 data FillOrderTransactionDetails = FillOrderTransactionDetails
   { fotdTransaction ∷ !GYTx,
     fotdTransactionId ∷ !GYTxId,
-    fotdTransactionFee ∷ !Natural,
+    fotdTransactionFee ∷ !GYNatural,
     fotdTakerLovelaceFlatFee ∷ !GYNatural,
     fotdTakerOfferedPercentFee ∷ !GYRational,
     fotdTakerOfferedPercentFeeAmount ∷ !GYNatural
