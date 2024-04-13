@@ -717,6 +717,39 @@ paths:
     post:
       consumes:
       - application/json;charset=utf-8
+      description: Create an order. This endpoint would also sign & submit the built
+        transaction.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BotPlaceOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/PlaceOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Create an order
+      tags:
+      - Orders
+  /v0/orders/details:
+    post:
+      consumes:
+      - application/json;charset=utf-8
       description: Get details of order(s) using their unique NFT token. Note that
         each order is identified uniquely by an associated NFT token which can then
         later be used to retrieve it's details across partial fills.

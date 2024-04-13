@@ -268,6 +268,7 @@ type OrdersAPI =
       :> Delete '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Get order(s) details"
       :> Description "Get details of order(s) using their unique NFT token. Note that each order is identified uniquely by an associated NFT token which can then later be used to retrieve it's details across partial fills."
+      :> "details"
       :> ReqBody '[JSON] [GYAssetClass]
       :> Post '[JSON] [OrderInfoDetailed]
 
