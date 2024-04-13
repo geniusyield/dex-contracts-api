@@ -27,8 +27,11 @@ module GeniusYield.Api.Dex.PartialOrder (
 
   -- * Queries
   partialOrders,
+  partialOrdersHavingAsset,
+  orderByNft,
   getPartialOrderInfo,
   getPartialOrdersInfos,
+  getPartialOrdersInfos',
 
   -- * Tx constructors
   placePartialOrder,
@@ -345,10 +348,17 @@ partialOrders
   ∷ GYDexApiQueryMonad m a
   ⇒ PORefs
   → m (Map.Map GYTxOutRef PartialOrderInfo)
-partialOrders por = do
+partialOrders = flip partialOrdersHavingAsset Nothing
+
+partialOrdersHavingAsset
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → Maybe GYAssetClass
+  → m (Map.Map GYTxOutRef PartialOrderInfo)
+partialOrdersHavingAsset por hasAsset = do
   addr ← partialOrderAddr por
   let paymentCred = addressToPaymentCredential addr & fromJust
-  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred
+  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred hasAsset
   policyId ← partialOrderNftPolicyId por
   let datums = utxosDatumsPure utxosWithDatums
   iwither
@@ -357,6 +367,17 @@ partialOrders por = do
           <$> runExceptT (makePartialOrderInfo policyId oref vod)
     )
     datums
+
+orderByNft
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → GYAssetClass
+  → m (Maybe PartialOrderInfo)
+orderByNft por orderNft = do
+  ois ← partialOrdersHavingAsset por (Just orderNft)
+  case Map.elems ois of
+    [oi] → pure $ Just oi
+    _ → pure Nothing
 
 getPartialOrderInfo
   ∷ GYDexApiQueryMonad m a
@@ -381,6 +402,13 @@ getPartialOrdersInfos por orderRefs = do
   when (Map.size vod /= length orderRefs) $ throwAppError $ PodNotAllOrderRefsPresent $ Set.fromList orderRefs `Set.difference` Map.keysSet vod
   policyId ← partialOrderNftPolicyId por
   runExceptT (Map.traverseWithKey (makePartialOrderInfo policyId) vod) >>= liftEither
+
+getPartialOrdersInfos' ∷ GYDexApiQueryMonad m a ⇒ PORefs → [(GYTxOutRef, Natural)] → m [(PartialOrderInfo, Natural)]
+getPartialOrdersInfos' por ordersWithTokenBuyAmount = do
+  let ordersWithTokenBuyAmount' = Map.fromList ordersWithTokenBuyAmount
+  orders ← getPartialOrdersInfos por $ Map.keys ordersWithTokenBuyAmount' -- @Map.keys@ instead of @fst <$> ordersWithTokenBuyAmount@ just to make sure we don't give in duplicates, though not strictly necessary.
+  -- Even though we use `dropMissing`, `getPartialOrdersInfos` verify that all entries are present.
+  pure $ Map.elems $ Map.merge Map.dropMissing Map.dropMissing (Map.zipWithMatched (\_ poi amt → (poi, amt))) orders ordersWithTokenBuyAmount'
 
 makePartialOrderInfo
   ∷ GYDexApiQueryMonad m a
@@ -759,11 +787,8 @@ fillMultiplePartialOrders
   → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
   → m (GYTxSkeleton 'PlutusV2)
 fillMultiplePartialOrders por ordersWithTokenBuyAmount mRefPocd = do
-  let ordersWithTokenBuyAmount' = Map.fromList ordersWithTokenBuyAmount
-  orders ← getPartialOrdersInfos por $ Map.keys ordersWithTokenBuyAmount'
-  -- Even though we use `dropMissing`, `getPartialOrdersInfos` verify that all entries are present.
-  let orders' = Map.elems $ Map.merge Map.dropMissing Map.dropMissing (Map.zipWithMatched (\_ poi amt → (poi, amt))) orders ordersWithTokenBuyAmount'
-  fillMultiplePartialOrders' por orders' mRefPocd
+  ordersWithTokenBuyAmount' ← getPartialOrdersInfos' por ordersWithTokenBuyAmount
+  fillMultiplePartialOrders' por ordersWithTokenBuyAmount' mRefPocd mempty
 
 -- | Completely fill multiple orders.
 completelyFillMultiplePartialOrders
@@ -774,7 +799,7 @@ completelyFillMultiplePartialOrders
   → m (GYTxSkeleton 'PlutusV2)
 completelyFillMultiplePartialOrders por ordersRefs mRefPocd = do
   orders ← getPartialOrdersInfos por ordersRefs
-  fillMultiplePartialOrders' por (map (\o → (o, poiOfferedAmount o)) $ Map.elems orders) mRefPocd
+  fillMultiplePartialOrders' por (map (\o → (o, poiOfferedAmount o)) $ Map.elems orders) mRefPocd mempty
 
 -- | Fills multiple orders. If the provided amount of offered tokens to buy in an order is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillMultiplePartialOrders'
@@ -782,8 +807,9 @@ fillMultiplePartialOrders'
   ⇒ PORefs
   → [(PartialOrderInfo, Natural)]
   → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → GYValue
   → m (GYTxSkeleton 'PlutusV2)
-fillMultiplePartialOrders' por orders mRefPocd = do
+fillMultiplePartialOrders' por orders mRefPocd addTakerFee = do
   (cfgRef, pocd) ←
     case mRefPocd of
       Just (cfgRef', pocd') → pure (cfgRef', pocd')
@@ -807,7 +833,7 @@ fillMultiplePartialOrders' por orders mRefPocd = do
             feeOutput
               | fee == mempty = mempty
               | otherwise =
-                  mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) fee $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
+                  mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) (fee <> addTakerFee) $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
         script ← mintingPolicyToScript <$> partialOrderNftPolicy por
         foldlM
           ( \(!prevSkel) (poi@PartialOrderInfo {..}, amt) → do

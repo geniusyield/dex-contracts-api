@@ -15,6 +15,7 @@ import Data.ByteString.Builder (toLazyByteString)
 import GeniusYield.HTTP.Errors
 import GeniusYield.Imports (lazyDecodeUtf8Lenient)
 import GeniusYield.Providers.Common (SubmitTxException (SubmitTxException))
+import GeniusYield.Server.Dex.PartialOrder (PodServerException)
 import GeniusYield.Transaction (BuildTxException (..))
 import GeniusYield.Transaction.Common (BalancingError (..))
 import GeniusYield.TxBuilder
@@ -149,7 +150,8 @@ exceptionHandler =
               <> tShow sysStart
         GYQueryDatumException qdErr → someBackendError $ tShow qdErr
         GYDatumMismatch actualDatum scriptWitness → someBackendError $ "Actual datum in UTxO is: " <> tShow actualDatum <> ", but witness has wrong corresponding datum information: " <> tShow scriptWitness
-        GYApplicationException e → toApiError e
+        GYApplicationException e → toApiError e,
+      WH $ \(e ∷ PodServerException) → toApiError e
     ]
 
 sinkStreamingBody ∷ ((Wai.StreamingBody → IO ()) → IO ()) → IO LBS.ByteString

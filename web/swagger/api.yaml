@@ -86,9 +86,7 @@ definitions:
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       transaction_id:
         $ref: '#/definitions/GYTxId'
     required:
@@ -103,6 +101,66 @@ definitions:
     example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
     format: bech32
     type: string
+  FillOrderParameters:
+    description: Fill order(s) request parameters.
+    example:
+      addresses:
+      - addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+      change_address: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+      collateral: 4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1
+      order_references_with_amount:
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0
+        - '100'
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0
+        - '100'
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
+      order_references_with_amount:
+        items:
+          items:
+          - $ref: '#/definitions/GYTxOutRef'
+          - $ref: '#/definitions/GYNatural'
+          maxItems: 2
+          minItems: 2
+          type: array
+        minItems: 1
+        type: array
+    required:
+    - addresses
+    - order_references_with_amount
+    type: object
+  FillOrderTransactionDetails:
+    properties:
+      taker_lovelace_flat_fee:
+        $ref: '#/definitions/GYNatural'
+      taker_offered_percent_fee:
+        example: '0.125'
+        format: float
+        type: string
+      taker_offered_percent_fee_amount:
+        $ref: '#/definitions/GYNatural'
+      transaction:
+        $ref: '#/definitions/GYTx'
+      transaction_fee:
+        $ref: '#/definitions/GYNatural'
+      transaction_id:
+        $ref: '#/definitions/GYTxId'
+    required:
+    - transaction
+    - transaction_id
+    - transaction_fee
+    - taker_lovelace_flat_fee
+    - taker_offered_percent_fee
+    - taker_offered_percent_fee_amount
+    type: object
   GYAddressBech32:
     description: An address, serialised as Bech32.
     example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
@@ -272,6 +330,8 @@ definitions:
         example: 1970-01-01T00:00:00Z
         format: ISO8601
         type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
       offer_amount:
         example: '0.125'
         format: float
@@ -297,6 +357,56 @@ definitions:
     - owner_address
     - owner_key_hash
     - output_reference
+    - nft_token
+    type: object
+  OrderInfoDetailed:
+    properties:
+      asked_asset:
+        $ref: '#/definitions/GYAssetClass'
+      contained_asked_tokens:
+        $ref: '#/definitions/GYNatural'
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
+      offer_amount:
+        $ref: '#/definitions/GYNatural'
+      offer_asset:
+        $ref: '#/definitions/GYAssetClass'
+      original_offer_amount:
+        $ref: '#/definitions/GYNatural'
+      output_reference:
+        $ref: '#/definitions/GYTxOutRef'
+      owner_address:
+        $ref: '#/definitions/GYAddressBech32'
+      owner_key_hash:
+        $ref: '#/definitions/GYPubKeyHash'
+      partial_fills:
+        $ref: '#/definitions/GYNatural'
+      price:
+        example: '0.125'
+        format: float
+        type: string
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_amount
+    - original_offer_amount
+    - offer_asset
+    - asked_asset
+    - price
+    - partial_fills
+    - contained_asked_tokens
+    - owner_address
+    - owner_key_hash
+    - output_reference
+    - nft_token
     type: object
   PlaceOrderParameters:
     description: Place order request parameters.
@@ -342,9 +452,7 @@ definitions:
       lovelace_deposit:
         $ref: '#/definitions/GYNatural'
       maker_lovelace_flat_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       maker_offered_percent_fee:
         example: '0.125'
         format: float
@@ -356,9 +464,7 @@ definitions:
       transaction:
         $ref: '#/definitions/GYTx'
       transaction_fee:
-        exclusiveMinimum: false
-        minimum: 0
-        type: integer
+        $ref: '#/definitions/GYNatural'
       transaction_id:
         $ref: '#/definitions/GYTxId'
     required:
@@ -686,6 +792,44 @@ paths:
       summary: Create an order
       tags:
       - Orders
+  /v0/orders/details:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Get details of order(s) using their unique NFT token. Note that
+        each order is identified uniquely by an associated NFT token which can then
+        later be used to retrieve it's details across partial fills.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/GYAssetClass'
+          type: array
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/OrderInfoDetailed'
+            type: array
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get order(s) details
+      tags:
+      - Orders
   /v0/orders/tx/build-cancel:
     post:
       consumes:
@@ -719,6 +863,41 @@ paths:
       security:
       - api-key: []
       summary: Build transaction to cancel order(s)
+      tags:
+      - Orders
+  /v0/orders/tx/build-fill:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Build a transaction to fill order(s). Note that if "collateral"
+        field is not provided, then framework would try to pick collateral UTxO on
+        it's own and in that case would also be free to spend it (i.e., would be made
+        available to coin balancer).
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/FillOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/FillOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Build transaction to fill order(s)
       tags:
       - Orders
   /v0/orders/tx/build-open:

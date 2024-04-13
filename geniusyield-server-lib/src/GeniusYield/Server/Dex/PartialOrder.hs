@@ -1,26 +1,144 @@
 module GeniusYield.Server.Dex.PartialOrder (
   OrdersAPI,
   handleOrdersApi,
+  OrderInfo (..),
+  poiToOrderInfo,
+  PodServerException (..),
 ) where
 
+import Data.Aeson (ToJSON (..))
 import Data.Ratio ((%))
+import Data.Strict.Tuple (Pair (..))
 import Data.Strict.Tuple qualified as Strict
 import Data.Swagger qualified as Swagger
 import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), cancelMultiplePartialOrders, getPartialOrdersInfos, placePartialOrder')
+import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', orderByNft, partialOrderPrice', placePartialOrder')
 import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
+import GeniusYield.HTTP.Errors
+import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Tx (handleTxSign, handleTxSubmit, throwNoSigningKeyError)
-import GeniusYield.Server.Utils (addSwaggerDescription, dropSymbolAndCamelToSnake, logInfo)
+import GeniusYield.Server.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake, logDebug, logInfo)
 import GeniusYield.Types
+import Network.HTTP.Types.Status
 import RIO hiding (logDebug, logInfo)
 import RIO.Map qualified as Map
 import RIO.NonEmpty qualified as NonEmpty
+import RIO.Text qualified as T
 import Servant
+
+-- | Number of orders that we at most allow to be filled in a single transaction.
+maxFillOrders ∷ GYNatural
+maxFillOrders = 5
+
+data PodServerException
+  = -- | Cannot fill more than allowed number of orders.
+    PodMultiFillMoreThanAllowed
+  | -- | When filling multiple orders, they all should have same payment token so that taker fee is charged in only one token.
+    PodMultiFillNotAllSamePaymentToken
+  deriving stock (Show)
+  deriving anyclass (Exception)
+
+instance IsGYApiError PodServerException where
+  toApiError PodMultiFillMoreThanAllowed =
+    GYApiError
+      { gaeErrorCode = "MULTI_FILL_MORE_THAN_ALLOWED",
+        gaeHttpStatus = status400,
+        gaeMsg = T.pack $ "Orders to fill is more than " <> show maxFillOrders
+      }
+  toApiError PodMultiFillNotAllSamePaymentToken =
+    GYApiError
+      { gaeErrorCode = "MULTI_FILL_NOT_SAME_PAIR",
+        gaeHttpStatus = status400,
+        gaeMsg = "Given orders are not having same payment token"
+      }
+
+type OrderInfoPrefix ∷ Symbol
+type OrderInfoPrefix = "oi"
+
+data OrderInfo = OrderInfo
+  { oiOfferAmount ∷ !GYRational,
+    oiPrice ∷ !GYRational,
+    oiStart ∷ !(Maybe GYTime),
+    oiEnd ∷ !(Maybe GYTime),
+    oiOwnerAddress ∷ !GYAddressBech32,
+    oiOwnerKeyHash ∷ !GYPubKeyHash,
+    oiOutputReference ∷ !GYTxOutRef,
+    oiNFTToken ∷ !GYAssetClass
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoPrefix, CamelToSnake]] OrderInfo
+
+instance Swagger.ToSchema OrderInfo where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
+
+type OrderInfoDetailedPrefix ∷ Symbol
+type OrderInfoDetailedPrefix = "oid"
+
+data OrderInfoDetailed = OrderInfoDetailed
+  { oidOfferAmount ∷ !GYNatural,
+    oidOriginalOfferAmount ∷ !GYNatural,
+    oidOfferAsset ∷ !GYAssetClass,
+    oidAskedAsset ∷ !GYAssetClass,
+    oidPrice ∷ !GYRational,
+    oidPartialFills ∷ !GYNatural,
+    oidContainedAskedTokens ∷ !GYNatural,
+    oidStart ∷ !(Maybe GYTime),
+    oidEnd ∷ !(Maybe GYTime),
+    oidOwnerAddress ∷ !GYAddressBech32,
+    oidOwnerKeyHash ∷ !GYPubKeyHash,
+    oidOutputReference ∷ !GYTxOutRef,
+    oidNFTToken ∷ !GYAssetClass
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix OrderInfoDetailedPrefix, CamelToSnake]] OrderInfoDetailed
+
+instance Swagger.ToSchema OrderInfoDetailed where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoDetailedPrefix}
+
+poiToOrderInfo ∷ PartialOrderInfo → OrderAssetPair → Pair OrderInfo Bool
+poiToOrderInfo PartialOrderInfo {..} oap =
+  let isSell = commodityAsset oap == poiOfferedAsset
+      poiOfferedAmount' = fromIntegral poiOfferedAmount
+   in OrderInfo
+        { oiOfferAmount = if isSell then poiOfferedAmount' else poiOfferedAmount' * poiPrice,
+          oiPrice = if isSell then poiPrice else 1 / poiPrice,
+          oiStart = poiStart,
+          oiEnd = poiEnd,
+          oiOwnerAddress = addressToBech32 poiOwnerAddr,
+          oiOwnerKeyHash = poiOwnerKey,
+          oiOutputReference = poiRef,
+          oiNFTToken = GYToken poiNFTCS poiNFT
+        }
+        :!: isSell
+
+poiToOrderInfoDetailed ∷ PartialOrderInfo → OrderInfoDetailed
+poiToOrderInfoDetailed PartialOrderInfo {..} =
+  OrderInfoDetailed
+    { oidOfferAmount = naturalFromGHC poiOfferedAmount,
+      oidOriginalOfferAmount = naturalFromGHC poiOfferedOriginalAmount,
+      oidOfferAsset = poiOfferedAsset,
+      oidAskedAsset = poiAskedAsset,
+      oidPrice = poiPrice,
+      oidPartialFills = naturalFromGHC poiPartialFills,
+      oidContainedAskedTokens = naturalFromGHC poiContainedPayment,
+      oidStart = poiStart,
+      oidEnd = poiEnd,
+      oidOwnerAddress = addressToBech32 poiOwnerAddr,
+      oidOwnerKeyHash = poiOwnerKey,
+      oidOutputReference = poiRef,
+      oidNFTToken = GYToken poiNFTCS poiNFT
+    }
 
 type BotPlaceOrderReqPrefix ∷ Symbol
 type BotPlaceOrderReqPrefix = "bpop"
@@ -87,8 +205,8 @@ type PlaceOrderResPrefix = "potd"
 data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
   { potdTransaction ∷ !GYTx,
     potdTransactionId ∷ !GYTxId,
-    potdTransactionFee ∷ !Natural,
-    potdMakerLovelaceFlatFee ∷ !Natural,
+    potdTransactionFee ∷ !GYNatural,
+    potdMakerLovelaceFlatFee ∷ !GYNatural,
     potdMakerOfferedPercentFee ∷ !GYRational,
     potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
     potdLovelaceDeposit ∷ !GYNatural,
@@ -144,7 +262,7 @@ type CancelOrderResPrefix = "cotd"
 data CancelOrderTransactionDetails = CancelOrderTransactionDetails
   { cotdTransaction ∷ !GYTx,
     cotdTransactionId ∷ !GYTxId,
-    cotdTransactionFee ∷ !Natural
+    cotdTransactionFee ∷ !GYNatural
   }
   deriving stock (Generic)
   deriving
@@ -154,6 +272,46 @@ data CancelOrderTransactionDetails = CancelOrderTransactionDetails
 instance Swagger.ToSchema CancelOrderTransactionDetails where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @CancelOrderResPrefix}
+
+type FillOrderReqPrefix ∷ Symbol
+type FillOrderReqPrefix = "fop"
+
+data FillOrderParameters = FillOrderParameters
+  { fopAddresses ∷ !(NonEmpty GYAddressBech32),
+    fopChangeAddress ∷ !(Maybe ChangeAddress),
+    fopCollateral ∷ !(Maybe GYTxOutRef),
+    fopOrderReferencesWithAmount ∷ !(NonEmpty (GYTxOutRef, GYNatural))
+  }
+  deriving stock (Show, Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix FillOrderReqPrefix, CamelToSnake]] FillOrderParameters
+
+instance Swagger.ToSchema FillOrderParameters where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @FillOrderReqPrefix}
+      & addSwaggerDescription "Fill order(s) request parameters."
+      & addSwaggerExample (toJSON $ FillOrderParameters {fopAddresses = pure "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5", fopChangeAddress = Just (ChangeAddress "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5"), fopCollateral = Just "4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1", fopOrderReferencesWithAmount = ("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0", 100) :| [("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0", 100)]})
+
+type FillOrderResPrefix ∷ Symbol
+type FillOrderResPrefix = "fotd"
+
+data FillOrderTransactionDetails = FillOrderTransactionDetails
+  { fotdTransaction ∷ !GYTx,
+    fotdTransactionId ∷ !GYTxId,
+    fotdTransactionFee ∷ !GYNatural,
+    fotdTakerLovelaceFlatFee ∷ !GYNatural,
+    fotdTakerOfferedPercentFee ∷ !GYRational,
+    fotdTakerOfferedPercentFeeAmount ∷ !GYNatural
+  }
+  deriving stock (Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix FillOrderResPrefix, CamelToSnake]] FillOrderTransactionDetails
+
+instance Swagger.ToSchema FillOrderTransactionDetails where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @FillOrderResPrefix}
 
 type CommonCollateralText ∷ Symbol
 type CommonCollateralText = "Note that if \"collateral\" field is not provided, then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
@@ -166,7 +324,7 @@ type OrdersAPI =
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description ("Create an order. This endpoint would also sign & submit the built transaction.")
+      :> Description "Create an order. This endpoint would also sign & submit the built transaction."
       :> ReqBody '[JSON] BotPlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -176,16 +334,29 @@ type OrdersAPI =
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction.")
+      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction."
       :> ReqBody '[JSON] BotCancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
+    :<|> Summary "Get order(s) details"
+      :> Description "Get details of order(s) using their unique NFT token. Note that each order is identified uniquely by an associated NFT token which can then later be used to retrieve it's details across partial fills."
+      :> "details"
+      :> ReqBody '[JSON] [GYAssetClass]
+      :> Post '[JSON] [OrderInfoDetailed]
+    :<|> Summary "Build transaction to fill order(s)"
+      :> Description ("Build a transaction to fill order(s). " `AppendSymbol` CommonCollateralText)
+      :> "tx"
+      :> "build-fill"
+      :> ReqBody '[JSON] FillOrderParameters
+      :> Post '[JSON] FillOrderTransactionDetails
 
 handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
 handleOrdersApi ctx =
   handlePlaceOrder ctx
     :<|> handlePlaceOrderAndSignSubmit ctx
-    :<|> handleCancelOrder ctx
-    :<|> handleCancelOrderAndSignSubmit ctx
+    :<|> handleCancelOrders ctx
+    :<|> handleCancelOrdersAndSignSubmit ctx
+    :<|> handleOrdersDetails ctx
+    :<|> handleFillOrders ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
 handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
@@ -241,8 +412,8 @@ handlePlaceOrderAndSignSubmit ctx BotPlaceOrderParameters {..} = do
   -- Though transaction id would be same, but we are returning it again, just in case...
   pure $ details {potdTransactionId = txId, potdTransaction = signedTx}
 
-handleCancelOrder ∷ Ctx → CancelOrderParameters → IO CancelOrderTransactionDetails
-handleCancelOrder ctx@Ctx {..} cops@CancelOrderParameters {..} = do
+handleCancelOrders ∷ Ctx → CancelOrderParameters → IO CancelOrderTransactionDetails
+handleCancelOrders ctx@Ctx {..} cops@CancelOrderParameters {..} = do
   logInfo ctx $ "Canceling order(s). Parameters: " +|| cops ||+ ""
   let porefs = dexPORefs ctxDexInfo
       copAddresses' = addressFromBech32 <$> copAddresses
@@ -257,12 +428,63 @@ handleCancelOrder ctx@Ctx {..} cops@CancelOrderParameters {..} = do
         cotdTransactionFee = fromIntegral $ txBodyFee txBody
       }
 
-handleCancelOrderAndSignSubmit ∷ Ctx → BotCancelOrderParameters → IO CancelOrderTransactionDetails
-handleCancelOrderAndSignSubmit ctx BotCancelOrderParameters {..} = do
+handleCancelOrdersAndSignSubmit ∷ Ctx → BotCancelOrderParameters → IO CancelOrderTransactionDetails
+handleCancelOrdersAndSignSubmit ctx BotCancelOrderParameters {..} = do
   logInfo ctx "Canceling order(s) and signing & submitting the transaction."
   ctxAddr ← addressToBech32 <$> resolveCtxAddr ctx
-  details ← handleCancelOrder ctx $ CancelOrderParameters {copAddresses = pure ctxAddr, copChangeAddress = Just (ChangeAddress ctxAddr), copCollateral = ctxCollateral ctx, copOrderReferences = bcopOrderReferences}
+  details ← handleCancelOrders ctx $ CancelOrderParameters {copAddresses = pure ctxAddr, copChangeAddress = Just (ChangeAddress ctxAddr), copCollateral = ctxCollateral ctx, copOrderReferences = bcopOrderReferences}
   signedTx ← handleTxSign ctx $ cotdTransaction details
   txId ← handleTxSubmit ctx signedTx
   -- Though transaction id would be same, but we are returning it again, just in case...
   pure $ details {cotdTransactionId = txId, cotdTransaction = signedTx}
+
+handleOrdersDetails ∷ Ctx → [GYAssetClass] → IO [OrderInfoDetailed]
+handleOrdersDetails ctx@Ctx {..} acs = do
+  logInfo ctx $ "Getting orders details for NFT tokens: " +|| acs ||+ ""
+  let porefs = dexPORefs ctxDexInfo
+  os ← forM acs $ \ac → do
+    logDebug ctx $ "Getting order details for NFT token: " +|| ac ||+ ""
+    runQuery ctx $
+      fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
+  pure $ catMaybes os
+
+handleFillOrders ∷ Ctx → FillOrderParameters → IO FillOrderTransactionDetails
+handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
+  logInfo ctx $ "Filling order(s). Parameters: " +|| fops ||+ ""
+  let porefs = dexPORefs ctxDexInfo
+      fopAddresses' = addressFromBech32 <$> fopAddresses
+      changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
+  (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft porefs
+  ordersWithTokenBuyAmount ← runQuery ctx $ getPartialOrdersInfos' porefs $ NonEmpty.toList $ second naturalToGHC <$> fopOrderReferencesWithAmount
+  when (length ordersWithTokenBuyAmount > fromIntegral maxFillOrders) $ throwIO PodMultiFillMoreThanAllowed
+  let takerFeeRatio = pociMakerFeeRatio pocd
+      takerFee = computePercentTakerFees ordersWithTokenBuyAmount takerFeeRatio
+      maxFlatTakerFee = foldl' (\prevMax (poi, _) → max prevMax $ poiTakerLovelaceFlatFee poi) 0 ordersWithTokenBuyAmount
+  takerFee' ← case valueToList takerFee of
+    [(_, feeAmt)] → pure $ fromIntegral feeAmt
+    _ → throwIO PodMultiFillNotAllSamePaymentToken
+  txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
+    fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just (cfgRef, pocd)) takerFee
+  pure
+    FillOrderTransactionDetails
+      { fotdTransaction = unsignedTx txBody,
+        fotdTransactionId = txBodyTxId txBody,
+        fotdTransactionFee = fromIntegral $ txBodyFee txBody,
+        fotdTakerLovelaceFlatFee = fromIntegral maxFlatTakerFee,
+        fotdTakerOfferedPercentFee = 100 * takerFeeRatio,
+        fotdTakerOfferedPercentFeeAmount = takerFee'
+      }
+ where
+  computePercentTakerFees ∷ Foldable t ⇒ t (PartialOrderInfo, Natural) → GYRational → GYValue
+  computePercentTakerFees ordersWithTokenBuyAmount takerFeeRatio =
+    let takerACWithAmt =
+          foldl'
+            ( \accTakerACWithAmt (poi@PartialOrderInfo {..}, amtToFill) →
+                let takerOfferedAmount = partialOrderPrice' poi amtToFill
+                 in Map.insertWith (+) poiAskedAsset takerOfferedAmount accTakerACWithAmt
+            )
+            mempty
+            ordersWithTokenBuyAmount
+        takerFee =
+          Map.foldlWithKey' (\acc ac amt → acc <> valueSingleton ac (ceiling $ toRational amt * rationalToGHC takerFeeRatio)) mempty takerACWithAmt
+     in takerFee
