@@ -1,0 +1,1106 @@
+definitions:
+  AssetDecimals:
+    description: Decimals of an asset.
+    example: 6
+    format: int64
+    maximum: 18446744073709551615
+    minimum: 0
+    type: integer
+  AssetDetails:
+    description: Asset details.
+    properties:
+      asset:
+        $ref: '#/definitions/GYAssetClass'
+      asset_decimals:
+        $ref: '#/definitions/AssetDecimals'
+      asset_ticker:
+        $ref: '#/definitions/AssetTicker'
+    required:
+    - asset
+    type: object
+  AssetTicker:
+    description: Ticker of an asset.
+    example: ADA
+    type: string
+  BotCancelOrderParameters:
+    description: Cancel order request parameters specialized towards configured bot.
+    properties:
+      order_references:
+        items:
+          $ref: '#/definitions/GYTxOutRef'
+        minItems: 1
+        type: array
+    required:
+    - order_references
+    type: object
+  BotPlaceOrderParameters:
+    description: Place order request parameters specialized towards configured bot.
+    properties:
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      offer_amount:
+        $ref: '#/definitions/GYNatural'
+      offer_token:
+        $ref: '#/definitions/GYAssetClass'
+      price_amount:
+        $ref: '#/definitions/GYNatural'
+      price_token:
+        $ref: '#/definitions/GYAssetClass'
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_token
+    - offer_amount
+    - price_token
+    - price_amount
+    type: object
+  CancelOrderParameters:
+    description: Cancel order request parameters.
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
+      order_references:
+        items:
+          $ref: '#/definitions/GYTxOutRef'
+        minItems: 1
+        type: array
+    required:
+    - addresses
+    - order_references
+    type: object
+  CancelOrderTransactionDetails:
+    properties:
+      transaction:
+        $ref: '#/definitions/GYTx'
+      transaction_fee:
+        $ref: '#/definitions/GYNatural'
+      transaction_id:
+        $ref: '#/definitions/GYTxId'
+    required:
+    - transaction
+    - transaction_id
+    - transaction_fee
+    type: object
+  ChangeAddress:
+    description: An address, serialised as Bech32. This is used as a change address
+      by our balancer to send left over funds from selected inputs. If not provided,
+      first address from given addresses list is used instead.
+    example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+    format: bech32
+    type: string
+  FillOrderParameters:
+    description: Fill order(s) request parameters.
+    example:
+      addresses:
+      - addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+      change_address: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+      collateral: 4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1
+      order_references_with_amount:
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0
+        - '100'
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0
+        - '100'
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
+      order_references_with_amount:
+        items:
+          items:
+          - $ref: '#/definitions/GYTxOutRef'
+          - $ref: '#/definitions/GYNatural'
+          maxItems: 2
+          minItems: 2
+          type: array
+        minItems: 1
+        type: array
+    required:
+    - addresses
+    - order_references_with_amount
+    type: object
+  FillOrderTransactionDetails:
+    properties:
+      taker_lovelace_flat_fee:
+        $ref: '#/definitions/GYNatural'
+      taker_offered_percent_fee:
+        example: '0.125'
+        format: float
+        type: string
+      taker_offered_percent_fee_amount:
+        $ref: '#/definitions/GYNatural'
+      transaction:
+        $ref: '#/definitions/GYTx'
+      transaction_fee:
+        $ref: '#/definitions/GYNatural'
+      transaction_id:
+        $ref: '#/definitions/GYTxId'
+    required:
+    - transaction
+    - transaction_id
+    - transaction_fee
+    - taker_lovelace_flat_fee
+    - taker_offered_percent_fee
+    - taker_offered_percent_fee_amount
+    type: object
+  GYAddressBech32:
+    description: An address, serialised as Bech32.
+    example: addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5
+    format: bech32
+    type: string
+  GYAssetClass:
+    description: This is an asset class, i.e. either "lovelace" or some other token
+      with its minting policy and token name delimited by dot (.).
+    example: ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44
+    type: string
+  GYBalance:
+    description: 'A multi asset quantity, represented as map where each key represents
+      an asset: policy ID and token name in hex concatenated by a dot.'
+    example:
+      ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44: '101'
+      lovelace: '22'
+    type: object
+  GYNatural:
+    description: A natural number which is a non-negative integer. Minimum value is
+      0.
+    example: '123456789123456789123456789123456789123456789'
+    type: string
+  GYPubKeyHash:
+    description: The hash of a public key.
+    example: e1cbb80db89e292269aeb93ec15eb963dda5176b66949fe1c2a6a38d
+    format: hex
+    maxLength: 56
+    minLength: 56
+    type: string
+  GYStakeAddressBech32:
+    description: A stake address, serialised as Bech32.
+    example: stake_test1upa805fqh85x4hw88zxmhvdaydgyjzmazs9tydqrscerxnghfq4t3
+    format: bech32
+    type: string
+  GYTx:
+    description: Transaction cbor hex string
+    example: 84a70082825820975e4c7f8d7937f8102e500714feb3f014c8766fcf287a11c10c686154fcb27501825820c887cba672004607a0f60ab28091d5c24860dbefb92b1a8776272d752846574f000d818258207a67cd033169e330c9ae9b8d0ef8b71de9eb74bbc8f3f6be90446dab7d1e8bfd00018282583900fd040c7a10744b79e5c80ec912a05dbdb3009e372b7f4b0f026d16b0c663651ffc046068455d2994564ba9d4b3e9b458ad8ab5232aebbf401a1abac7d882583900fd040c7a10744b79e5c80ec912a05dbdb3009e372b7f4b0f026d16b0c663651ffc046068455d2994564ba9d4b3e9b458ad8ab5232aebbf40821a0017ad4aa2581ca6bb5fd825455e7c69bdaa9d3a6dda9bcbe9b570bc79bd55fa50889ba1466e69636b656c1911d7581cb17cb47f51d6744ad05fb937a762848ad61674f8aebbaec67be0bb6fa14853696c6c69636f6e190258021a00072f3c0e8009a1581cb17cb47f51d6744ad05fb937a762848ad61674f8aebbaec67be0bb6fa14853696c6c69636f6e1902580b5820291b4e4c5f189cb896674e02e354028915b11889687c53d9cf4c1c710ff5e4aea203815908d45908d101000033332332232332232323232323232323232323232323232323232222223232323235500222222222225335333553024120013232123300122333500522002002001002350012200112330012253350021001102d02c25335325335333573466e3cd400488008d404c880080b40b04ccd5cd19b873500122001350132200102d02c102c3500122002102b102c00a132635335738921115554784f206e6f7420636f6e73756d65640002302115335333573466e3c048d5402c880080ac0a854cd4ccd5cd19b8701335500b2200102b02a10231326353357389210c77726f6e6720616d6f756e740002302113263533573892010b77726f6e6720746f6b656e00023021135500122222222225335330245027007162213500222253350041335502d00200122161353333573466e1cd55cea8012400046644246600200600464646464646464646464646666ae68cdc39aab9d500a480008cccccccccc888888888848cccccccccc00402c02802402001c01801401000c008cd40548c8c8cccd5cd19b8735573aa0049000119910919800801801180f1aba15002301a357426ae8940088c98d4cd5ce01381401301289aab9e5001137540026ae854028cd4054058d5d0a804999aa80c3ae501735742a010666aa030eb9405cd5d0a80399a80a80f1aba15006335015335502101f75a6ae854014c8c8c8cccd5cd19b8735573aa00490001199109198008018011919191999ab9a3370e6aae754009200023322123300100300233502475a6ae854008c094d5d09aba2500223263533573805605805405226aae7940044dd50009aba150023232323333573466e1cd55cea8012400046644246600200600466a048eb4d5d0a80118129aba135744a004464c6a66ae700ac0b00a80a44d55cf280089baa001357426ae8940088c98d4cd5ce01381401301289aab9e5001137540026ae854010cd4055d71aba15003335015335502175c40026ae854008c06cd5d09aba2500223263533573804604804404226ae8940044d5d1280089aba25001135744a00226ae8940044d5d1280089aba25001135744a00226aae7940044dd50009aba150023232323333573466e1d400520062321222230040053016357426aae79400c8cccd5cd19b875002480108c848888c008014c060d5d09aab9e500423333573466e1d400d20022321222230010053014357426aae7940148cccd5cd19b875004480008c848888c00c014dd71aba135573ca00c464c6a66ae7007807c07407006c0680644d55cea80089baa001357426ae8940088c98d4cd5ce00b80c00b00a9100109aab9e5001137540022464460046eb0004c8004d5406488cccd55cf8009280c119a80b98021aba100230033574400402446464646666ae68cdc39aab9d5003480008ccc88848ccc00401000c008c8c8c8cccd5cd19b8735573aa004900011991091980080180118099aba1500233500c012357426ae8940088c98d4cd5ce00b00b80a80a09aab9e5001137540026ae85400cccd5401dd728031aba1500233500875c6ae84d5d1280111931a99ab9c012013011010135744a00226aae7940044dd5000899aa800bae75a224464460046eac004c8004d5405c88c8cccd55cf8011280b919a80b19aa80c18031aab9d5002300535573ca00460086ae8800c0444d5d080089119191999ab9a3370ea0029000119091180100198029aba135573ca00646666ae68cdc3a801240044244002464c6a66ae7004004403c0380344d55cea80089baa001232323333573466e1cd55cea80124000466442466002006004600a6ae854008dd69aba135744a004464c6a66ae7003403803002c4d55cf280089baa0012323333573466e1cd55cea800a400046eb8d5d09aab9e500223263533573801601801401226ea8004488c8c8cccd5cd19b87500148010848880048cccd5cd19b875002480088c84888c00c010c018d5d09aab9e500423333573466e1d400d20002122200223263533573801c01e01a01801601426aae7540044dd50009191999ab9a3370ea0029001100911999ab9a3370ea0049000100911931a99ab9c00a00b009008007135573a6ea80048c8c8c8c8c8cccd5cd19b8750014803084888888800c8cccd5cd19b875002480288488888880108cccd5cd19b875003480208cc8848888888cc004024020dd71aba15005375a6ae84d5d1280291999ab9a3370ea00890031199109111111198010048041bae35742a00e6eb8d5d09aba2500723333573466e1d40152004233221222222233006009008300c35742a0126eb8d5d09aba2500923333573466e1d40192002232122222223007008300d357426aae79402c8cccd5cd19b875007480008c848888888c014020c038d5d09aab9e500c23263533573802402602202001e01c01a01801601426aae7540104d55cf280189aab9e5002135573ca00226ea80048c8c8c8c8cccd5cd19b875001480088ccc888488ccc00401401000cdd69aba15004375a6ae85400cdd69aba135744a00646666ae68cdc3a80124000464244600400660106ae84d55cf280311931a99ab9c00b00c00a009008135573aa00626ae8940044d55cf280089baa001232323333573466e1d400520022321223001003375c6ae84d55cf280191999ab9a3370ea004900011909118010019bae357426aae7940108c98d4cd5ce00400480380300289aab9d5001137540022244464646666ae68cdc39aab9d5002480008cd5403cc018d5d0a80118029aba135744a004464c6a66ae7002002401c0184d55cf280089baa00149924103505431001200132001355008221122253350011350032200122133350052200230040023335530071200100500400132001355007222533500110022213500222330073330080020060010033200135500622225335001100222135002225335333573466e1c005200000d00c13330080070060031333008007335009123330010080030020060031122002122122330010040031122123300100300212200212200111232300100122330033002002001482c0252210853696c6c69636f6e003351223300248920975e4c7f8d7937f8102e500714feb3f014c8766fcf287a11c10c686154fcb27500480088848cc00400c00880050581840100d87980821a001f372a1a358a2b14f5f6
+    type: string
+  GYTxId:
+    description: Transaction id
+    example: a8d75b90a052302c1232bedd626720966b1697fe38de556c617c340233688935
+    type: string
+  GYTxOutRef:
+    example: 4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1
+    format: hex
+    pattern: '[0-9a-fA-F]{64}#"d+'
+    type: string
+  Market:
+    description: Market information
+    properties:
+      base_asset:
+        $ref: '#/definitions/GYAssetClass'
+      market_id:
+        $ref: '#/definitions/OrderAssetPair'
+      target_asset:
+        $ref: '#/definitions/GYAssetClass'
+    required:
+    - market_id
+    - base_asset
+    - target_asset
+    type: object
+  MarketOHLC:
+    description: Returns market activity in candlestick OHLC format for a specific
+      DEX and token pair
+    example:
+      base_close: 0.207742
+      base_high: 0.207742
+      base_low: 0.207742
+      base_open: 0.207742
+      base_volume: 25.21128
+      count: 1
+      target_close: 4.813658
+      target_high: 4.813658
+      target_low: 4.813658
+      target_open: 4.813658
+      target_volume: 121.358488
+      timestamp: 2024-03-07T23:45:00Z
+    properties:
+      base_close:
+        format: double
+        type: number
+      base_high:
+        format: double
+        type: number
+      base_low:
+        format: double
+        type: number
+      base_open:
+        format: double
+        type: number
+      base_volume:
+        format: double
+        type: number
+      count:
+        exclusiveMinimum: false
+        minimum: 0
+        type: integer
+      target_close:
+        format: double
+        type: number
+      target_high:
+        format: double
+        type: number
+      target_low:
+        format: double
+        type: number
+      target_open:
+        format: double
+        type: number
+      target_volume:
+        format: double
+        type: number
+      timestamp:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - base_close
+    - base_high
+    - base_low
+    - base_open
+    - base_volume
+    - target_close
+    - target_high
+    - target_low
+    - target_open
+    - target_volume
+    - count
+    - timestamp
+    type: object
+  OrderAssetPair:
+    description: Market pair identifier. It's an underscore delimited concatenation
+      of offered and asked asset's "token detail". A token detail is given by dot
+      delimited concatenation of policy id and token name.
+    example: f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53
+    type: string
+  OrderBookInfo:
+    properties:
+      asks:
+        items:
+          $ref: '#/definitions/OrderInfo'
+        type: array
+      bids:
+        items:
+          $ref: '#/definitions/OrderInfo'
+        type: array
+      market_pair_id:
+        $ref: '#/definitions/OrderAssetPair'
+      timestamp:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - market_pair_id
+    - timestamp
+    - bids
+    - asks
+    type: object
+  OrderInfo:
+    properties:
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
+      offer_amount:
+        example: '0.125'
+        format: float
+        type: string
+      output_reference:
+        $ref: '#/definitions/GYTxOutRef'
+      owner_address:
+        $ref: '#/definitions/GYAddressBech32'
+      owner_key_hash:
+        $ref: '#/definitions/GYPubKeyHash'
+      price:
+        example: '0.125'
+        format: float
+        type: string
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_amount
+    - price
+    - owner_address
+    - owner_key_hash
+    - output_reference
+    - nft_token
+    type: object
+  OrderInfoDetailed:
+    properties:
+      asked_asset:
+        $ref: '#/definitions/GYAssetClass'
+      contained_asked_tokens:
+        $ref: '#/definitions/GYNatural'
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
+      offer_amount:
+        $ref: '#/definitions/GYNatural'
+      offer_asset:
+        $ref: '#/definitions/GYAssetClass'
+      original_offer_amount:
+        $ref: '#/definitions/GYNatural'
+      output_reference:
+        $ref: '#/definitions/GYTxOutRef'
+      owner_address:
+        $ref: '#/definitions/GYAddressBech32'
+      owner_key_hash:
+        $ref: '#/definitions/GYPubKeyHash'
+      partial_fills:
+        $ref: '#/definitions/GYNatural'
+      price:
+        example: '0.125'
+        format: float
+        type: string
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - offer_amount
+    - original_offer_amount
+    - offer_asset
+    - asked_asset
+    - price
+    - partial_fills
+    - contained_asked_tokens
+    - owner_address
+    - owner_key_hash
+    - output_reference
+    - nft_token
+    type: object
+  PlaceOrderParameters:
+    description: Place order request parameters.
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/GYAddressBech32'
+        minItems: 1
+        type: array
+      change_address:
+        $ref: '#/definitions/ChangeAddress'
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
+      end:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+      offer_amount:
+        $ref: '#/definitions/GYNatural'
+      offer_token:
+        $ref: '#/definitions/GYAssetClass'
+      price_amount:
+        $ref: '#/definitions/GYNatural'
+      price_token:
+        $ref: '#/definitions/GYAssetClass'
+      stake_address:
+        $ref: '#/definitions/GYStakeAddressBech32'
+      start:
+        description: This is the posix time in ISO8601 format.
+        example: 1970-01-01T00:00:00Z
+        format: ISO8601
+        type: string
+    required:
+    - addresses
+    - offer_token
+    - offer_amount
+    - price_token
+    - price_amount
+    type: object
+  PlaceOrderTransactionDetails:
+    properties:
+      lovelace_deposit:
+        $ref: '#/definitions/GYNatural'
+      maker_lovelace_flat_fee:
+        $ref: '#/definitions/GYNatural'
+      maker_offered_percent_fee:
+        example: '0.125'
+        format: float
+        type: string
+      maker_offered_percent_fee_amount:
+        $ref: '#/definitions/GYNatural'
+      order_ref:
+        $ref: '#/definitions/GYTxOutRef'
+      transaction:
+        $ref: '#/definitions/GYTx'
+      transaction_fee:
+        $ref: '#/definitions/GYNatural'
+      transaction_id:
+        $ref: '#/definitions/GYTxId'
+    required:
+    - transaction
+    - transaction_id
+    - transaction_fee
+    - maker_lovelace_flat_fee
+    - maker_offered_percent_fee
+    - maker_offered_percent_fee_amount
+    - lovelace_deposit
+    - order_ref
+    type: object
+  Settings:
+    description: Genius Yield Server settings.
+    properties:
+      address:
+        $ref: '#/definitions/GYAddressBech32'
+      backend:
+        type: string
+      collateral:
+        $ref: '#/definitions/GYTxOutRef'
+      network:
+        type: string
+      revision:
+        type: string
+      stake_address:
+        $ref: '#/definitions/GYStakeAddressBech32'
+      version:
+        type: string
+    required:
+    - network
+    - version
+    - revision
+    - backend
+    type: object
+  TradingFees:
+    description: Trading fees of DEX.
+    properties:
+      flat_maker_fee:
+        $ref: '#/definitions/GYNatural'
+      flat_taker_fee:
+        $ref: '#/definitions/GYNatural'
+      percentage_maker_fee:
+        example: '0.125'
+        format: float
+        type: string
+      percentage_taker_fee:
+        example: '0.125'
+        format: float
+        type: string
+    required:
+    - flat_maker_fee
+    - flat_taker_fee
+    - percentage_maker_fee
+    - percentage_taker_fee
+    type: object
+info:
+  contact:
+    email: support@geniusyield.co
+    name: GeniusYield Technical Support
+    url: https://www.geniusyield.co/
+  description: API to interact with GeniusYield DEX.
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/apache-2-0
+  title: GeniusYield DEX Server API
+  version: 0.0.1
+paths:
+  /v0/assets/{asset}:
+    get:
+      description: Get information for a specific asset.
+      parameters:
+      - in: path
+        name: asset
+        required: true
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/AssetDetails'
+        '400':
+          description: Invalid `asset`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get assets information
+      tags:
+      - Assets
+  /v0/balances/{address}:
+    get:
+      description: Get token balances of an address.
+      parameters:
+      - format: bech32
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/GYBalance'
+        '400':
+          description: Invalid `address`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Balances
+      tags:
+      - Balances
+  /v0/historical-prices/maestro/{market-id}/{dex}:
+    get:
+      description: This endpoint internally calls Maestro's "DEX And Pair OHLC" endpoint.
+      parameters:
+      - in: path
+        name: market-id
+        required: true
+        type: string
+      - enum:
+        - minswap
+        - genius-yield
+        in: path
+        name: dex
+        required: true
+        type: string
+      - enum:
+        - 1m
+        - 5m
+        - 15m
+        - 30m
+        - 1h
+        - 4h
+        - 1d
+        - 1w
+        - 1mo
+        in: query
+        name: resolution
+        required: false
+        type: string
+      - format: date
+        in: query
+        name: from
+        required: false
+        type: string
+      - format: date
+        in: query
+        name: to
+        required: false
+        type: string
+      - in: query
+        maximum: 50000
+        minimum: 1
+        name: limit
+        required: false
+        type: integer
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: sort
+        required: false
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/MarketOHLC'
+            type: array
+        '400':
+          description: Invalid `sort` or `limit` or `to` or `from` or `resolution`
+            or `dex` or `market-id`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get price history using Maestro.
+      tags:
+      - Historical Prices
+  /v0/markets:
+    get:
+      description: Returns the list of markets information supported by GeniusYield
+        DEX.
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/Market'
+            type: array
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get markets information for the DEX.
+      tags:
+      - Markets
+  /v0/order-books/{market-id}:
+    get:
+      description: Get order book for a specific market.
+      parameters:
+      - in: path
+        name: market-id
+        required: true
+        type: string
+      - format: bech32
+        in: query
+        name: address
+        required: false
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/OrderBookInfo'
+        '400':
+          description: Invalid `address` or `market-id`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Order book
+      tags:
+      - Order Book
+  /v0/orders:
+    delete:
+      consumes:
+      - application/json;charset=utf-8
+      description: Cancel order(s). This endpoint would also sign & submit the built
+        transaction.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BotCancelOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CancelOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Cancel order(s)
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Create an order. This endpoint would also sign & submit the built
+        transaction.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BotPlaceOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/PlaceOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Create an order
+      tags:
+      - Orders
+  /v0/orders/details:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Get details of order(s) using their unique NFT token. Note that
+        each order is identified uniquely by an associated NFT token which can then
+        later be used to retrieve it's details across partial fills.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/GYAssetClass'
+          type: array
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/OrderInfoDetailed'
+            type: array
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get order(s) details
+      tags:
+      - Orders
+  /v0/orders/tx/build-cancel:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Build a transaction to cancel order(s). Note that if "collateral"
+        field is not provided, then framework would try to pick collateral UTxO on
+        it's own and in that case would also be free to spend it (i.e., would be made
+        available to coin balancer).
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CancelOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CancelOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Build transaction to cancel order(s)
+      tags:
+      - Orders
+  /v0/orders/tx/build-fill:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Build a transaction to fill order(s). Note that if "collateral"
+        field is not provided, then framework would try to pick collateral UTxO on
+        it's own and in that case would also be free to spend it (i.e., would be made
+        available to coin balancer).
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/FillOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/FillOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Build transaction to fill order(s)
+      tags:
+      - Orders
+  /v0/orders/tx/build-open:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Build a transaction to create an order. In case "stakeAddress"
+        field is provided then order is placed at a mangled address having the given
+        staking credential. Note that if "collateral" field is not provided, then
+        framework would try to pick collateral UTxO on it's own and in that case would
+        also be free to spend it (i.e., would be made available to coin balancer).
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/PlaceOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/PlaceOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Build transaction to create order
+      tags:
+      - Orders
+  /v0/settings:
+    get:
+      description: Get server settings such as network, version, and revision. Optionally
+        if a collateral UTxO reference and signing key are individually configured
+        in the server (provided server is spun up locally), then it's details are
+        also returned.
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Settings'
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Server settings
+      tags:
+      - Settings
+  /v0/trading-fees:
+    get:
+      description: Get trading fees of DEX.
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/TradingFees'
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Trading fees
+      tags:
+      - Trading Fees
+  /v0/tx/sign:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Signs the given transaction using key configured in server.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/GYTx'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/GYTx'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Sign a transaction
+      tags:
+      - Transaction
+  /v0/tx/sign-and-submit:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Signs the given transaction using key configured in server and
+        submits it to the network.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/GYTx'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/GYTxId'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Sign and submit a transaction
+      tags:
+      - Transaction
+  /v0/tx/submit:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Submits the given transaction to the network.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/GYTx'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/GYTxId'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Submit a transaction
+      tags:
+      - Transaction
+securityDefinitions:
+  api-key:
+    description: API key for accessing the server's API.
+    in: header
+    name: api-key
+    type: apiKey
+swagger: '2.0'
+tags:
+- description: Endpoints related to transaction hex such as submitting a transaction
+  name: Transaction
+- description: Endpoints related to accessing markets information
+  name: Markets
+- description: Endpoints related to interacting with orders
+  name: Orders
+- description: Endpoint to get server settings such as network, version, and revision
+  name: Settings
+- description: Endpoint to get trading fees of DEX.
+  name: Trading Fees
+- description: Endpoint to fetch asset details.
+  name: Assets
+- description: Endpoint to fetch order book.
+  name: Order Book
+- description: Endpoints to fetch historical prices.
+  name: Historical Prices
+- description: Endpoint to fetch token balances.
+  name: Balances

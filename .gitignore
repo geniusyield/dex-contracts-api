@@ -23,3 +23,5 @@ cabal.project.local~
 .ghc.environment.*
 .DS_Store
 *.skey
+secrets/
+*.env

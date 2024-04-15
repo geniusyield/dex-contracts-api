@@ -1,23 +1,31 @@
-cabal-version:      3.6
-name:               geniusyield-dex-api
+cabal-version:   3.6
+name:            geniusyield-dex-api
 
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:            0.1.0.0
+version:         0.1.0.0
+synopsis:        API code to interact with GeniusYield DEX.
+description:
+  API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
 
-synopsis:           API code to interact with GeniusYield DEX.
-description:        API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
-license:            Apache-2.0
-license-file:       LICENSE
-author:             GeniusYield
-maintainer:         support@geniusyield.co
-copyright:          2023 GYELD GMBH
-build-type:         Simple
-category:           Blockchain, Cardano, Validator
-extra-doc-files:    CHANGELOG.md, README.md
-extra-source-files: compiled-scripts/minting-policy, compiled-scripts/partial-order
-tested-with:        GHC ==9.2.8
+license:         Apache-2.0
+license-file:    LICENSE
+author:          GeniusYield
+maintainer:      support@geniusyield.co
+copyright:       2023 GYELD GMBH
+build-type:      Simple
+category:        Blockchain, Cardano, Validator
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.2.8
+data-dir:        data
+data-files:
+  compiled-scripts/minting-policy.txt
+  compiled-scripts/partial-order-config.uplc
+  compiled-scripts/partial-order.txt
 
 source-repository head
   type:     git
@@ -57,6 +65,7 @@ library
     GeniusYield.Scripts
     GeniusYield.Scripts.Common
     GeniusYield.Scripts.Dex
+    GeniusYield.Scripts.Dex.Data
     GeniusYield.Scripts.Dex.Nft
     GeniusYield.Scripts.Dex.PartialOrder
     GeniusYield.Scripts.Dex.PartialOrderConfig
@@ -64,8 +73,11 @@ library
     GeniusYield.Scripts.Dex.PartialOrderNft
 
   build-depends:
-    , base                   ^>=4.16.4.0
+    , aeson
+    , base        ^>=4.16.4.0
+    , bytestring
     , containers
+    , file-embed
     , http-types
     , mtl
     , swagger2

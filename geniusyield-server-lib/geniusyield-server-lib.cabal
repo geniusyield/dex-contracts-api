@@ -1,0 +1,125 @@
+cabal-version:   3.6
+name:            geniusyield-server-lib
+version:         0.1.0
+synopsis:        GeniusYield server library
+description:     Library for GeniusYield server.
+license:         Apache-2.0
+license-file:    LICENSE
+bug-reports:     http://github.com/geniusyield/dex-contracts-api/issues
+author:          GeniusYield
+maintainer:      support@geniusyield.co
+copyright:       2024 GYELD GMBH
+build-type:      Simple
+category:        Blockchain, Cardano
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.2.8
+
+source-repository head
+  type:     git
+  location: https://github.com/geniusyield/dex-contracts-api.git
+
+common common
+  default-language:   GHC2021
+  default-extensions:
+    NoImplicitPrelude
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    GADTs
+    LambdaCase
+    MultiWayIf
+    OverloadedStrings
+    RecordWildCards
+    RoleAnnotations
+    TemplateHaskell
+    TypeFamilies
+    TypeFamilyDependencies
+    UndecidableInstances
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:        -Wall -Wincomplete-uni-patterns -Wunused-packages
+
+  -- Speed-ups GHCi considerably.
+  ghc-options:        -fno-show-valid-hole-fits
+
+library
+  import:          common
+  hs-source-dirs:  src
+  exposed-modules:
+    GeniusYield.Server.Api
+    GeniusYield.Server.Assets
+    GeniusYield.Server.Auth
+    GeniusYield.Server.Config
+    GeniusYield.Server.Constants
+    GeniusYield.Server.Ctx
+    GeniusYield.Server.Dex.HistoricalPrices.Maestro
+    GeniusYield.Server.Dex.Markets
+    GeniusYield.Server.Dex.PartialOrder
+    GeniusYield.Server.ErrorMiddleware
+    GeniusYield.Server.Options
+    GeniusYield.Server.RequestLoggerMiddleware
+    GeniusYield.Server.Run
+    GeniusYield.Server.Tx
+    GeniusYield.Server.Utils
+
+  other-modules:
+    PackageInfo_geniusyield_server_lib
+    Paths_geniusyield_server_lib
+
+  autogen-modules:
+    Paths_geniusyield_server_lib
+    PackageInfo_geniusyield_server_lib
+
+  build-depends:
+    , aeson
+    , atlas-cardano
+    , base                       ^>=4.16.4.0
+    , binary
+    , bytestring
+    , cardano-api
+    , deriving-aeson
+    , envy
+    , fast-logger
+    , fmt
+    , geniusyield-dex-api
+    , geniusyield-orderbot-lib
+    , githash
+    , http-types
+    , insert-ordered-containers
+    , lens
+    , optparse-applicative
+    , plutus-ledger-api
+    , ply-core
+    , rio
+    , servant-foreign
+    , servant-server
+    , servant-swagger
+    , strict
+    , swagger2
+    , time
+    , time-manager
+    , transformers
+    , wai
+    , wai-extra
+    , warp
+    , yaml
+
+  -- Dependencies whose version is fixed by @cabal.project@ file.
+  build-depends:
+    , atlas-cardano
+    , maestro-sdk
+
+executable geniusyield-server
+  import:         common
+  hs-source-dirs: app
+  main-is:        Main.hs
+  ghc-options:    -O2 -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+    , geniusyield-server-lib
+    , optparse-applicative
+    , rio

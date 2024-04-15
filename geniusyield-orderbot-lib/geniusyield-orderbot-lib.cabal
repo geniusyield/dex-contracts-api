@@ -1,0 +1,75 @@
+cabal-version:   3.6
+name:            geniusyield-orderbot-lib
+version:         0.1.0
+synopsis:
+  GeniusYield orderbot library, providing common utilities which different orderbots such as market-maker, smart-order-router, etc. can use.
+
+description:
+  GeniusYield orderbot library, providing common utilities which different orderbots such as market-maker, smart-order-router, etc. can use. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
+
+license:         Apache-2.0
+license-file:    LICENSE
+bug-reports:     http://github.com/geniusyield/dex-contracts-api/issues
+author:          GeniusYield
+maintainer:      support@geniusyield.co
+copyright:       2024 GYELD GMBH
+build-type:      Simple
+category:        Blockchain, Cardano
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+tested-with:     GHC ==9.2.8
+
+source-repository head
+  type:     git
+  location: https://github.com/geniusyield/dex-contracts-api.git
+
+common common
+  default-language:   GHC2021
+  default-extensions:
+    NoImplicitPrelude
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    FunctionalDependencies
+    GADTs
+    LambdaCase
+    MultiWayIf
+    OverloadedStrings
+    RecordWildCards
+    RoleAnnotations
+    TemplateHaskell
+    TypeFamilies
+    TypeFamilyDependencies
+    UndecidableInstances
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:        -Wall -Wincomplete-uni-patterns -Wunused-packages
+
+  -- Speed-ups GHCi considerably.
+  ghc-options:        -fno-show-valid-hole-fits
+
+library
+  import:          common
+  hs-source-dirs:  src
+  exposed-modules:
+    GeniusYield.OrderBot.Adapter.Maestro
+    GeniusYield.OrderBot.Domain.Assets
+    GeniusYield.OrderBot.Domain.Markets
+
+  build-depends:
+    , aeson
+    , base            ^>=4.16.4.0
+    , deriving-aeson
+    , http-api-data
+    , lens
+    , rio
+    , swagger2
+
+  -- Dependencies whose version is fixed by @cabal.project@ file.
+  build-depends:
+    , atlas-cardano
+    , maestro-sdk

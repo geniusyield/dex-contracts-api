@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  server:
+    image: ghcr.io/geniusyield/dex-contracts-api:latest
+    container_name: server
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      CORE_MAESTRO_API_KEY: ${CORE_MAESTRO_API_KEY}
+      MAESTRO_API_KEY: ${MAESTRO_API_KEY}
+      SERVER_API_KEY: ${SERVER_API_KEY}
+      SEED_PHRASE: ${SEED_PHRASE}
+      SERVER_CONFIG: |
+        coreProvider:
+          maestroToken: <<CORE_MAESTRO_API_KEY>>
+          turboSubmit: false
+        networkId: mainnet
+        logging: [{type: {tag: stderr}, severity: "Debug", verbosity: "V2"}]
+        maestroToken: <<MAESTRO_API_KEY>>
+        serverApiKey: <<SERVER_API_KEY>>
+        wallet:
+          tag: mnemonicWallet
+          contents:
+            mnemonic: <<SEED_PHRASE>>
+        port: 8082

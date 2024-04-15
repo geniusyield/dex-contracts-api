@@ -1,41 +1,106 @@
-# GeniusYield DEX Contracts API
+# GeniusYield DEX
 
-This repository hosts off-chain code to interact with DEX smart contracts.
+This repository houses on-chain smart contracts, Haskell off-chain interaction logic and server endpoints enabling users to easily interact with DEX in language of their choice. 
 
-Main file of interest is [`PartialOrder.hs`](./src/GeniusYield/Api/Dex/PartialOrder.hs) and provides various useful API functions among those related to interacting with order's contract.
+## Table of Contents
 
-Order's contract offers three interaction for an existing order, namely:
+- [Structure of repository](#structure-of-repository)
+- [Spinning up server](#spinning-up-server)
+- [Contributing](#contributing)
+- [License](#license)
 
-* Completely filling it.
-* Only partially filling it with a specified amount.
-* Cancelling it.
+## Structure of repository
 
-These are represented in redeemer as:
+- [`geniusyield-dex-api`](./geniusyield-dex-api/) provides off-chain code to interact with our DEX. See it's [`README.md`](./geniusyield-dex-api/README.md) for more information about it.
+- [`geniusyield-server-lib`](./geniusyield-server-lib/) serves endpoints using our off-chain code to easily interact with GeniusYield DEX in language of user's choice.
+- [`geniusyield-orderbot-lib`](./geniusyield-orderbot-lib/) cater to additional requirements such as building up of an order-book, receiving price feed, etc.
 
-https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L112-L116
+## Spinning up server
 
-And following is the specification of datum:
+Endpoints made available by server are specified [here](./web/swagger/api.yaml).
 
-https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L75-L108
+1. Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/how-to-build/) section of Atlas documentation for it.
+2. Prepare a configuration, which can be stored either in file or in `SERVER_CONFIG` environment variable. Structure of it is as follows:
 
-Where `PartialOrderContainedFee` is defined to be:
+    ```yaml
+     # Blockchain provider used by Atlas, our off-chain transaction building tool.
+     # Supported values of `coreProvider` represented as JSON for brevity:
+     # Local node in combination of Kupo, `{ socketPath: string, kupoUrl: string }`
+     # Maestro, `{ maestroToken: string, turboSubmit: boolean }`
+     # Blockfrost, `{ blockfrostKey: string }`
+     # Note that Blockfrost is not recommended as some of the operations performed aren't optimal with it.
+    coreProvider:
+      maestroToken: YOUR_MAESTRO_TOKEN
+      turboSubmit: false
+     # Network id, only `mainnet` and `preprod` are supported for at the moment.
+    networkId: mainnet
+     # Logging configuration. It's an array to cater for potentially multiple scribes.
+    logging:
+      - type:
+           # TODO: Possible values of `tag` are to be documented.
+          tag: stderr
+         # Possible values of `severity` are `Debug`, `Info`, `Warning` and `Error`.
+        severity: Debug
+         # Possible values of `verbosity` are `V0`, `V1`, `V2`, `V3` and `V4`. Consult https://hackage.haskell.org/package/katip-0.8.8.0/docs/Katip.html#t:Verbosity for more information about it.
+        verbosity: V2
+     # Port to serve endpoints at.
+    port: 8082
+     # Maestro API key (token) to access information such as asset details given it's currency symbol and token name.
+    maestroToken: YOUR_MAESTRO_TOKEN
+     # API key to protect server endpoints with. It's value must be provided under `api-key` header of request.
+    serverApiKey: YOUR_SECRET_KEY
+     # Optionally, wallet key details if one wants server to be able to sign transactions using this key.
+    wallet:
+      tag: mnemonicWallet
+      contents:
+        mnemonic:
+          - health
+          - unable
+          - dog
+          - lend
+          - artefact
+          - arctic
+          - dinner
+          - energy
+          - silent
+          - wealth
+          - shock
+          - safe
+          - glad
+          - mail
+          - gas
+          - flag
+          - beauty
+          - penalty
+          - mixed
+          - garbage
+          - erupt
+          - wonder
+          - magnet
+          - around
+        # Account index.
+        accIx: 0
+        # Payment address index.
+        addrIx: 0
+     # Optionally, a stake address which is used to place orders at a mangled address, i.e., an address having payment component of the order validator but staking component from the given stake address. It has to bech32 encoded, with prefix "stake_test" for testnet and "stake" for mainnet.
+    stakeAddress: stake1...
+     # Optionally, one can specify collateral in the configuration to avoid sending it's information in the endpoints which require it.
+    collateral: 15522d2518b36bdeb8e2e4829aff7ae9e5afbf74387d756543c5e955e83a9434#2
+    ```
+3. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`. Run `cabal run geniusyield-server -- -h` for help 😉.
+4. Test if server is running successfully by calling, say, `/settings` endpoint. Example `curl` request: `curl -H 'api-key: YOUR_SECRET_KEY' -X GET http://localhost:8082/v0/settings | jq`, assuming port was specified as `8082`. On success, it should return something akin to:
+    ```json
+    {
+      "network": "mainnet",
+      "version": "0.1.0",
+      "revision": "c2f8db2bc82a13c850c3b0088a1ce089bb1065b7",
+      "backend": "mmb"
+    }
 
-https://github.com/geniusyield/dex-contracts-api/blob/8add6b608235095fa019fb6566d8ef1cd81080bf/src/GeniusYield/Scripts/Dex/PartialOrder.hs#L39-L48
+## Contributing
 
-## Order creation
+We welcome all contributors! See [contributing guide](./CONTRIBUTING.md) for how to get started.
 
-Order can be created as described in the following snippet:
+## License
 
-https://github.com/geniusyield/dex-contracts-api/blob/cdc81e96ee45411786fa160bab51eff1bc281316/src/GeniusYield/Api/Dex/PartialOrder.hs#L429-L542
-
-## Order fill
-
-And following describes how an existing order can be filled for both the cases, namely partial & complete.
-
-https://github.com/geniusyield/dex-contracts-api/blob/cdc81e96ee45411786fa160bab51eff1bc281316/src/GeniusYield/Api/Dex/PartialOrder.hs#L544-L693
-
-## Order cancellation
-
-Lastly, existing order can be canceled by it's owner, as described in linked snippet:
-
-https://github.com/geniusyield/dex-contracts-api/blob/cdc81e96ee45411786fa160bab51eff1bc281316/src/GeniusYield/Api/Dex/PartialOrder.hs#L695-L751
+[Apache-2.0](./LICENSE) © [GYELD GMBH](https://www.geniusyield.co).
