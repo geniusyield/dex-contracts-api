@@ -1,0 +1,48 @@
+let* fstPair!! = fstPair# ! !
+     sndPair!! = sndPair# ! !
+     equalsInteger_1 = equalsInteger# 1#
+     chooseList!! = chooseList# ! !
+     ifThenElse! = ifThenElse# !
+     tailList! = tailList# !
+     headList! = headList# !
+     zComb = \ f -> let* x = \ y -> f (\ u -> y y u) in f (\ v -> x x v)
+     x_0 = \ x_1 -> zComb (\ x_2 x_3 -> chooseList!! x_3 (\ ~ -> False#) (\ ~ -> ifThenElse! (x_1 (headList! x_3)) (\ ~ -> True#) (\ ~ -> x_2 (tailList! x_3)) !) !)
+     x_4 =
+       \ x_5 ->
+         let* x_6 = bData# x_5
+         in \ x_7 ->
+              zComb
+                (\ x_8 x_9 ->
+                   chooseList!! x_9 (\ ~ x_a x_b -> x_b !) (\ ~ -> ifThenElse! (equalsData# (fstPair!! (headList! x_9)) x_6) (\ ~ -> let* x_c = unMapData# (sndPair!! (headList! x_9)) in \ x_d x_e -> x_d x_c) (\ ~ -> x_8 (tailList! x_9)) !) !)
+                x_7
+     x_f = \ x_g -> tailList! (tailList! (tailList! (tailList! x_g)))
+     x_h = \ x_i -> sndPair!! (unConstrData# x_i)
+     x_j = \ x_k -> let* x_m = unConstrData# (headList! (tailList! (x_h x_k))); x_x = sndPair!! x_m in ifThenElse! (equalsInteger# 0# (fstPair!! x_m)) (\ ~ -> unBData# (headList! x_x)) (\ ~ -> ERROR) !
+     tt = ()#
+     x_n = \ x_p x_r -> ifThenElse! x_p x_r (\ ~ -> False#)
+in \ x_s x_t ->
+     let* x_u = unConstrData# x_s
+          x_x_0 = sndPair!! x_u
+     in ifThenElse!
+          (equalsInteger_1 (fstPair!! x_u))
+          (\ ~ -> ifThenElse! (x_0 (\ x_v -> lessThanEqualsInteger# 0# (unIData# (sndPair!! x_v))) (x_4 (x_j x_t) (unMapData# (headList! (x_f (x_h (headList! (x_h x_t)))))) (\ x_w -> x_w) (\ ~ -> ERROR))) (\ ~ -> ERROR) (\ ~ -> tt) !)
+          (\ ~ ->
+             let* x_x = headList! (x_h x_t)
+                  headList!_x_x = headList! x_x_0
+                  x_headList!_x_x = x_h headList!_x_x
+                  x_y = sha2_256# (consByteString# (unIData# (headList! (tailList! x_headList!_x_x))) (unBData# (headList! (x_h (headList! x_headList!_x_x)))))
+                  x_z = x_4 (x_j x_t) (unMapData# (headList! (x_f (x_h x_x)))) (\ x_10 -> x_10) (\ ~ -> ERROR)
+             in chooseList!!
+                  x_z
+                  (\ ~ -> ERROR)
+                  (\ ~ ->
+                     ifThenElse!
+                       (x_n
+                          (x_0 (\ x_11 -> equalsData# (listData# (x_h headList!_x_x)) (listData# (x_h (headList! (x_h x_11))))) (unListData# (headList! (x_h x_x))))
+                          (\ ~ -> x_n (nullList# ! (tailList! x_z)) (\ ~ -> x_n (equalsInteger_1 (unIData# (sndPair!! (headList! x_z)))) (\ ~ -> equalsByteString# (unBData# (fstPair!! (headList! x_z))) x_y) !) !)
+                          !)
+                       (\ ~ -> tt)
+                       (\ ~ -> ERROR)
+                       !)
+                  !)
+          !

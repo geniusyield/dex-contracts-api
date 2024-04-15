@@ -1,0 +1,55 @@
+cabal-version: 3.0
+name:          geniusyield-common
+version:       0.1.0.0
+synopsis:      Common code shared between GeniusYield onchain and offchain
+license:       Apache-2.0
+license-file:  LICENSE
+author:        GeniusYield
+maintainer:    support@geniusyield.co
+build-type:    Simple
+copyright:     2023 GYELD GMBH
+data-dir:      data
+data-files:
+  compiled-scripts/DEX.NFT
+  compiled-scripts/DEX.PartialOrder
+  compiled-scripts/DEX.PartialOrderConfig
+  compiled-scripts/DEX.PartialOrderConfigTracing
+  compiled-scripts/DEX.PartialOrderNFT
+  compiled-scripts/DEX.PartialOrderNFTTracing
+  compiled-scripts/DEX.PartialOrderNFTV1_1
+  compiled-scripts/DEX.PartialOrderNFTV1_1Tracing
+  compiled-scripts/DEX.PartialOrderTracing
+
+library
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    DerivingVia
+    GADTs
+    LambdaCase
+    MultiWayIf
+    OverloadedStrings
+    RecordWildCards
+    RoleAnnotations
+    TemplateHaskell
+    TypeFamilies
+    UndecidableInstances
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:        -Wall
+  hs-source-dirs:     src
+  exposed-modules:
+    GeniusYield.OnChain.Common.Scripts
+    GeniusYield.OnChain.Common.Scripts.DEX.Data
+
+  build-depends:
+    , aeson
+    , base               <5
+    , bytestring
+    , file-embed
+    , plutus-ledger-api
+    , ply-core
+    , text
