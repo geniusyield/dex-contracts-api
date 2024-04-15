@@ -34,8 +34,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # yq:
-RUN \
-    curl https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 > /usr/local/bin/yq && chmod +x /usr/local/bin/yq
+RUN curl https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 > /usr/local/bin/yq && chmod +x /usr/local/bin/yq
 
 # Libsodium:
 RUN git clone https://github.com/input-output-hk/libsodium && \
