@@ -65,16 +65,11 @@ RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 7D1E8AFD1D4A16D71FA
 
 # ghcup:
 ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
+ENV BOOTSTRAP_HASKELL_GHC_VERSION=9.2.8
+ENV BOOTSTRAP_HASKELL_CABAL_VERSION=3.10.2.0
 RUN bash -c "curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh"
-
 ENV PATH=${PATH}:/root/.local/bin
 ENV PATH=${PATH}:/root/.ghcup/bin
-
-# GHC and Cabal:
-RUN ghcup install ghc 9.2.8 && \
-    ghcup set ghc 9.2.8  && \
-    ghcup install cabal 3.10.2.0  && \
-    ghcup set cabal 3.10.2.0
 
 # ==================================[ BUILD ]========================================
 WORKDIR /DEX
