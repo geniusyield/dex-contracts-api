@@ -29,15 +29,13 @@ RUN apt-get update && \
     procps \
     snapd \
     software-properties-common \
-    wget \
     tmux \
     zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Update and install wget and ca-certificates to download yq
-RUN wget https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 -O /usr/local/bin/yq && \
-    chmod +x /usr/local/bin/yq && \
-    rm -rf /var/lib/apt/lists/*
+# yq:
+RUN \
+    curl https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64 > /usr/local/bin/yq && chmod +x /usr/local/bin/yq
 
 # Libsodium:
 RUN git clone https://github.com/input-output-hk/libsodium && \
@@ -60,19 +58,25 @@ RUN git clone https://github.com/bitcoin-core/secp256k1 && \
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-# Install ghcup using official command from https://www.haskell.org/ghcup/. Following stackoverflow discussion had been helpful in regards to GHC installation https://stackoverflow.com/q/67680726/20330802.
-ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
-RUN bash -c "curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh"
+# Install gpg keys (https://www.haskell.org/ghcup/install/#manual-installation):
+RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 7D1E8AFD1D4A16D71FADA2F2CCC85C0E40C06A8C && \
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys FE5AB6C91FEA597C3B31180B73EDE9E8CFBAEF01 && \
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 88B57FCF7DB53B4DB3BFA4B1588764FBE22D19C4 && \
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys EAF2A9A722C0C96F2B431CA511AAD8CEDEE0CAEF
 
-# Add ghcup to PATH
+# ghcup:
+RUN curl https://downloads.haskell.org/~ghcup/x86_64-linux-ghcup > /usr/bin/ghcup && \
+    chmod +x /usr/bin/ghcup && \
+    ghcup config set gpg-setting GPGStrict
+
 ENV PATH=${PATH}:/root/.local/bin
 ENV PATH=${PATH}:/root/.ghcup/bin
 
-# Install specific versions of GHC and Cabal and set them.
-RUN ghcup install ghc 9.2.8
-RUN ghcup set ghc 9.2.8
-RUN ghcup install cabal 3.10.2.0
-RUN ghcup set cabal 3.10.2.0
+# GHC and Cabal:
+RUN ghcup install ghc 9.2.8 && \
+    ghcup set ghc 9.2.8  && \
+    ghcup install cabal 3.10.2.0  && \
+    ghcup set cabal 3.10.2.0
 
 # ==================================[ BUILD ]========================================
 WORKDIR /DEX
