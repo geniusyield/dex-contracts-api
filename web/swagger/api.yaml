@@ -171,6 +171,13 @@ definitions:
       with its minting policy and token name delimited by dot (.).
     example: ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44
     type: string
+  GYBalance:
+    description: 'A multi asset quantity, represented as map where each key represents
+      an asset: policy ID and token name in hex concatenated by a dot.'
+    example:
+      ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44: '101'
+      lovelace: '22'
+    type: object
   GYNatural:
     description: A natural number which is a non-negative integer. Minimum value is
       0.
@@ -201,15 +208,6 @@ definitions:
     format: hex
     pattern: '[0-9a-fA-F]{64}#"d+'
     type: string
-  GYValue:
-    additionalProperties:
-      type: integer
-    description: 'A multi asset quantity, represented as map where each key represents
-      an asset: policy ID and token name in hex concatenated by a dot.'
-    example:
-      ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44: 101
-      lovelace: 22
-    type: object
   Market:
     description: Market information
     properties:
@@ -577,7 +575,7 @@ paths:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/GYValue'
+            $ref: '#/definitions/GYBalance'
         '400':
           description: Invalid `address`
         '401':

@@ -1,5 +1,6 @@
 module GeniusYield.Server.Api (
   GeniusYieldAPI,
+  GYBalance (..),
   geniusYieldAPI,
   geniusYieldServer,
   MainAPI,
@@ -9,12 +10,16 @@ module GeniusYield.Server.Api (
 ) where
 
 import Control.Lens ((?~))
+import Data.Aeson (ToJSON (..))
+import Data.Aeson qualified as Aeson
+import Data.Aeson.Key qualified as K
 import Data.Kind (Type)
 import Data.List (sortBy)
 import Data.Strict qualified as Strict
 import Data.Strict.Tuple
 import Data.Swagger
 import Data.Swagger qualified as Swagger
+import Data.Swagger.Internal.Schema qualified as Swagger
 import Data.Version (showVersion)
 import Deriving.Aeson
 import Fmt
@@ -39,8 +44,19 @@ import RIO hiding (asks, logDebug, logInfo)
 import RIO.Char (toLower)
 import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
+import RIO.Text qualified as T
 import Servant
 import Servant.Swagger
+
+{- $setup
+
+>>> :set -XOverloadedStrings -XTypeApplications
+>>> import qualified Data.Aeson                 as Aeson
+>>> import qualified Data.ByteString.Lazy.Char8 as LBS8
+>>> import           Data.Proxy
+>>> import qualified Data.Swagger               as Swagger
+>>> import GeniusYield.Types
+-}
 
 -------------------------------------------------------------------------------
 -- Settings.
@@ -114,6 +130,47 @@ instance Swagger.ToSchema OrderBookInfo where
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderResPrefix}
 
 -------------------------------------------------------------------------------
+-- Balances.
+-------------------------------------------------------------------------------
+
+newtype GYBalance = GYBalance {unGYBalance ∷ GYValue}
+  deriving stock (Show)
+  deriving newtype (Eq, Ord, Semigroup, Monoid)
+
+{- |
+
+>>> LBS8.putStrLn . Aeson.encode . GYBalance . valueFromList $ [(GYLovelace,22),(GYToken "ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef" "GOLD",101)]
+{"lovelace":"22","ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44":"101"}
+-}
+instance Aeson.ToJSON GYBalance where
+  toJSON = Aeson.object . map (RIO.uncurry assetPairToKVT) . valueToList . unGYBalance
+  toEncoding = Aeson.pairs . foldMap (RIO.uncurry assetPairToKVT) . valueToList . unGYBalance
+
+assetPairToKVT ∷ Aeson.KeyValue kv ⇒ GYAssetClass → Integer → kv
+assetPairToKVT ac i = K.fromText (f ac) Aeson..= toUrlPiece i
+ where
+  f GYLovelace = "lovelace"
+  f (GYToken cs tk) = mintingPolicyIdToText cs <> T.cons '.' (tokenNameToHex tk)
+
+instance Swagger.ToSchema GYBalance where
+  declareNamedSchema _ = do
+    pure $
+      Swagger.named "GYBalance" $
+        mempty
+          & Swagger.type_
+            ?~ Swagger.SwaggerObject
+          & Swagger.example
+            ?~ toJSON
+              ( GYBalance $
+                  valueFromList
+                    [ (GYLovelace, 22),
+                      (GYToken "ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef" "GOLD", 101)
+                    ]
+              )
+          & Swagger.description
+            ?~ "A multi asset quantity, represented as map where each key represents an asset: policy ID and token name in hex concatenated by a dot."
+
+-------------------------------------------------------------------------------
 -- Server's API.
 -------------------------------------------------------------------------------
 
@@ -126,7 +183,7 @@ type TradingFeesAPI =
 
 type OrderBookAPI = Summary "Order book" :> Description "Get order book for a specific market." :> Capture "market-id" OrderAssetPair :> QueryParam "address" GYAddressBech32 :> Get '[JSON] OrderBookInfo
 
-type BalancesAPI = Summary "Balances" :> Description "Get token balances of an address." :> Capture "address" GYAddressBech32 :> Get '[JSON] GYValue
+type BalancesAPI = Summary "Balances" :> Description "Get token balances of an address." :> Capture "address" GYAddressBech32 :> Get '[JSON] GYBalance
 
 type V0API =
   "settings" :> SettingsAPI
@@ -279,9 +336,9 @@ handleOrderBookApi ctx@Ctx {..} orderAssetPair mownAddress = do
         obiBids = sortBy (\a b → compare (oiPrice b) (oiPrice a)) bids -- sort by decreasing price
       }
 
-handleBalancesApi ∷ Ctx → GYAddressBech32 → IO GYValue
+handleBalancesApi ∷ Ctx → GYAddressBech32 → IO GYBalance
 handleBalancesApi ctx addr = do
   logInfo ctx $ "Fetching balance of address: " +|| addr ||+ ""
   runQuery ctx $ do
     utxos ← utxosAtAddress (addressFromBech32 addr) Nothing
-    pure $ foldMapUTxOs utxoValue utxos
+    pure $ GYBalance $ foldMapUTxOs utxoValue utxos
