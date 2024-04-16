@@ -236,7 +236,7 @@ data PartialOrderInfo = PartialOrderInfo
     -- | Version of the partial order.
     poiVersion ∷ !POCVersion
   }
-  deriving stock (Show, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (Swagger.ToSchema)
 
 poiContainedFeeToPlutus ∷ POIContainedFee → PartialOrderContainedFee
