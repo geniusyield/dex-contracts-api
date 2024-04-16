@@ -54,6 +54,7 @@ library
   import:          common
   hs-source-dirs:  src
   exposed-modules:
+    GeniusYield.Api.Dex.Constants
     GeniusYield.Api.Dex.PartialOrder
     GeniusYield.Api.Dex.PartialOrderConfig
     GeniusYield.Api.Dex.Types
@@ -66,15 +67,20 @@ library
     GeniusYield.Scripts.Dex.PartialOrderConfig
     GeniusYield.Scripts.Dex.PartialOrderConfig.Internal
     GeniusYield.Scripts.Dex.PartialOrderNft
+    GeniusYield.Scripts.Dex.Version
 
   build-depends:
     , aeson
-    , base        ^>=4.16.4.0
+    , base          ^>=4.16.4.0
     , bytestring
     , containers
+    , data-default
     , file-embed
     , http-types
+    , lens
     , mtl
+    , some
+    , strict
     , swagger2
     , text
 

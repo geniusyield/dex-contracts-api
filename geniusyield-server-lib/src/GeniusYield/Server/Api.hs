@@ -24,10 +24,11 @@ import Data.Version (showVersion)
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), partialOrders)
-import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
+import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), partialOrders)
+import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig)
 import GeniusYield.OrderBot.Domain.Markets
 import GeniusYield.Scripts (PartialOrderConfigInfoF (..))
+import GeniusYield.Scripts.Dex.Version (POCVersion (POCVersion1_1))
 import GeniusYield.Server.Assets
 import GeniusYield.Server.Auth (APIKeyAuthProtect, V0)
 import GeniusYield.Server.Constants (gitHash)
@@ -290,7 +291,7 @@ customShowNetworkId = show >>> removePrefix "GY" >>> removePrefix "Testnet" >>> 
 handleTradingFeesApi ∷ Ctx → IO TradingFees
 handleTradingFeesApi ctx@Ctx {..} = do
   logInfo ctx "Calculating trading fees."
-  (_, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft $ dexPORefs ctxDexInfo
+  SomeRefPocd (RefPocd (_ :!: pocd)) ← runQuery ctx $ fetchPartialOrderConfig POCVersion1_1 $ dexPORefs ctxDexInfo
   pure
     TradingFees
       { tfFlatMakerFee = fromIntegral $ pociMakerFeeFlat pocd,

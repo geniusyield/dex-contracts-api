@@ -15,11 +15,12 @@ import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..), PartialOrderInfo (..), cancelMultiplePartialOrders, fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', orderByNft, partialOrderPrice', placePartialOrder')
-import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
+import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
+import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig, fetchPartialOrderConfigs)
 import GeniusYield.HTTP.Errors
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
+import GeniusYield.Scripts.Dex.Version (POCVersion (POCVersion1_1))
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Tx (handleTxSign, handleTxSubmit, throwNoSigningKeyError)
 import GeniusYield.Server.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake, logDebug, logInfo)
@@ -364,7 +365,8 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
   let porefs = dexPORefs ctxDexInfo
       popAddresses' = addressFromBech32 <$> popAddresses
       changeAddr = maybe (NonEmpty.head popAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) popChangeAddress
-  (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft porefs
+      pocVersion = POCVersion1_1
+  SomeRefPocd (RefPocd (cfgRef :!: pocd)) ← runQuery ctx $ fetchPartialOrderConfig pocVersion porefs
   let unitPrice =
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount
@@ -391,7 +393,7 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         potdTransactionFee = fromIntegral $ txBodyFee txBody,
         potdMakerLovelaceFlatFee = fromIntegral $ pociMakerFeeFlat pocd,
         potdMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
-        potdMakerOfferedPercentFeeAmount = ceiling $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
+        potdMakerOfferedPercentFeeAmount = roundFunctionForPOCVersion pocVersion $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
         potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd,
         potdOrderRef = txOutRefFromTuple (txId, 0)
       }
@@ -420,7 +422,7 @@ handleCancelOrders ctx@Ctx {..} cops@CancelOrderParameters {..} = do
       changeAddr = maybe (NonEmpty.head copAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) copChangeAddress
   txBody ← runSkeletonI ctx (NonEmpty.toList copAddresses') changeAddr copCollateral $ do
     pois ← Map.elems <$> getPartialOrdersInfos porefs (NonEmpty.toList copOrderReferences)
-    cancelMultiplePartialOrders porefs pois
+    cancelMultiplePartialOrders' porefs pois
   pure
     CancelOrderTransactionDetails
       { cotdTransaction = unsignedTx txBody,
@@ -452,19 +454,22 @@ handleFillOrders ∷ Ctx → FillOrderParameters → IO FillOrderTransactionDeta
 handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
   logInfo ctx $ "Filling order(s). Parameters: " +|| fops ||+ ""
   let porefs = dexPORefs ctxDexInfo
-      fopAddresses' = addressFromBech32 <$> fopAddresses
-      changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
-  (cfgRef, pocd) ← runQuery ctx $ fetchPartialOrderConfig $ porRefNft porefs
+  refPocds ← runQuery ctx $ fetchPartialOrderConfigs porefs
   ordersWithTokenBuyAmount ← runQuery ctx $ getPartialOrdersInfos' porefs $ NonEmpty.toList $ second naturalToGHC <$> fopOrderReferencesWithAmount
   when (length ordersWithTokenBuyAmount > fromIntegral maxFillOrders) $ throwIO PodMultiFillMoreThanAllowed
-  let takerFeeRatio = pociMakerFeeRatio pocd
-      takerFee = computePercentTakerFees ordersWithTokenBuyAmount takerFeeRatio
+  let versionsSet = getVersionsInOrders $ map fst ordersWithTokenBuyAmount
+      overallPocVersion = preferentiallySelectLatestVersion versionsSet
+      pocd = preferentiallySelectLatestPocd versionsSet refPocds
+      takerFeeRatio = pociMakerFeeRatio pocd
+      takerFee = computePercentTakerFees overallPocVersion ordersWithTokenBuyAmount takerFeeRatio
       maxFlatTakerFee = foldl' (\prevMax (poi, _) → max prevMax $ poiTakerLovelaceFlatFee poi) 0 ordersWithTokenBuyAmount
+      fopAddresses' = addressFromBech32 <$> fopAddresses
+      changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
   takerFee' ← case valueToList takerFee of
     [(_, feeAmt)] → pure $ fromIntegral feeAmt
     _ → throwIO PodMultiFillNotAllSamePaymentToken
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
-    fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just (cfgRef, pocd)) takerFee
+    fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
   pure
     FillOrderTransactionDetails
       { fotdTransaction = unsignedTx txBody,
@@ -475,8 +480,8 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
         fotdTakerOfferedPercentFeeAmount = takerFee'
       }
  where
-  computePercentTakerFees ∷ Foldable t ⇒ t (PartialOrderInfo, Natural) → GYRational → GYValue
-  computePercentTakerFees ordersWithTokenBuyAmount takerFeeRatio =
+  computePercentTakerFees ∷ Foldable t ⇒ POCVersion → t (PartialOrderInfo, Natural) → GYRational → GYValue
+  computePercentTakerFees overallPocVersion ordersWithTokenBuyAmount takerFeeRatio =
     let takerACWithAmt =
           foldl'
             ( \accTakerACWithAmt (poi@PartialOrderInfo {..}, amtToFill) →
@@ -486,5 +491,5 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
             mempty
             ordersWithTokenBuyAmount
         takerFee =
-          Map.foldlWithKey' (\acc ac amt → acc <> valueSingleton ac (ceiling $ toRational amt * rationalToGHC takerFeeRatio)) mempty takerACWithAmt
+          Map.foldlWithKey' (\acc ac amt → acc <> valueSingleton ac (roundFunctionForPOCVersion overallPocVersion $ toRational amt * rationalToGHC takerFeeRatio)) mempty takerACWithAmt
      in takerFee

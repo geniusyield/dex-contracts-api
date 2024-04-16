@@ -16,7 +16,8 @@ import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
 import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
-import GeniusYield.Scripts.Dex.Data (nftPolicy, orderValidator)
+import GeniusYield.Scripts.Dex.Data (nftPolicyV1, nftPolicyV1_1, orderValidator)
+import GeniusYield.Scripts.Dex.Version (POCVersion (..))
 import GeniusYield.Server.Constants (poConfigAddrMainnet, poConfigAddrPreprod, poRefsMainnet, poRefsPreprod)
 import GeniusYield.Transaction
 import GeniusYield.TxBuilder
@@ -30,11 +31,10 @@ import RIO
 -- | Type that encapsulates the scripts needed for the dex api.
 data DEXInfo = DEXInfo
   { dexPartialOrderValidator ∷ !(TypedScript 'ValidatorRole '[Address, AssetClass]),
-    dexNftPolicy ∷ !(TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]),
-    dexPartialOrderConfigAddr ∷ !GYAddress,
+    dexNftPolicy ∷ !(POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]),
+    dexPartialOrderConfigAddr ∷ !(POCVersion → GYAddress),
     dexPORefs ∷ !PORefs
   }
-  deriving stock (Show)
 
 instance HasPartialOrderScript DEXInfo where
   getPartialOrderValidator = dexPartialOrderValidator
@@ -44,6 +44,11 @@ instance HasPartialOrderNftScript DEXInfo where
 
 instance HasPartialOrderConfigAddr DEXInfo where
   getPartialOrderConfigAddr = dexPartialOrderConfigAddr
+
+nftPolicy ∷ POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]
+nftPolicy = \case
+  POCVersion1 → nftPolicyV1
+  POCVersion1_1 → nftPolicyV1_1
 
 dexInfoDefaultMainnet ∷ DEXInfo
 dexInfoDefaultMainnet =

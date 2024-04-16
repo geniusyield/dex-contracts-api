@@ -1,6 +1,7 @@
 module GeniusYield.OnChain.Common.Scripts.DEX.Data (
   orderValidator,
-  nftPolicy,
+  nftPolicyV1,
+  nftPolicyV1_1,
 ) where
 
 import Data.Aeson qualified as Aeson
@@ -26,7 +27,12 @@ orderValidator =
   let fileBS = $(makeRelativeToProject "./data/compiled-scripts/DEX.PartialOrder" >>= embedFile)
    in readScript fileBS
 
-nftPolicy ∷ (TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass])
-nftPolicy =
+nftPolicyV1 ∷ (TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass])
+nftPolicyV1 =
   let fileBS = $(makeRelativeToProject "./data/compiled-scripts/DEX.PartialOrderNFT" >>= embedFile)
+   in readScript fileBS
+
+nftPolicyV1_1 ∷ (TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass])
+nftPolicyV1_1 =
+  let fileBS = $(makeRelativeToProject "./data/compiled-scripts/DEX.PartialOrderNFTV1_1" >>= embedFile)
    in readScript fileBS
