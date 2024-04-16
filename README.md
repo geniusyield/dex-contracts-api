@@ -166,10 +166,10 @@ For details please see the following section:
      # Optionally, one can specify collateral in the configuration to avoid sending it's information in the endpoints which require it.
     collateral: 15522d2518b36bdeb8e2e4829aff7ae9e5afbf74387d756543c5e955e83a9434#2
     ```
-3. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`
+3. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`.
 
-   Call: `cabal run geniusyield-server -- -h` for help 😉)
-   
+   Call: `cabal run geniusyield-server -- -h` for help. 😉
+
 4. Test if server is running successfully by calling, say, `/settings` endpoint. Example `curl` request: `curl -H 'api-key: YOUR_SECRET_KEY' -X GET http://localhost:8082/v0/settings | jq`, assuming port was specified as `8082`. On success, it should return something akin to:
 
 ```json
