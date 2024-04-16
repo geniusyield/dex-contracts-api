@@ -46,7 +46,7 @@ sleep 60 # wait for the server start or alternatively
 make test # send test request
 ```
 
-The last line should result in a JSON output like the following document:
+The `make test` call should result in a JSON output like the following document:
 
 ```json
 {
@@ -65,14 +65,51 @@ This output means that the bot api backend metadata could be retrieved via the `
 The Trading Bot API could by using by Custom Trading Bots or Trading Strategy implementations run
 using the [Trading Strategy Executor Framework](https://github.com/geniusyield/strategy-executor/tree/main) (Python SDK for the Genius Yield DEX).
 
-## Building from source
+Thanks to the programming language agnostic RESTful API, any modern programming
+language could be used to implement trading strategies and/or SOR, MMBs.
+
+Intergration with the Genius Yield DEX has never been easier.
+
+## Building locally from source using Docker
+
+The easiest way to build the software is using docker.
+
+Using the available Dockerfile the Haskell toolchain doesn't have to be installed locally:
+
+``` bash
+# Clone the reposizoty:
+git clone git@github.com:geniusyield/dex-contracts-api.git
+cd dex-contracts-api
+# Build the docker image locally from source:
+make build
+```
+
+If you would like to build the software from source locally on your workstation using the
+Haskell toolchain, then please see the following section.
+
+## Building locally from source using the Haskell Toolchain
 
 Alternatively the software could be built from source code on the local workstation using
 the Haskell toolchain.
 
 For details please see the following section:
 
-Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/getting-started/how-to-build) section of Atlas documentation for it.
+1. Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/getting-started/how-to-build) section of Atlas documentation for it.
+2. Run the server with command `cabal run geniusyield-server -- serve -c my-config.yaml`
+3. Run `cabal run geniusyield-server -- -h` for help 😉
+4. Test if server is running successfully by calling, say, `/settings` endpoint. Example `curl` request: `curl -H 'api-key: YOUR_SECRET_KEY' -X GET http://localhost:8082/v0/settings | jq`, assuming port was specified as `8082`. On success, it should return something akin to:
+
+```json
+{
+  "network":"mainnet",
+  "version":"0.1.0",
+  "revision":"e9715955919566e465cbf247480977f46f8809d2",
+  "backend":"mmb",
+  "address":"addr1qx...w60mw",
+  "stake_address":null,
+  "collateral":null
+}
+```
 
 ## Swagger API documentation
 
