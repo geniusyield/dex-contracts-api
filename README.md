@@ -19,7 +19,7 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 
 Endpoints made available by server are specified [here](./web/swagger/api.yaml).
 
-1. Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/how-to-build/) section of Atlas documentation for it.
+1. Make sure your environment is configured properly, consult ["How to build?"](https://atlas-app.io/getting-started/how-to-build) section of Atlas documentation for it.
 2. Prepare a configuration, which can be stored either in file or in `SERVER_CONFIG` environment variable. Structure of it is as follows:
 
     ```yaml
