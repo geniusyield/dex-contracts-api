@@ -5,7 +5,11 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 ## Table of Contents
 
 - [Structure of repository](#structure-of-repository)
-- [Spinning up server](#spinning-up-server)
+- [Bot API Server](#bot-api-server)
+  - [Spinning up the api server using docker](#spinning-up-the-api-server-using-docker)
+  - [Building locally from source using Docker](#building-locally-from-source-using-docker)
+  - [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain)
+  - [Swagger API documentation](#swagger-api-documentation)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -15,9 +19,9 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 - [`geniusyield-server-lib`](./geniusyield-server-lib/) serves endpoints using our off-chain code to easily interact with GeniusYield DEX in language of user's choice.
 - [`geniusyield-orderbot-lib`](./geniusyield-orderbot-lib/) cater to additional requirements such as building up of an order-book, receiving price feed, etc.
 
-# Bot API Server
+## Bot API Server
 
-## Spinning up the api server using docker
+### Spinning up the api server using docker
 
 The api server can be started using [docker-compose](https://github.com/geniusyield/dex-contracts-api/blob/main/docker-compose.yml). Simply clone the repository,
 prepare a `.env` file with the necessary secrets and use the make targets from
@@ -70,7 +74,7 @@ language could be used to implement trading strategies and/or SOR, MMBs.
 
 Intergration with the Genius Yield DEX has never been easier.
 
-## Building locally from source using Docker
+### Building locally from source using Docker
 
 The easiest way to build the software is using docker.
 
@@ -87,7 +91,7 @@ make build
 If you would like to build the software from source locally on your workstation using the
 Haskell toolchain, then please see the following section.
 
-## Building locally from source using the Haskell Toolchain
+### Building locally from source using the Haskell Toolchain
 
 Alternatively the software could be built from source code on the local workstation using
 the Haskell toolchain.
@@ -183,7 +187,7 @@ Alternatively you could also test using `make test`. This is sending a test GET 
 Further test requests are available in the Makefile of the strategy executor:
 - [Make targets sending test HTTP requests to the Bot API](https://github.com/geniusyield/strategy-executor/blob/6b5a1b1d9f117831e409989335bd48875eef4189/Makefile#L32-L57)
 
-## Swagger API documentation
+### Swagger API documentation
 
 Endpoints made available by server are specified [here](./web/swagger/api.yaml).
 
