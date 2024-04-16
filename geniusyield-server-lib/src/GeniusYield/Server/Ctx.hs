@@ -12,61 +12,13 @@ module GeniusYield.Server.Ctx (
 ) where
 
 import Data.Strict.Tuple (Pair (..))
-import GeniusYield.Api.Dex.PartialOrder (PORefs (..))
 import GeniusYield.Imports
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider)
-import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
-import GeniusYield.Scripts.Dex.Data (nftPolicyV1, nftPolicyV1_1, orderValidator)
-import GeniusYield.Scripts.Dex.Version (POCVersion (..))
-import GeniusYield.Server.Constants (poConfigAddrMainnet, poConfigAddrPreprod, poRefsMainnet, poRefsPreprod)
+import GeniusYield.Server.Constants (DEXInfo (..), dexInfoDefaultMainnet, dexInfoDefaultPreprod)
 import GeniusYield.Transaction
 import GeniusYield.TxBuilder
 import GeniusYield.Types
-import PlutusLedgerApi.V1 (Address)
-import PlutusLedgerApi.V1.Scripts (ScriptHash)
-import PlutusLedgerApi.V1.Value (AssetClass)
-import Ply (ScriptRole (..), TypedScript)
 import RIO
-
--- | Type that encapsulates the scripts needed for the dex api.
-data DEXInfo = DEXInfo
-  { dexPartialOrderValidator ∷ !(TypedScript 'ValidatorRole '[Address, AssetClass]),
-    dexNftPolicy ∷ !(POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]),
-    dexPartialOrderConfigAddr ∷ !(POCVersion → GYAddress),
-    dexPORefs ∷ !PORefs
-  }
-
-instance HasPartialOrderScript DEXInfo where
-  getPartialOrderValidator = dexPartialOrderValidator
-
-instance HasPartialOrderNftScript DEXInfo where
-  getPartialOrderNftPolicy = dexNftPolicy
-
-instance HasPartialOrderConfigAddr DEXInfo where
-  getPartialOrderConfigAddr = dexPartialOrderConfigAddr
-
-nftPolicy ∷ POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]
-nftPolicy = \case
-  POCVersion1 → nftPolicyV1
-  POCVersion1_1 → nftPolicyV1_1
-
-dexInfoDefaultMainnet ∷ DEXInfo
-dexInfoDefaultMainnet =
-  DEXInfo
-    { dexPartialOrderValidator = orderValidator,
-      dexNftPolicy = nftPolicy,
-      dexPartialOrderConfigAddr = poConfigAddrMainnet,
-      dexPORefs = poRefsMainnet
-    }
-
-dexInfoDefaultPreprod ∷ DEXInfo
-dexInfoDefaultPreprod =
-  DEXInfo
-    { dexPartialOrderValidator = orderValidator,
-      dexNftPolicy = nftPolicy,
-      dexPartialOrderConfigAddr = poConfigAddrPreprod,
-      dexPORefs = poRefsPreprod
-    }
 
 -- | Server context: configuration & shared state.
 data Ctx = Ctx

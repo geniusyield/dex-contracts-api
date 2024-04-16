@@ -3,11 +3,20 @@ module GeniusYield.Api.Dex.Constants (
   poRefsPreprod,
   poConfigAddrMainnet,
   poConfigAddrPreprod,
+  DEXInfo (..),
+  dexInfoDefaultMainnet,
+  dexInfoDefaultPreprod,
 ) where
 
 import GeniusYield.Api.Dex.PartialOrderConfig (PORef (..), PORefs (..))
+import GeniusYield.OnChain.Common.Scripts.DEX.Data
+import GeniusYield.Scripts (HasPartialOrderConfigAddr (..), HasPartialOrderNftScript (..), HasPartialOrderScript (..))
 import GeniusYield.Scripts.Dex.Version (POCVersion (POCVersion1, POCVersion1_1))
 import GeniusYield.Types (GYAddress, unsafeAddressFromText)
+import PlutusLedgerApi.V1 (Address)
+import PlutusLedgerApi.V1.Scripts (ScriptHash)
+import PlutusLedgerApi.V1.Value (AssetClass)
+import Ply (ScriptRole (..), TypedScript)
 
 poRefsMainnet ∷ PORefs
 poRefsMainnet =
@@ -58,3 +67,43 @@ poConfigAddrPreprod =
    in \case
         POCVersion1 → v1Addr
         POCVersion1_1 → v1_1Addr
+
+-- | Type that encapsulates the scripts needed for the dex api.
+data DEXInfo = DEXInfo
+  { dexPartialOrderValidator ∷ !(TypedScript 'ValidatorRole '[Address, AssetClass]),
+    dexNftPolicy ∷ !(POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]),
+    dexPartialOrderConfigAddr ∷ !(POCVersion → GYAddress),
+    dexPORefs ∷ !PORefs
+  }
+
+instance HasPartialOrderScript DEXInfo where
+  getPartialOrderValidator = dexPartialOrderValidator
+
+instance HasPartialOrderNftScript DEXInfo where
+  getPartialOrderNftPolicy = dexNftPolicy
+
+instance HasPartialOrderConfigAddr DEXInfo where
+  getPartialOrderConfigAddr = dexPartialOrderConfigAddr
+
+nftPolicy ∷ POCVersion → TypedScript 'MintingPolicyRole '[ScriptHash, Address, AssetClass]
+nftPolicy = \case
+  POCVersion1 → nftPolicyV1
+  POCVersion1_1 → nftPolicyV1_1
+
+dexInfoDefaultMainnet ∷ DEXInfo
+dexInfoDefaultMainnet =
+  DEXInfo
+    { dexPartialOrderValidator = orderValidator,
+      dexNftPolicy = nftPolicy,
+      dexPartialOrderConfigAddr = poConfigAddrMainnet,
+      dexPORefs = poRefsMainnet
+    }
+
+dexInfoDefaultPreprod ∷ DEXInfo
+dexInfoDefaultPreprod =
+  DEXInfo
+    { dexPartialOrderValidator = orderValidator,
+      dexNftPolicy = nftPolicy,
+      dexPartialOrderConfigAddr = poConfigAddrPreprod,
+      dexPORefs = poRefsPreprod
+    }
