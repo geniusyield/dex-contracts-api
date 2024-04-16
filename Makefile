@@ -9,7 +9,14 @@ pull:
 	docker compose pull
 
 start:
-	docker compose up --no-recreate
+	docker compose up -d --remove-orphans
+
+logs:
+	docker compose logs -f
 
 stop:
 	docker compose down
+
+test:
+	@[ ! -f .env ] || export $(grep -v 'SERVER_API_KEY' .env | xargs) >/dev/null 2>&1
+	@curl -H "api-key: ${SERVER_API_KEY}" http://localhost:8082/v0/settings && echo
