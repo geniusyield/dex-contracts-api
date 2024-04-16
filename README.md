@@ -180,6 +180,9 @@ For details please see the following section:
 
 Alternatively you could also test using `make test`. This is sending a test GET request to the `settings` endpoint of the server running on the port `8082` of the `localhost`.
 
+Further test requests are available in the Makefile of the strategy executor:
+- [Make targets sending test HTTP requests to the Bot API](https://github.com/geniusyield/strategy-executor/blob/6b5a1b1d9f117831e409989335bd48875eef4189/Makefile#L32-L57)
+
 ## Swagger API documentation
 
 Endpoints made available by server are specified [here](./web/swagger/api.yaml).
