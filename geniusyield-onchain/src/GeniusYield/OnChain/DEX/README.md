@@ -5,6 +5,7 @@
 - [DEX](#dex)
   - [Table of Content](#table-of-content)
   - [Introduction](#introduction)
+  - [Audit report](#audit-report)
   - [NFT](#nft)
   - [Special NFT for Partially Fillable Orders](#special-nft-for-partially-fillable-orders)
   - [Partially Fillable Orders](#partially-fillable-orders)
@@ -23,6 +24,10 @@ In total, we have four different smart contracts powering our DEX:
  - [_NFT_](#nft). A simple NFT minting policy which guarantees that any token seen with it's currency symbol is an NFT.
  - [_Special NFT for Partially Fillable Orders_](#special-nft-for-partially-fillable-orders). This besides giving the same guarantees as our simple NFT minting policy, also guarantees that any UTxO seen with this token is a sensible order. Besides that, an NFT token in an order is also useful to track it's "identity" over it's lifetime. Note that there is no mutable state in the eUTxO-model, and one way to simulate it is to pass an NFT from the consumed UTxO to the new one being created (with modified value and/or datum) so as to identify "same" abstract order.
  - [_Fee Configuration_](#fee-configuration). Governs fees charged to maker & taker when creating, filling an order respectively.
+
+## Audit Report
+
+Our DEX smart contracts have been audited by [Anastasia Labs](https://anastasialabs.com/) and report is available [here](./Anastasia_Labs____Genius_Yield_Audit.pdf).
 
 ## NFT
 
