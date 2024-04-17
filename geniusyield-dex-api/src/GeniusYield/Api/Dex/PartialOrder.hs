@@ -31,6 +31,7 @@ module GeniusYield.Api.Dex.PartialOrder (
   -- * Queries
   partialOrders,
   partialOrdersHavingAsset,
+  partialOrdersWithTransformerPredicate,
   orderByNft,
   getPartialOrderInfo,
   getPartialOrdersInfos,
@@ -417,6 +418,15 @@ partialOrdersHavingAsset pors hasAsset = do
       )
       datumsV1_1
   pure $! m1 <> m1_1
+
+partialOrdersWithTransformerPredicate
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → (PartialOrderInfo → Maybe b)
+  → m [b]
+partialOrdersWithTransformerPredicate pors transformerPredicate = do
+  ois ← Map.elems <$> partialOrders pors
+  pure $ mapMaybe transformerPredicate ois
 
 orderByNft
   ∷ GYDexApiQueryMonad m a
