@@ -17,7 +17,7 @@ jobs:
       VERSION: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Install dependencies (apt-get)
       run: |
         sudo apt-get update
@@ -54,14 +54,14 @@ jobs:
       with:
         extra_args: --verbose --all-files
     - name: Setup haskell tooling
-      uses: haskell/actions/setup@v2
+      uses: haskell-actions/setup@v2
       with:
         ghc-version: '9.2.8'
         cabal-version: '3.10.1.0'
         enable-stack: true
         stack-version: '2.9'
     - name: Setup cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         cache-name: cache-cabal
       with:
