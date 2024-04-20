@@ -31,7 +31,6 @@ jobs:
         uses: actions/deploy-pages@v2
   docker:
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       packages: write
       contents: read
@@ -60,4 +59,3 @@ jobs:
           labels: ${{ steps.docker-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
