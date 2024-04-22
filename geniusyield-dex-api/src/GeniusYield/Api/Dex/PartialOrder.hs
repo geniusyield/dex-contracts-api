@@ -291,7 +291,7 @@ partialOrderInfoToIn
   → PartialOrderAction
   → GYTxIn 'PlutusV2
 partialOrderInfoToIn a pocVersion pors oi@PartialOrderInfo {..} oa =
-  let SomePORef (PORef {..}) = selectPor pors pocVersion
+  let SomePORef PORef {..} = selectPor pors pocVersion
    in GYTxIn
         { gyTxInTxOutRef = poiRef,
           gyTxInWitness =
@@ -876,7 +876,7 @@ cancelMultiplePartialOrders pors orderRefs = do
   cancelMultiplePartialOrders' pors ois
 
 getVersionsInOrders ∷ [PartialOrderInfo] → Set POCVersion
-getVersionsInOrders = foldl' (\acc (PartialOrderInfo {..}) → Set.insert poiVersion acc) Set.empty
+getVersionsInOrders = foldl' (\acc PartialOrderInfo {..} → Set.insert poiVersion acc) Set.empty
 
 addCfgRefInputs ∷ Set POCVersion → RefPocds → GYTxSkeleton 'PlutusV2
 addCfgRefInputs versionsSet cfgRefs =

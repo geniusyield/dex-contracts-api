@@ -123,7 +123,7 @@ selectPor' PORefs {..} = case (singPOCVersion @v) of
 
 fetchPartialOrderConfig ∷ GYDexApiQueryMonad m a ⇒ POCVersion → PORefs → m SomeRefPocd
 fetchPartialOrderConfig pocVersion pors =
-  let SomePORef (PORef {..}) = selectPor pors pocVersion
+  let SomePORef PORef {..} = selectPor pors pocVersion
    in unsafeFetchPartialOrderConfig pocVersion porRefNft
 
 -- | Unsafe as it takes NFT's asset class where this NFT might not belong to the given version.
@@ -148,7 +148,7 @@ unsafeFetchPartialOrderConfig' nftToken = do
 fetchPartialOrderConfig' ∷ ∀ v m a. (GYDexApiQueryMonad m a, SingPOCVersionI v) ⇒ PORefs → m (RefPocd v)
 fetchPartialOrderConfig' pors = do
   let pocVersion = fromSingPOCVersion $ singPOCVersion @v
-      SomePORef (PORef {..}) = selectPor pors pocVersion
+      SomePORef PORef {..} = selectPor pors pocVersion
   unsafeFetchPartialOrderConfig' @v porRefNft
 
 fetchPartialOrderConfigs ∷ GYDexApiQueryMonad m a ⇒ PORefs → m RefPocds
