@@ -269,7 +269,7 @@ mainServer = geniusYieldServer
 handleSettings ∷ Ctx → IO Settings
 handleSettings ctx@Ctx {..} = do
   logInfo ctx "Settings requested."
-  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "mmb", settingsAddress = fmap (addressToBech32 . Strict.snd) ctxSigningKey, settingsStakeAddress = ctxStakeAddress, settingsCollateral = ctxCollateral}
+  pure $ Settings {settingsNetwork = ctxNetworkId & customShowNetworkId, settingsVersion = showVersion PackageInfo.version, settingsRevision = gitHash, settingsBackend = "genius-server", settingsAddress = fmap (addressToBech32 . Strict.snd) ctxSigningKey, settingsStakeAddress = ctxStakeAddress, settingsCollateral = ctxCollateral}
 
 -- >>> customShowNetworkId GYMainnet
 -- "mainnet"
