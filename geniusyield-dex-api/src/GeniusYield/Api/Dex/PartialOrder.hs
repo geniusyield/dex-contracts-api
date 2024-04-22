@@ -700,6 +700,7 @@ placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC p
       <> mustHaveOutput o
       <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
       <> mustHaveRefInput cfgRef
+      <> mustHaveTxMetadata stampPlaced
 
 -- | Fills an order. If the provided amount of offered tokens to buy is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillPartialOrder
@@ -812,6 +813,7 @@ mkSkeletonCompletelyFillPartialOrder pors oi@PartialOrderInfo {..} mRefPocd addT
       <> feeOutput
       <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
       <> cs
+      <> mustHaveTxMetadata stampFilled
 
 -- | Creates the partial fill skeleton of a partial order.
 mkSkeletonPartiallyFillPartialOrder
@@ -854,6 +856,7 @@ mkSkeletonPartiallyFillPartialOrder pors oi@PartialOrderInfo {..} amt mRefPocd a
       <> mustHaveOutput o
       <> cs
       <> mustHaveRefInput cfgRef
+      <> mustHaveTxMetadata stampFilled
 
 cancelPartialOrder
   ∷ (HasCallStack, GYDexApiMonad m a)
@@ -939,6 +942,7 @@ cancelMultiplePartialOrders' pors ois = do
     feeOutput
       <> accumulatedSkeleton
       <> addCfgRefInputs versionsSet cfgRefs
+      <> mustHaveTxMetadata stampCancel
 
 -- | Fills multiple orders. If the provided amount of offered tokens to buy in an order is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillMultiplePartialOrders
@@ -1029,7 +1033,7 @@ fillMultiplePartialOrders' pors orders mRefPocd addTakerFee = do
 
               pure $! prevSkel <> skel
           )
-          (cfgRefInputs <> feeOutput)
+          (cfgRefInputs <> feeOutput <> mustHaveTxMetadata stampFilled)
           orders
 
   let buildWithoutFeeOutput = do
@@ -1059,7 +1063,7 @@ fillMultiplePartialOrders' pors orders mRefPocd addTakerFee = do
                   <> mustHaveOutput o
                   <> cs
           )
-          cfgRefInputs
+          (cfgRefInputs <> mustHaveTxMetadata stampFilled)
           (zip [(1 ∷ Natural) ..] orders)
   -- If all orders are of same version, we can keep earlier logic of not requiring fee output when all orders are filled partially.
   if (Set.size versionsSet > 1) || isJust (find (\(PartialOrderInfo {..}, amt) → amt == poiOfferedAmount) orders)
@@ -1118,3 +1122,9 @@ validFillRangeConstraints mstart mend = (<>) <$> startConstraint <*> endConstrai
       if now <= endSlot
         then return $ isInvalidAfter $ min endSlot $ unsafeAdvanceSlot now 120
         else throwAppError $ TooLateFill {foeEnd = endSlot, foeNow = now}
+
+-- | Metadata stamps
+stampPlaced, stampFilled, stampCancel ∷ Maybe GYTxMetadata
+stampPlaced = metadataMsg "GeniusYield: Order placed"
+stampFilled = metadataMsg "GeniusYield: Order filled"
+stampCancel = metadataMsg "GeniusYield: Order canceled"
