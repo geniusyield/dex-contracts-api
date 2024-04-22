@@ -18,7 +18,7 @@ which include ada and arbitrary custom tokens. This is _Decentralized_ in the se
 
 Our DEX architecture is very open and extensible.
 
-In total, we have four different smart contracts powering our DEX:
+In total, we at the moment have four different smart contracts powering our DEX:
 
  - [_Partially Fillable Orders_](#partially-fillable-orders). Order that can be filled in several transactions, each only taking part of the offered tokens and paying corresponding asked tokens.
  - [_NFT_](#nft). A simple NFT minting policy which guarantees that any token seen with it's currency symbol is an NFT.
