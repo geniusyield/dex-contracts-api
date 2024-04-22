@@ -1,0 +1,117 @@
+cabal-version: 3.0
+name:          geniusyield-onchain
+version:       0.1.0.0
+synopsis:      GeniusYield onchain code
+license:       Apache-2.0
+license-file:  LICENSE
+author:        GeniusYield
+maintainer:    support@geniusyield.co
+build-type:    Simple
+copyright:     2023 GYELD GMBH
+
+common lang
+  default-language:   GHC2021
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DerivingStrategies
+    TypeFamilies
+
+library
+  import:          lang
+  ghc-options:     -Wall
+
+  -- so unfoldings are present even when compiled without optmizations
+  ghc-options:
+    -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -Wno-partial-type-signatures
+
+  -- expose all unfoldings, so plutustx compiler can do its job
+  ghc-options:     -fexpose-all-unfoldings -fobject-code
+  hs-source-dirs:  src
+  exposed-modules:
+    GeniusYield.OnChain.DEX.NFT
+    GeniusYield.OnChain.DEX.NFT.Compiled
+    GeniusYield.OnChain.DEX.PartialOrder
+    GeniusYield.OnChain.DEX.PartialOrder.Compiled
+    GeniusYield.OnChain.DEX.PartialOrder.Types
+    GeniusYield.OnChain.DEX.PartialOrderConfig
+    GeniusYield.OnChain.DEX.PartialOrderConfig.Compiled
+    GeniusYield.OnChain.DEX.PartialOrderNFT
+    GeniusYield.OnChain.DEX.PartialOrderNFT.Compiled
+    GeniusYield.OnChain.DEX.PartialOrderNFTV1_1
+    GeniusYield.OnChain.DEX.PartialOrderNFTV1_1.Compiled
+    GeniusYield.OnChain.DEX.Utils
+    GeniusYield.OnChain.Plutarch.Api
+    GeniusYield.OnChain.Plutarch.Crypto
+    GeniusYield.OnChain.Plutarch.Run
+    GeniusYield.OnChain.Plutarch.Time
+    GeniusYield.OnChain.Plutarch.Tx
+    GeniusYield.OnChain.Plutarch.Types
+    GeniusYield.OnChain.Plutarch.Utils
+    GeniusYield.OnChain.Plutarch.Value
+    GeniusYield.OnChain.Utils
+    GeniusYield.Plutonomy
+
+  build-depends:
+    , base                <5
+    , bytestring
+    , data-default
+    , geniusyield-common
+    , lens
+    , plutarch
+    , plutarch-extra
+    , plutonomy
+    , plutus-core
+    , plutus-ledger-api
+    , plutus-tx
+    , plutus-tx-plugin
+    , ply-core
+    , ply-plutarch
+    , text
+
+executable geniusyield-onchain-compiler
+  import:         lang
+  ghc-options:    -Wall -fwarn-incomplete-uni-patterns
+
+  -- so unfoldings are present even when compiled without optmizations
+  ghc-options:
+    -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -Wno-partial-type-signatures
+
+  ghc-options:
+    -O2 -threaded -rtsopts -with-rtsopts=-T -fplugin-opt
+    PlutusTx.Plugin:defer-errors
+
+  hs-source-dirs: app
+  main-is:        Main.hs
+  build-depends:
+    , base
+    , directory
+    , filepath
+    , geniusyield-common
+    , geniusyield-onchain
+    , ply-core
+    , text
+    , transformers
+
+test-suite geniusyield-onchain-tests
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        geniusyield-onchain-tests.hs
+  hs-source-dirs: tests
+  ghc-options:    -threaded -rtsopts
+  ghc-options:
+    -Wall -Wincomplete-uni-patterns -Wno-unticked-promoted-constructors
+
+  build-depends:
+    , base
+    , data-default
+    , geniusyield-onchain
+    , plutonomy
+    , plutus-ledger-api
+    , plutus-tx
+    , ply-core
+    , ply-plutarch
+    , tasty
+    , text

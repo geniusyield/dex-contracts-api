@@ -7,40 +7,27 @@ Stability   : develop
 -}
 module GeniusYield.Scripts.Dex.PartialOrderConfig (
   -- * Typeclass
-  HasPartialOrderConfigScript (..),
   HasPartialOrderConfigAddr (..),
 
   -- * Datum
   PartialOrderConfigDatum (..),
   PartialOrderConfigInfoF (..),
   PartialOrderConfigInfo,
-
-  -- * Validator
-  mkPartialOrderConfigValidator,
-
-  -- * Address
-  partialOrderConfigAddr,
-  partialOrderConfigPlutusAddr,
 ) where
 
 import GHC.Generics (Generic)
 import GeniusYield.Scripts.Dex.PartialOrderConfig.Internal (PartialOrderConfigDatum (..))
+import GeniusYield.Scripts.Dex.Version (POCVersion)
 import GeniusYield.Types
-import PlutusCore.Version (plcVersion100)
 import PlutusLedgerApi.V1 qualified as Plutus
-import PlutusLedgerApi.V1.Value (AssetClass)
 import PlutusTx (
   BuiltinData,
   FromData (fromBuiltinData),
   ToData (toBuiltinData),
  )
-import PlutusTx qualified
-
-class HasPartialOrderConfigScript a where
-  getPartialOrderConfigValidator ∷ a → PlutusTx.CompiledCode (AssetClass → BuiltinData → BuiltinData → BuiltinData → ())
 
 class HasPartialOrderConfigAddr a where
-  getPartialOrderConfigAddr ∷ a → GYAddress
+  getPartialOrderConfigAddr ∷ a → POCVersion → GYAddress
 
 data PartialOrderConfigInfoF addr = PartialOrderConfigInfo
   { -- | Public key hashes of the potential signatories.
@@ -103,15 +90,3 @@ instance FromData (PartialOrderConfigInfoF Plutus.Address) where
    where
     fromEither ∷ Either e a → Maybe a
     fromEither = either (const Nothing) Just
-
-mkPartialOrderConfigValidator ∷ HasPartialOrderConfigScript a ⇒ a → GYAssetClass → GYValidator 'PlutusV2
-mkPartialOrderConfigValidator script ac =
-  let val = getPartialOrderConfigValidator script `PlutusTx.unsafeApplyCode` PlutusTx.liftCode plcVersion100 (assetClassToPlutus ac)
-   in validatorFromPlutus val
-
-partialOrderConfigAddr ∷ HasPartialOrderConfigScript a ⇒ a → GYNetworkId → GYAssetClass → GYAddress
-partialOrderConfigAddr script nid ac =
-  addressFromValidator nid $ mkPartialOrderConfigValidator script ac
-
-partialOrderConfigPlutusAddr ∷ HasPartialOrderConfigScript a ⇒ a → GYAssetClass → Plutus.Address
-partialOrderConfigPlutusAddr script ac = addressToPlutus $ partialOrderConfigAddr script GYMainnet ac

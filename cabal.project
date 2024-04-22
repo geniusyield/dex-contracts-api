@@ -20,6 +20,7 @@ packages:
   geniusyield-dex-api
   geniusyield-orderbot-lib
   geniusyield-server-lib
+  geniusyield-onchain/geniusyield-common
 
 -- TODO: Default value should be @direct@ in upcoming 3.10 version of cabal, omit this line then.
 test-show-details: direct

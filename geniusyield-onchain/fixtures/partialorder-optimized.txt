@@ -1,0 +1,861 @@
+let* sndPair!! = sndPair# ! !
+     fstPair!! = fstPair# ! !
+     constrData_0 = constrData# 0#
+     lessThanInteger_0 = lessThanInteger# 0#
+     equalsInteger_32 = equalsInteger# 32#
+     equalsInteger_28 = equalsInteger# 28#
+     equalsInteger_2 = equalsInteger# 2#
+     equalsInteger_1 = equalsInteger# 1#
+     equalsInteger_0 = equalsInteger# 0#
+     __ = []#
+     _00 = 0#d
+     ~__ = \ ~ -> __
+     equalsData_listData___ = equalsData# (listData# []#)
+     cse = \ x -> x 0# 1#
+     chooseList!! = chooseList# ! !
+     ifThenElse! = ifThenElse# !
+     headList! = headList# !
+     tailList! = tailList# !
+     zComb = \ f -> let* x_0 = \ y -> f (\ u -> y y u) in f (\ v -> x_0 x_0 v)
+     x_1 = zComb (\ x_2 x_3 x_4 -> chooseList!! x_4 (\ ~ x_5 x_6 -> x_6 !) (\ ~ -> ifThenElse! (x_3 (headList! x_4)) (\ ~ -> let* x_7 = headList! x_4 in \ x_8 x_9 -> x_8 x_7) (\ ~ -> x_2 x_3 (tailList! x_4)) !) !)
+     x_a = zComb (\ x_b x_c x_d -> ifThenElse! (equalsInteger_0 x_d) (\ ~ -> x_c) (\ ~ -> x_b x_d (modInteger# x_c x_d)) !)
+     x_e = \ x_f -> sndPair!! (unConstrData# x_f)
+     x_g = \ x_h x_i -> equalsData# (listData# (x_e x_h)) (listData# (x_e x_i))
+     x_j = \ x_k x_m -> ifThenElse! x_k x_m (\ ~ -> False#)
+     x_n =
+       \ x_p ->
+         let* x_r = bData# x_p
+         in \ x_s x_t x_u -> zComb (\ x_v x_w -> chooseList!! x_w (\ ~ -> x_s) (\ ~ -> ifThenElse! (equalsData# (fstPair!! (headList! x_w)) x_r) (\ ~ -> x_t (sndPair!! (headList! x_w))) (\ ~ -> x_v (tailList! x_w)) !) !) x_u
+     x_x = \ x_y x_z x_10 -> x_n x_z 0# (\ x_11 -> x_n x_10 0# unIData# (unMapData# x_11)) x_y
+     x_12 = \ x_13 x_14 -> x_x x_13 (unBData# (headList! (x_e x_14))) (unBData# (headList! (tailList! (x_e x_14))))
+     tt = ()#
+     mkCons! = mkCons# !
+     const = \ u1 v1 -> u1
+     flipConst = \ u2 v2 -> v2
+     x_15 =
+       \ x_16 x_17 x_18 ->
+         zComb
+           (\ x_19 x_1a ->
+              x_1a
+                (\ x_1b x_1c -> chooseList!! x_1b (\ ~ -> x_1c) (\ ~ -> x_19 flipConst (headList! x_1b) (tailList! x_1b) x_1c) !)
+                (\ x_1d x_1e x_1f ->
+                   chooseList!!
+                     x_1f
+                     (\ ~ -> mkCons! x_1d x_1e)
+                     (\ ~ ->
+                        let* x_1g = headList! x_1f
+                             x_1h = fstPair!! x_1d
+                             x_x = fstPair!! x_1g
+                        in ifThenElse!
+                             (equalsData# x_1h x_x)
+                             (\ ~ -> mkCons! (mkPairData# x_1h (x_16 (sndPair!! x_1d) (sndPair!! x_1g))) (x_19 const x_1e (tailList! x_1f)))
+                             (\ ~ -> ifThenElse! (lessThanByteString# (unBData# x_1h) (unBData# x_x)) (\ ~ -> mkCons! x_1d (x_19 flipConst x_1g (tailList! x_1f) x_1e)) (\ ~ -> mkCons! x_1g (x_19 flipConst x_1d x_1e (tailList! x_1f))) !)
+                             !)
+                     !))
+           const
+           x_17
+           x_18
+     x_1i = \ x_1j x_1k x_1m -> x_15 (\ x_1n x_1p -> mapData# (x_15 (\ x_1r x_1s -> iData# (x_1j (unIData# x_1r) (unIData# x_1s))) (unMapData# x_1n) (unMapData# x_1p))) x_1k x_1m
+     x_1t = subtractInteger# 0#
+     x_1u = \ x_1v x_1w -> zComb (\ x_1x x_1y -> chooseList!! x_1y ~__ (\ ~ -> mkCons! (mkPairData# (fstPair!! (headList! x_1y)) (x_1v (sndPair!! (headList! x_1y)))) (x_1x (tailList! x_1y))) !) x_1w
+     x_1z = \ x_20 x_21 -> x_1i addInteger# x_20 (x_1u (\ x_22 -> mapData# (x_1u (\ x_23 -> iData# (x_1t (unIData# x_23))) (unMapData# x_22))) x_21)
+     x_24 = \ x_25 x_26 -> constrData_0 (mkCons! (bData# x_25) (mkCons! (bData# x_26) []#))
+     x_27 = \ x_28 x_29 -> mkCons! (mkPairData# x_28 x_29) __
+     x_2a = \ x_2b x_2c -> let* x_2d = headList! (x_e x_2b); x_2e = headList! (tailList! (x_e x_2b)) in ifThenElse! (lessThanEqualsInteger# (unIData# x_2c) 0#) ~__ (\ ~ -> x_27 x_2d (mapData# (x_27 x_2e x_2c))) !
+     x_2f = \ x_2g x_2h x_2i -> zComb (\ x_2j x_2k -> chooseList!! x_2k (\ ~ x_2m x_2n -> x_2n !) (\ ~ -> ifThenElse! (equalsData# (fstPair!! (headList! x_2k)) x_2h) (\ ~ -> x_2g (headList! x_2k)) (\ ~ -> x_2j (tailList! x_2k)) !) !) x_2i
+     x_2p = \ x_2r -> x_2f (\ x_2s -> let* x_2t = sndPair!! x_2s in \ x_2u x_2v -> x_2u x_2t) (bData# x_2r)
+     x_2w =
+       \ x_2x x_2y ->
+         let* x_2z = \ x_30 x_31 -> x_j (equalsData# x_30 x_2x) (\ ~ -> x_g x_31 x_2y) !
+         in \ x_32 ->
+              zComb
+                (\ x_33 x_34 ->
+                   chooseList!!
+                     x_34
+                     ~__
+                     (\ ~ ->
+                        let* x_x_0 = x_e (headList! x_34)
+                             headList!_x_x = headList! x_x_0
+                             x_35 = unConstrData# (headList! (tailList! (tailList! x_x_0)))
+                             x_36 = fstPair!! x_35
+                             x_37 = sndPair!! x_35
+                        in ifThenElse!
+                             (ifThenElse!
+                                (equalsInteger_0 x_36)
+                                (\ ~ -> False#)
+                                (\ ~ -> ifThenElse! (equalsInteger_1 x_36) (\ ~ -> x_2p (unBData# (headList! x_37)) x_32 (\ x_38 -> x_2z x_38 headList!_x_x) (\ ~ -> False#)) (\ ~ -> x_2z (headList! x_37) headList!_x_x) !)
+                                !)
+                             (\ ~ -> unMapData# (headList! (tailList! (x_e (headList! x_34)))))
+                             (\ ~ -> x_33 (tailList! x_34))
+                             !)
+                     !)
+     x_39 = \ x_3a -> zComb (\ x_3b x_3c -> chooseList!! x_3c (\ ~ -> True#) (\ ~ -> x_j (x_3a (headList! x_3c)) (\ ~ -> x_3b (tailList! x_3c)) !) !)
+     x_3d = \ x_3e x_3f -> x_39 (\ x_3g -> x_3e (unMapData# (sndPair!! x_3g))) x_3f
+     x_3h = \ x_3i x_3j -> x_39 (\ x_3k -> x_3i (unIData# (sndPair!! x_3k))) x_3j
+     x_3m = \ x_3n x_3p -> x_3d (\ x_3r -> x_3h (lessThanEqualsInteger# 0#) x_3r) (x_1z x_3n x_3p)
+     x_3s = \ x_3t -> zComb (\ x_3u x_3v x_3w -> chooseList!! x_3w (\ ~ -> x_3v) (\ ~ -> x_3u (x_3t x_3v (headList! x_3w)) (tailList! x_3w)) !)
+     x_3x = \ x_3y -> ifThenElse! x_3y (\ ~ -> True#)
+     x_3z = \ x_40 -> ifThenElse! (x_3d (\ x_41 -> x_3h lessThanInteger_0 x_41) x_40) (\ ~ -> x_40) (\ ~ -> ERROR) !
+     x_42 =
+       \ x_43 ->
+         zComb
+           (\ x_44 x_45 ->
+              chooseList!! x_45 (\ ~ x_46 -> x_43) (\ ~ -> let* x_47 = unBData# (fstPair!! (headList! x_45)) in \ x_48 -> ifThenElse! (x_48 x_47) (\ ~ -> ERROR) (\ ~ -> x_44 (tailList! x_45) (\ x_49 -> lessThanByteString# x_49 x_47)) !) !)
+           x_43
+           (\ x_4a -> False#)
+     x_4b = \ x_4c -> zComb (\ x_4d x_4e -> chooseList!! x_4e ~__ (\ ~ -> mkCons! (x_4c (headList! x_4e)) (x_4d (tailList! x_4e))) !)
+     x_4f =
+       \ x_4g x_4h x_4i x_4j x_4k x_4m ->
+         x_1
+           (\ x_4n -> x_g (headList! (x_e x_4n)) x_4i)
+           x_4g
+           (\ x_4p ->
+              let* x_4r = tailList! (x_e x_4p)
+                   x_4s = unConstrData# (headList! (tailList! x_4r))
+                   x_x_1 = fstPair!! x_4s
+                   x_x_2 = sndPair!! x_4s
+                   x_x_3 =
+                     x_e
+                       (ifThenElse!
+                          (equalsInteger_0 x_x_1)
+                          (\ ~ -> ERROR)
+                          (\ ~ ->
+                             ifThenElse!
+                               (equalsInteger_2 x_x_1)
+                               (\ ~ ->
+                                  let* headList!_x_x_0 = headList! x_x_2
+                                       unConstrData_headList!_x_x = unConstrData# headList!_x_x_0
+                                       x_unConstrData_headList!_x_x = sndPair!! unConstrData_headList!_x_x
+                                       x_4t =
+                                         ifThenElse!
+                                           (equalsInteger_0 (fstPair!! unConstrData_headList!_x_x))
+                                           (\ ~ ->
+                                              let* x_4u =
+                                                     x_4b
+                                                       (\ x_4v ->
+                                                          let* x_4w = unConstrData# (fstPair!! x_4v)
+                                                               x_4x =
+                                                                 x_4b
+                                                                   (\ x_4y ->
+                                                                      let* lengthOfByteString_x = lengthOfByteString# (unBData# (fstPair!! x_4y))
+                                                                           x_4z =
+                                                                             x_4b
+                                                                               (\ x_50 ->
+                                                                                  let* x_51 = unIData# (sndPair!! x_50)
+                                                                                  in mkPairData# (ifThenElse! (lessThanEqualsInteger# (lengthOfByteString# (unBData# (fstPair!! x_50))) 32#) (\ ~ -> fstPair!! x_50) (\ ~ -> ERROR) !) (sndPair!! x_50))
+                                                                               (unMapData# (sndPair!! x_4y))
+                                                                           x_52 = x_42 (unMapData# (sndPair!! x_4y))
+                                                                      in mkPairData#
+                                                                           (ifThenElse! (x_3x (equalsInteger_0 lengthOfByteString_x) (\ ~ -> equalsInteger_28 lengthOfByteString_x) !) (\ ~ -> fstPair!! x_4y) (\ ~ -> ERROR) !)
+                                                                           (sndPair!! x_4y))
+                                                                   (unMapData# (sndPair!! x_4v))
+                                                               x_x_4 = sndPair!! x_4w
+                                                               x_53 = x_42 (unMapData# (sndPair!! x_4v))
+                                                               x_54 =
+                                                                 ifThenElse!
+                                                                   (equalsInteger_0 (fstPair!! x_4w))
+                                                                   (\ ~ ->
+                                                                      let* unConstrData_headList!_x_x_0 = unConstrData# (headList! x_x_4)
+                                                                      in ifThenElse!
+                                                                           (equalsInteger_0 (fstPair!! unConstrData_headList!_x_x_0))
+                                                                           (\ ~ ->
+                                                                              let* x_unConstrData_headList!_x_x_0 = sndPair!! unConstrData_headList!_x_x_0
+                                                                              in ifThenElse!
+                                                                                   (equalsData_listData___ (listData# (tailList! x_unConstrData_headList!_x_x_0)))
+                                                                                   (\ ~ ->
+                                                                                      ifThenElse!
+                                                                                        (equalsInteger_32 (lengthOfByteString# (unBData# (headList! x_unConstrData_headList!_x_x_0))))
+                                                                                        (\ ~ ->
+                                                                                           let* tailList!_x_x = tailList! x_x_4
+                                                                                                x_55 = unIData# (headList! tailList!_x_x)
+                                                                                                x_56 = chooseList!! (tailList! tailList!_x_x) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                                                                           in tt)
+                                                                                        (\ ~ -> ERROR)
+                                                                                        !)
+                                                                                   (\ ~ -> ERROR)
+                                                                                   !)
+                                                                           (\ ~ -> ERROR)
+                                                                           !)
+                                                                   (\ ~ -> ERROR)
+                                                                   !
+                                                               x_57 = x_3z (unMapData# (sndPair!! x_4v))
+                                                          in mkPairData# (fstPair!! x_4v) (sndPair!! x_4v))
+                                                       (unMapData# (headList! x_unConstrData_headList!_x_x))
+                                                   x_58 = tailList! x_unConstrData_headList!_x_x
+                                                   x_59 = headList! x_58
+                                                   x_5a =
+                                                     x_4b
+                                                       (\ x_5b ->
+                                                          let* lengthOfByteString_x_0 = lengthOfByteString# (unBData# (fstPair!! x_5b))
+                                                               x_5c =
+                                                                 x_4b
+                                                                   (\ x_5d ->
+                                                                      let* x_5e = unIData# (sndPair!! x_5d)
+                                                                      in mkPairData# (ifThenElse! (lessThanEqualsInteger# (lengthOfByteString# (unBData# (fstPair!! x_5d))) 32#) (\ ~ -> fstPair!! x_5d) (\ ~ -> ERROR) !) (sndPair!! x_5d))
+                                                                   (unMapData# (sndPair!! x_5b))
+                                                               x_5f = x_42 (unMapData# (sndPair!! x_5b))
+                                                          in mkPairData# (ifThenElse! (x_3x (equalsInteger_0 lengthOfByteString_x_0) (\ ~ -> equalsInteger_28 lengthOfByteString_x_0) !) (\ ~ -> fstPair!! x_5b) (\ ~ -> ERROR) !) (sndPair!! x_5b))
+                                                       (unMapData# x_59)
+                                                   x_5g = x_42 (unMapData# x_59)
+                                                   x_5h = x_3z (unMapData# x_59)
+                                                   x_5i = tailList! x_58
+                                                   x_5j = unConstrData# (headList! x_5i)
+                                                   x_5k = fstPair!! x_5j
+                                                   x_5m = sndPair!! x_5j
+                                                   x_5n =
+                                                     ifThenElse!
+                                                       (equalsInteger_0 x_5k)
+                                                       (\ ~ ->
+                                                          let* x_5p = unConstrData# (headList! x_5m)
+                                                               x_5r = sndPair!! x_5p
+                                                               x_5s =
+                                                                 ifThenElse!
+                                                                   (equalsInteger_0 (fstPair!! x_5p))
+                                                                   (\ ~ ->
+                                                                      let* x_5t = unConstrData# (headList! x_5r)
+                                                                      in ifThenElse!
+                                                                           (equalsInteger_0 (fstPair!! x_5t))
+                                                                           (\ ~ ->
+                                                                              let* x_5u = sndPair!! x_5t
+                                                                              in ifThenElse!
+                                                                                   (equalsData_listData___ (listData# (tailList! x_5u)))
+                                                                                   (\ ~ ->
+                                                                                      ifThenElse!
+                                                                                        (equalsInteger_32 (lengthOfByteString# (unBData# (headList! x_5u))))
+                                                                                        (\ ~ -> let* x_5v = tailList! x_5r; x_5w = unIData# (headList! x_5v); x_5x = chooseList!! (tailList! x_5v) (\ ~ -> tt) (\ ~ -> ERROR) ! in tt)
+                                                                                        (\ ~ -> ERROR)
+                                                                                        !)
+                                                                                   (\ ~ -> ERROR)
+                                                                                   !)
+                                                                           (\ ~ -> ERROR)
+                                                                           !)
+                                                                   (\ ~ -> ERROR)
+                                                                   !
+                                                               x_5y = chooseList!! (tailList! x_5m) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                                          in tt)
+                                                       (\ ~ -> ifThenElse! (equalsInteger_1 x_5k) (\ ~ -> let* x_5z = chooseList!! x_5m (\ ~ -> tt) (\ ~ -> ERROR) ! in tt) (\ ~ -> ERROR) !)
+                                                       !
+                                                   x_60 = chooseList!! (tailList! x_5i) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                              in tt)
+                                           (\ ~ -> ERROR)
+                                           !
+                                  in headList!_x_x_0)
+                               (\ ~ ->
+                                  x_2p
+                                    (unBData# (headList! x_x_2))
+                                    x_4h
+                                    (\ x_61 ->
+                                       let* x_62 = unConstrData# x_61
+                                            x_x_5 = sndPair!! x_62
+                                            x_63 =
+                                              ifThenElse!
+                                                (equalsInteger_0 (fstPair!! x_62))
+                                                (\ ~ ->
+                                                   let* x_64 =
+                                                          x_4b
+                                                            (\ x_65 ->
+                                                               let* x_66 = unConstrData# (fstPair!! x_65)
+                                                                    x_67 =
+                                                                      x_4b
+                                                                        (\ x_68 ->
+                                                                           let* lengthOfByteString_x_1 = lengthOfByteString# (unBData# (fstPair!! x_68))
+                                                                                x_69 =
+                                                                                  x_4b
+                                                                                    (\ x_6a ->
+                                                                                       let* x_6b = unIData# (sndPair!! x_6a)
+                                                                                       in mkPairData#
+                                                                                            (ifThenElse! (lessThanEqualsInteger# (lengthOfByteString# (unBData# (fstPair!! x_6a))) 32#) (\ ~ -> fstPair!! x_6a) (\ ~ -> ERROR) !)
+                                                                                            (sndPair!! x_6a))
+                                                                                    (unMapData# (sndPair!! x_68))
+                                                                                x_6c = x_42 (unMapData# (sndPair!! x_68))
+                                                                           in mkPairData#
+                                                                                (ifThenElse! (x_3x (equalsInteger_0 lengthOfByteString_x_1) (\ ~ -> equalsInteger_28 lengthOfByteString_x_1) !) (\ ~ -> fstPair!! x_68) (\ ~ -> ERROR) !)
+                                                                                (sndPair!! x_68))
+                                                                        (unMapData# (sndPair!! x_65))
+                                                                    x_x_6 = sndPair!! x_66
+                                                                    x_6d = x_42 (unMapData# (sndPair!! x_65))
+                                                                    x_6e =
+                                                                      ifThenElse!
+                                                                        (equalsInteger_0 (fstPair!! x_66))
+                                                                        (\ ~ ->
+                                                                           let* unConstrData_headList!_x_x_1 = unConstrData# (headList! x_x_6)
+                                                                           in ifThenElse!
+                                                                                (equalsInteger_0 (fstPair!! unConstrData_headList!_x_x_1))
+                                                                                (\ ~ ->
+                                                                                   let* x_unConstrData_headList!_x_x_1 = sndPair!! unConstrData_headList!_x_x_1
+                                                                                   in ifThenElse!
+                                                                                        (equalsData_listData___ (listData# (tailList! x_unConstrData_headList!_x_x_1)))
+                                                                                        (\ ~ ->
+                                                                                           ifThenElse!
+                                                                                             (equalsInteger_32 (lengthOfByteString# (unBData# (headList! x_unConstrData_headList!_x_x_1))))
+                                                                                             (\ ~ ->
+                                                                                                let* tailList!_x_x_0 = tailList! x_x_6
+                                                                                                     x_6f = unIData# (headList! tailList!_x_x_0)
+                                                                                                     x_6g = chooseList!! (tailList! tailList!_x_x_0) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                                                                                in tt)
+                                                                                             (\ ~ -> ERROR)
+                                                                                             !)
+                                                                                        (\ ~ -> ERROR)
+                                                                                        !)
+                                                                                (\ ~ -> ERROR)
+                                                                                !)
+                                                                        (\ ~ -> ERROR)
+                                                                        !
+                                                                    x_6h = x_3z (unMapData# (sndPair!! x_65))
+                                                               in mkPairData# (fstPair!! x_65) (sndPair!! x_65))
+                                                            (unMapData# (headList! x_x_5))
+                                                        tailList!_x_x_1 = tailList! x_x_5
+                                                        headList!_tailList!_x_x = headList! tailList!_x_x_1
+                                                        x_6i =
+                                                          x_4b
+                                                            (\ x_6j ->
+                                                               let* lengthOfByteString_x_2 = lengthOfByteString# (unBData# (fstPair!! x_6j))
+                                                                    x_6k =
+                                                                      x_4b
+                                                                        (\ x_6m ->
+                                                                           let* x_6n = unIData# (sndPair!! x_6m)
+                                                                           in mkPairData# (ifThenElse! (lessThanEqualsInteger# (lengthOfByteString# (unBData# (fstPair!! x_6m))) 32#) (\ ~ -> fstPair!! x_6m) (\ ~ -> ERROR) !) (sndPair!! x_6m))
+                                                                        (unMapData# (sndPair!! x_6j))
+                                                                    x_6p = x_42 (unMapData# (sndPair!! x_6j))
+                                                               in mkPairData# (ifThenElse! (x_3x (equalsInteger_0 lengthOfByteString_x_2) (\ ~ -> equalsInteger_28 lengthOfByteString_x_2) !) (\ ~ -> fstPair!! x_6j) (\ ~ -> ERROR) !) (sndPair!! x_6j))
+                                                            (unMapData# headList!_tailList!_x_x)
+                                                        x_6r = x_42 (unMapData# headList!_tailList!_x_x)
+                                                        x_6s = x_3z (unMapData# headList!_tailList!_x_x)
+                                                        tailList!_tailList!_x_x = tailList! tailList!_x_x_1
+                                                        x_6t = unConstrData# (headList! tailList!_tailList!_x_x)
+                                                        x_6u = fstPair!! x_6t
+                                                        x_6v = sndPair!! x_6t
+                                                        x_6w =
+                                                          ifThenElse!
+                                                            (equalsInteger_0 x_6u)
+                                                            (\ ~ ->
+                                                               let* x_6x = unConstrData# (headList! x_6v)
+                                                                    x_6y = sndPair!! x_6x
+                                                                    x_6z =
+                                                                      ifThenElse!
+                                                                        (equalsInteger_0 (fstPair!! x_6x))
+                                                                        (\ ~ ->
+                                                                           let* x_70 = unConstrData# (headList! x_6y)
+                                                                           in ifThenElse!
+                                                                                (equalsInteger_0 (fstPair!! x_70))
+                                                                                (\ ~ ->
+                                                                                   let* x_71 = sndPair!! x_70
+                                                                                   in ifThenElse!
+                                                                                        (equalsData_listData___ (listData# (tailList! x_71)))
+                                                                                        (\ ~ ->
+                                                                                           ifThenElse!
+                                                                                             (equalsInteger_32 (lengthOfByteString# (unBData# (headList! x_71))))
+                                                                                             (\ ~ -> let* x_72 = tailList! x_6y; x_73 = unIData# (headList! x_72); x_74 = chooseList!! (tailList! x_72) (\ ~ -> tt) (\ ~ -> ERROR) ! in tt)
+                                                                                             (\ ~ -> ERROR)
+                                                                                             !)
+                                                                                        (\ ~ -> ERROR)
+                                                                                        !)
+                                                                                (\ ~ -> ERROR)
+                                                                                !)
+                                                                        (\ ~ -> ERROR)
+                                                                        !
+                                                                    x_75 = chooseList!! (tailList! x_6v) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                                               in tt)
+                                                            (\ ~ -> ifThenElse! (equalsInteger_1 x_6u) (\ ~ -> let* x_76 = chooseList!! x_6v (\ ~ -> tt) (\ ~ -> ERROR) ! in tt) (\ ~ -> ERROR) !)
+                                                            !
+                                                        x_77 = chooseList!! (tailList! tailList!_tailList!_x_x) (\ ~ -> tt) (\ ~ -> ERROR) !
+                                                   in tt)
+                                                (\ ~ -> ERROR)
+                                                !
+                                       in x_61)
+                                    (\ ~ -> ERROR))
+                               !)
+                          !)
+                   unMapData_headList!_x_x = unMapData# (headList! x_x_3)
+              in ifThenElse!
+                   (x_3m
+                      (x_1z (unMapData# (headList! x_4r)) (unMapData# (headList! (tailList! x_x_3))))
+                      (x_1i addInteger# (x_3s (\ x_78 x_79 -> x_1i addInteger# x_78 (unMapData# (sndPair!! x_79))) __ unMapData_headList!_x_x) (x_2a (x_24 ""#b ""#b) x_4j)))
+                   (\ ~ -> x_4m unMapData_headList!_x_x)
+                   (\ ~ -> ERROR)
+                   !)
+           (\ ~ -> x_4k)
+     x_7a = \ x_7b -> let* x_7c = unMapData# (sndPair!! x_7b) in \ x_7d x_7e -> x_7d x_7c
+     x_7f = 0#
+     x_7g =
+       \ x_7h x_7i ->
+         zComb
+           (\ x_7j x_7k x_7m ->
+              chooseList!!
+                x_7k
+                (\ ~ -> x_39 (\ x_7n -> lessThanEqualsInteger# x_7f (unIData# (sndPair!! x_7n))) x_7m)
+                (\ ~ ->
+                   let* x_7p = unIData# (sndPair!! (headList! x_7k))
+                   in chooseList!!
+                        x_7m
+                        (\ ~ -> x_j (lessThanEqualsInteger# x_7p x_7f) (\ ~ -> x_39 (\ x_7r -> lessThanEqualsInteger# (unIData# (sndPair!! x_7r)) x_7f) (tailList! x_7k)) !)
+                        (\ ~ ->
+                           let* x_7s = unIData# (sndPair!! (headList! x_7m))
+                                x_7t = unBData# (fstPair!! (headList! x_7k))
+                                x_7u = unBData# (fstPair!! (headList! x_7m))
+                           in ifThenElse!
+                                (equalsByteString# x_7t x_7u)
+                                (\ ~ -> x_j (lessThanEqualsInteger# x_7p x_7s) (\ ~ -> x_7j (tailList! x_7k) (tailList! x_7m)) !)
+                                (\ ~ ->
+                                   ifThenElse!
+                                     (lessThanByteString# x_7t x_7u)
+                                     (\ ~ -> x_j (lessThanEqualsInteger# x_7p x_7f) (\ ~ -> x_7j (tailList! x_7k) x_7m) !)
+                                     (\ ~ -> x_j (lessThanEqualsInteger# x_7f x_7s) (\ ~ -> x_7j x_7k (tailList! x_7m)) !)
+                                     !)
+                                !)
+                        !)
+                !)
+           x_7h
+           x_7i
+     x_lessThanEqualsInteger =
+       \ x_7v x_7w ->
+         zComb
+           (\ x_7x x_7y x_7z ->
+              chooseList!!
+                x_7y
+                (\ ~ -> x_39 (\ x_80 -> x_7g __ (unMapData# (sndPair!! x_80))) x_7z)
+                (\ ~ ->
+                   let* x_81 = unMapData# (sndPair!! (headList! x_7y))
+                   in chooseList!!
+                        x_7z
+                        (\ ~ -> x_j (x_7g x_81 __) (\ ~ -> x_39 (\ x_82 -> x_7g (unMapData# (sndPair!! x_82)) __) (tailList! x_7y)) !)
+                        (\ ~ ->
+                           let* x_83 = unMapData# (sndPair!! (headList! x_7z))
+                                x_84 = unBData# (fstPair!! (headList! x_7y))
+                                x_85 = unBData# (fstPair!! (headList! x_7z))
+                           in ifThenElse!
+                                (equalsByteString# x_84 x_85)
+                                (\ ~ -> x_j (x_7g x_81 x_83) (\ ~ -> x_7x (tailList! x_7y) (tailList! x_7z)) !)
+                                (\ ~ -> ifThenElse! (lessThanByteString# x_84 x_85) (\ ~ -> x_j (x_7g x_81 __) (\ ~ -> x_7x (tailList! x_7y) x_7z) !) (\ ~ -> x_j (x_7g __ x_83) (\ ~ -> x_7x x_7y (tailList! x_7z)) !) !)
+                                !)
+                        !)
+                !)
+           x_7v
+           x_7w
+     x_86 = \ x_87 x_88 x_89 x_8a x_8b -> x_1i addInteger# (x_2a (x_24 ""#b ""#b) x_89) (x_1i addInteger# (x_2a x_87 x_8a) (x_2a x_88 x_8b))
+     x_8c = \ x_8d x_8e -> x_8d (\ x_8f x_8g -> x_8e (\ x_8h x_8i -> lessThanInteger# (multiplyInteger# x_8i x_8f) (multiplyInteger# x_8h x_8g)))
+     x_8j = \ x_8k x_8m -> x_8k (\ x_8n x_8p -> x_8m (\ x_8r x_8s -> equalsInteger# (multiplyInteger# x_8s x_8n) (multiplyInteger# x_8r x_8p)))
+     x_8t = \ x_8u -> ifThenElse! (lessThanEqualsInteger# x_8u -1#) (\ ~ -> x_1t x_8u) (\ ~ -> x_8u) !
+     x_8v =
+       \ x_8w x_8x ->
+         x_8w
+           (\ x_8y x_8z ->
+              x_8x
+                (\ x_90 x_91 ->
+                   let* x_92 = multiplyInteger# x_8y x_90
+                        x_93 = multiplyInteger# x_8z x_91
+                        x_94 = x_8t x_92
+                        x_95 = x_8t x_93
+                        x_96 = x_a (ifThenElse! (lessThanEqualsInteger# x_94 x_95) (\ ~ -> x_95) (\ ~ -> x_94) !) (ifThenElse! (lessThanEqualsInteger# x_94 x_95) (\ ~ -> x_94) (\ ~ -> x_95) !)
+                        x_97 = ifThenElse! (equalsInteger_0 x_93) (\ ~ -> 0#) (\ ~ -> ifThenElse! (lessThanEqualsInteger# x_93 0#) (\ ~ -> -1#) (\ ~ -> 1#) !) !
+                        x_98 = multiplyInteger# x_97 (divideInteger# x_92 x_96)
+                        x_99 = multiplyInteger# x_97 (divideInteger# x_93 x_96)
+                   in \ x_9a -> x_9a x_98 x_99))
+     x_9b = \ x_9c x_9d -> x_9d x_9c 1#
+     x_9e = \ x_9f -> equalsInteger_1 (fstPair!! (unConstrData# x_9f))
+     x_9g =
+       \ x_9h x_9i ->
+         let* x_9j = x_e x_9h
+              x_9k = x_e x_9i
+              headList!_x = headList! x_9j
+              headList!_x_0 = headList! x_9k
+              x_9m = unConstrData# headList!_x
+              x_9n = unConstrData# headList!_x_0
+              x_x_7 = fstPair!! x_9m
+              x_x_8 = fstPair!! x_9n
+         in ifThenElse!
+              (ifThenElse!
+                 (lessThanInteger# x_x_7 x_x_8)
+                 (\ ~ -> True#)
+                 (\ ~ ->
+                    ifThenElse!
+                      (equalsInteger# x_x_7 x_x_8)
+                      (\ ~ -> let* x_x_9 = sndPair!! x_9m; x_x_a = sndPair!! x_9n in ifThenElse! (equalsInteger_1 x_x_7) (\ ~ -> lessThanInteger# (unIData# (headList! x_x_9)) (unIData# (headList! x_x_a))) (\ ~ -> False#) !)
+                      (\ ~ -> False#)
+                      !)
+                 !)
+              (\ ~ -> True#)
+              (\ ~ ->
+                 let* x_9p = unConstrData# headList!_x
+                      x_x_b = fstPair!! x_9p
+                      x_x_c = sndPair!! x_9p
+                 in ifThenElse!
+                      (ifThenElse!
+                         (equalsInteger_1 x_x_b)
+                         (\ ~ -> let* x_9r = unConstrData# headList!_x_0; x_x_d = sndPair!! x_9r in ifThenElse! (equalsInteger_1 (fstPair!! x_9r)) (\ ~ -> equalsData# (listData# x_x_c) (listData# x_x_d)) (\ ~ -> False#) !)
+                         (\ ~ ->
+                            ifThenElse!
+                              (equalsInteger_2 x_x_b)
+                              (\ ~ -> let* x_9s = unConstrData# headList!_x_0; x_x_e = sndPair!! x_9s in ifThenElse! (equalsInteger_2 (fstPair!! x_9s)) (\ ~ -> equalsData# (listData# x_x_c) (listData# x_x_e)) (\ ~ -> False#) !)
+                              (\ ~ -> let* x_9t = unConstrData# headList!_x_0; x_x_f = sndPair!! x_9t in ifThenElse! (equalsInteger_0 (fstPair!! x_9t)) (\ ~ -> equalsData# (listData# x_x_c) (listData# x_x_f)) (\ ~ -> False#) !)
+                              !)
+                         !)
+                      (\ ~ -> ifThenElse! (x_9e (headList! (tailList! x_9j))) (x_9e (headList! (tailList! x_9k))) True#)
+                      (\ ~ -> False#)
+                      !)
+              !
+     x_9u = \ x_9v x_9w -> let* x_9x = x_e x_9v; x_9y = x_e x_9w in x_j (x_9g (headList! x_9x) (headList! x_9y)) (\ ~ -> x_9g (headList! (tailList! x_9y)) (headList! (tailList! x_9x))) !
+     x_9z = \ x_a0 -> constrData# (ifThenElse! x_a0 1# 0#) []#
+     x_a1 = \ x_a2 -> constrData_0 (mkCons! (constrData# 1# (mkCons! (iData# x_a2) []#)) (mkCons! (x_9z True#) []#))
+     x_a3 =
+       \ x_a4 x_a5 ->
+         let* x_a6 = unConstrData# x_a5
+              x_x_g = sndPair!! x_a6
+         in ifThenElse! (equalsInteger_1 (fstPair!! x_a6)) (\ ~ -> True#) (\ ~ -> x_9u (constrData_0 (mkCons! (x_a1 (unIData# (headList! x_x_g))) (mkCons! (constrData_0 (mkCons! (constrData# 2# []#) (mkCons! (x_9z True#) []#))) []#))) x_a4) !
+     x_a7 =
+       \ x_a8 x_a9 ->
+         let* x_aa = unConstrData# x_a9
+              x_x_h = sndPair!! x_aa
+         in ifThenElse! (equalsInteger_1 (fstPair!! x_aa)) (\ ~ -> True#) (\ ~ -> x_9u (constrData_0 (mkCons! (constrData_0 (mkCons! (constrData_0 []#) (mkCons! (x_9z True#) []#))) (mkCons! (x_a1 (unIData# (headList! x_x_h))) []#))) x_a8) !
+in \ x_ab x_ac x_ad ->
+     let* x_ae = x_e x_ab
+          tailList!_x = tailList! x_ae
+          tailList!_tailList!_x = tailList! tailList!_x
+          x_af = tailList! tailList!_tailList!_x
+          x_ag = tailList! x_af
+          x_ah = tailList! x_ag
+          x_ai = tailList! x_ah
+          x_aj = tailList! x_ai
+          x_ak = tailList! x_aj
+          x_am = tailList! x_ak
+          x_an = tailList! x_am
+          x_ap = tailList! x_an
+          x_ar = tailList! x_ap
+          x_as = tailList! x_ar
+          x_at = x_e x_ad
+          x_au = unConstrData# (headList! (tailList! x_at))
+          x_av = sndPair!! x_au
+     in ifThenElse!
+          (equalsInteger_1 (fstPair!! x_au))
+          (\ ~ ->
+             let* x_aw = headList! x_av
+                  x_headList!_x = x_e (headList! x_at)
+                  tailList!_x_headList!_x = tailList! x_headList!_x
+                  x_ax = tailList! tailList!_x_headList!_x
+                  x_ay = tailList! (tailList! x_ax)
+                  x_az = tailList! (tailList! (tailList! x_ay))
+                  x_b0 = tailList! x_az
+             in x_1
+                  (\ x_b1 -> x_g x_aw (headList! (x_e x_b1)))
+                  (unListData# (headList! x_headList!_x))
+                  (\ x_b2 ->
+                     let* x_b3 = unBData# (headList! x_aj)
+                          x_b4 = x_e (headList! (tailList! (x_e x_b2)))
+                          x_b5 = unMapData# (headList! (tailList! x_b4))
+                          x_x_x =
+                            tailList!
+                              (tailList!
+                                 (x_e
+                                    (x_1
+                                       (\ x_b6 ->
+                                          let* x_x_i = x_e (headList! (tailList! (x_e x_b6)))
+                                          in x_j
+                                               (x_g (headList! x_x_i) <0 <0 "\168\129\214\&6\159\167\&17}\130\216\ACK\216\222\178\ACKxx\DC2\154^-\249l%\229\160\142">, <1>>#d)
+                                               (\ ~ -> equalsInteger_1 (x_12 (unMapData# (headList! (tailList! x_x_i))) <0 "\190\CAN\194\156\DEL\SI\252\165\195\230\205V\249}\240\248*1\227\ETB\233\155\250\ETX\ESC;\SI\227", "47454e53">#d))
+                                               !)
+                                       (unListData# (headList! tailList!_x_headList!_x))
+                                       (\ x_b7 ->
+                                          let* unConstrData_headList!_x_x_x = unConstrData# (headList! (tailList! (tailList! (x_e (headList! (tailList! (x_e x_b7)))))))
+                                               x_b8 = sndPair!! unConstrData_headList!_x_x_x
+                                          in ifThenElse! (equalsInteger_2 (fstPair!! unConstrData_headList!_x_x_x)) (\ ~ -> headList! x_b8) (\ ~ -> ERROR) !)
+                                       (\ ~ -> ERROR))))
+                          unBData_headList!_x_x_x = unBData# (headList! x_x_x)
+                          headList!_tailList!_x_x_x = headList! (tailList! x_x_x)
+                     in ifThenElse!
+                          (equalsInteger_1 (x_x x_b5 unBData_headList!_x_x_x x_b3))
+                          (\ ~ ->
+                             let* x_b9 = unMapData# (headList! (tailList! (tailList! x_b0)))
+                                  x_ba = unListData# (headList! x_ax)
+                                  x_bb = unMapData# (headList! x_ay)
+                                  x_bc = x_x x_bb unBData_headList!_x_x_x x_b3
+                                  x_bd = unIData# (headList! x_ag)
+                                  x_be = headList! tailList!_tailList!_x
+                                  x_bf = headList! x_ah
+                                  x_bg = headList! x_ai
+                                  headList!_tailList!_x = headList! tailList!_x
+                                  x_bh = headList! x_as
+                                  x_bi = unConstrData# x_ac
+                                  x_x_j = fstPair!! x_bi
+                                  x_x_k = sndPair!! x_bi
+                                  x_bj = \ x_bk -> x_1z x_b5 (x_1i addInteger# (x_2a (x_24 unBData_headList!_x_x_x x_b3) 1#d) (x_1i addInteger# (x_2a x_be (iData# x_bd)) x_bk))
+                                  x_bm =
+                                    \ x_bn ->
+                                      let* x_bp = x_e x_bg
+                                           x_br = unIData# (headList! x_bp)
+                                           x_bs = unIData# (headList! (tailList! x_bp))
+                                           x_bt = x_8v (x_9b x_bn) (\ x_bu -> x_bu x_br x_bs)
+                                           x_x_m = x_bt quotientInteger#
+                                      in ifThenElse! (x_8c x_bt cse) (\ ~ -> x_x_m) (\ ~ -> ifThenElse! (x_8j x_bt (x_9b (x_bt quotientInteger#))) (\ ~ -> x_x_m) (\ ~ -> addInteger# 1# x_x_m) !) !
+                             in ifThenElse!
+                                  (equalsInteger_0 x_x_j)
+                                  (\ ~ ->
+                                     let* bData_unBData_headList!_x = bData# (unBData# (headList! x_ae))
+                                     in ifThenElse!
+                                          (zComb
+                                             (\ x_bv x_bw -> chooseList!! x_bw (\ ~ -> False#) (\ ~ -> ifThenElse! (equalsData# (headList! x_bw) bData_unBData_headList!_x) (\ ~ -> True#) (\ ~ -> x_bv (tailList! x_bw)) !) !)
+                                             (unListData# (headList! x_b0)))
+                                          (\ ~ ->
+                                             ifThenElse!
+                                               (equalsInteger# x_bc (x_1t 1#))
+                                               (\ ~ ->
+                                                  let* x_bx = x_e x_bh
+                                                       x_by = tailList! x_bx
+                                                       x_bz = headList! x_bx
+                                                       x_c0 = headList! x_by
+                                                       x_c1 = headList! (tailList! x_by)
+                                                  in ifThenElse!
+                                                       (x_3m (x_2w x_aw headList!_tailList!_x x_b9 x_ba) (x_bj (x_86 x_be x_bf x_bz x_c0 x_c1)))
+                                                       (\ ~ ->
+                                                          ifThenElse!
+                                                            (x_3x (equalsInteger_0 (unIData# (headList! x_an))) (\ ~ -> x_g x_bh (constrData_0 (mkCons! _00 (mkCons! _00 (mkCons! _00 []#))))) !)
+                                                            (\ ~ -> tt)
+                                                            (\ ~ ->
+                                                               ifThenElse!
+                                                                 (x_4f
+                                                                    x_ba
+                                                                    x_b9
+                                                                    headList!_tailList!_x_x_x
+                                                                    _00
+                                                                    False#
+                                                                    (\ x_c2 ->
+                                                                       x_2f
+                                                                         x_7a
+                                                                         x_aw
+                                                                         x_c2
+                                                                         (\ x_c3 ->
+                                                                            let* x_c4 = unIData# x_c0
+                                                                                 x_c5 = unIData# (headList! x_af)
+                                                                                 x_c6 = x_8v (x_9b x_bd) (\ x_c7 -> x_c7 x_c4 x_c5)
+                                                                                 x_x_n = x_c6 quotientInteger#
+                                                                            in x_lessThanEqualsInteger
+                                                                                 (x_86
+                                                                                    x_be
+                                                                                    x_bf
+                                                                                    x_bz
+                                                                                    (iData#
+                                                                                       (subtractInteger#
+                                                                                          (unIData# x_c0)
+                                                                                          (ifThenElse!
+                                                                                             (x_8c x_c6 cse)
+                                                                                             (\ ~ -> ifThenElse! (x_8j x_c6 (x_9b (x_c6 quotientInteger#))) (\ ~ -> x_x_n) (\ ~ -> subtractInteger# x_x_n 1#) !)
+                                                                                             (\ ~ -> x_x_n)
+                                                                                             !)))
+                                                                                    x_c1)
+                                                                                 x_c3)
+                                                                         (\ ~ -> False#)))
+                                                                 (\ ~ -> tt)
+                                                                 (\ ~ -> ERROR)
+                                                                 !)
+                                                            !)
+                                                       (\ ~ -> ERROR)
+                                                       !)
+                                               (\ ~ -> ERROR)
+                                               !)
+                                          (\ ~ -> ERROR)
+                                          !)
+                                  (\ ~ ->
+                                     ifThenElse!
+                                       (equalsInteger_1 x_x_j)
+                                       (\ ~ ->
+                                          let* unIData_headList!_x_x = unIData# (headList! x_x_k)
+                                          in ifThenElse!
+                                               (lessThanInteger_0 unIData_headList!_x_x)
+                                               (\ ~ ->
+                                                  ifThenElse!
+                                                    (lessThanInteger# unIData_headList!_x_x x_bd)
+                                                    (\ ~ ->
+                                                       let* x_c8 = headList! x_az
+                                                       in ifThenElse!
+                                                            (x_a3 x_c8 (headList! x_ak))
+                                                            (\ ~ ->
+                                                               ifThenElse!
+                                                                 (x_a7 x_c8 (headList! x_am))
+                                                                 (\ ~ ->
+                                                                    let* x_c9 = x_e x_bh
+                                                                         x_ca = tailList! x_c9
+                                                                         x_cb = headList! x_c9
+                                                                         x_cc = headList! x_ca
+                                                                         x_cd = unIData# (headList! (tailList! x_ca))
+                                                                         x_unIData_headList!_x_x = x_bm unIData_headList!_x_x
+                                                                         x_ce = addInteger# (unIData# (headList! (tailList! x_as))) x_unIData_headList!_x_x
+                                                                         x_cf = headList! x_ar
+                                                                         x_cg = x_2a (x_24 ""#b ""#b) x_cf
+                                                                         x_ch = x_4f x_ba x_b9 headList!_tailList!_x_x_x x_cf False# (\ x_ci -> True#)
+                                                                         headList!_x_1 = headList! x_b4
+                                                                    in zComb
+                                                                         (\ x_cj x_ck ->
+                                                                            chooseList!!
+                                                                              x_ck
+                                                                              (\ ~ x_cm x_cn x_cp -> x_cp !)
+                                                                              (\ ~ x_cr ->
+                                                                                 let* x_x_p = x_e (headList! x_ck)
+                                                                                 in ifThenElse!
+                                                                                      (x_g headList!_x_1 (headList! x_x_p))
+                                                                                      (\ ~ ->
+                                                                                         x_2f
+                                                                                           x_7a
+                                                                                           (bData# unBData_headList!_x_x_x)
+                                                                                           (unMapData# (headList! (tailList! x_x_p)))
+                                                                                           (\ x_cs ->
+                                                                                              chooseList!!
+                                                                                                x_cs
+                                                                                                (\ ~ x_ct x_cu -> x_cu !)
+                                                                                                (\ ~ ->
+                                                                                                   let* x_cv = unBData# (fstPair!! (headList! x_cs))
+                                                                                                   in ifThenElse!
+                                                                                                        (equalsInteger_1 (unIData# (sndPair!! (headList! x_cs))))
+                                                                                                        (\ ~ -> ifThenElse! (equalsInteger_0 (x_x x_bb unBData_headList!_x_x_x x_cv)) (\ ~ x_cw x_cx -> x_cw x_cv) (\ ~ x_cy x_cz -> x_cz !) !)
+                                                                                                        (\ ~ x_d0 x_d1 -> x_d1 !)
+                                                                                                        !)
+                                                                                                !)
+                                                                                           (\ ~ x_d2 x_d3 -> x_d3 !))
+                                                                                      (\ ~ x_d4 x_d5 -> x_d5 !)
+                                                                                      !
+                                                                                      (\ x_d6 ->
+                                                                                         ifThenElse!
+                                                                                           (equalsByteString# x_d6 x_b3)
+                                                                                           (\ ~ -> let* x_d7 = headList! x_ck in \ x_d8 x_d9 -> x_d8 (\ x_da -> x_da x_cr x_d7))
+                                                                                           (\ ~ -> x_cj (tailList! x_ck) False#)
+                                                                                           !)
+                                                                                      (\ ~ -> x_cj (tailList! x_ck) x_cr))
+                                                                              !)
+                                                                         x_ba
+                                                                         True#
+                                                                         (\ x_db ->
+                                                                            x_db
+                                                                              (\ x_dc x_dd ->
+                                                                                 let* x_de = x_1i addInteger# (x_2a x_bf (iData# x_unIData_headList!_x_x)) (x_1z x_b5 (x_2a x_be (iData# unIData_headList!_x_x)))
+                                                                                 in ifThenElse!
+                                                                                      (x_j x_dc (\ ~ -> ifThenElse! x_ch False# True#) !)
+                                                                                      (\ ~ -> let* x_df = x_1i addInteger# x_de x_cg; x_dg = iData# (addInteger# (unIData# x_cb) (unIData# x_cf)) in \ x_dh -> x_dh x_df x_dg)
+                                                                                      (\ ~ x_di -> x_di x_de x_cb)
+                                                                                      !
+                                                                                      (\ x_dj x_dk ->
+                                                                                         let* x_dm = tailList! (x_e x_dd)
+                                                                                              x_dn = unConstrData# (headList! (tailList! x_dm))
+                                                                                              x_dp = fstPair!! x_dn
+                                                                                              x_dr = sndPair!! x_dn
+                                                                                              x_ds =
+                                                                                                ifThenElse!
+                                                                                                  (equalsInteger_0 x_dp)
+                                                                                                  (\ ~ -> ERROR)
+                                                                                                  (\ ~ -> ifThenElse! (equalsInteger_2 x_dp) (\ ~ -> headList! x_dr) (\ ~ -> x_2p (unBData# (headList! x_dr)) x_b9 (\ x_dt -> x_dt) (\ ~ -> ERROR)) !)
+                                                                                                  !
+                                                                                              unMapData_headList!_x = unMapData# (headList! x_dm)
+                                                                                              x_du = x_1z unMapData_headList!_x x_dj
+                                                                                              x_dv = x_12 x_du x_bf
+                                                                                              x_dw = ifThenElse! (x_g x_bf (x_24 ""#b ""#b)) (\ ~ -> 0#) (\ ~ -> x_12 x_du (x_24 ""#b ""#b)) !
+                                                                                         in ifThenElse!
+                                                                                              (x_3m unMapData_headList!_x x_dj)
+                                                                                              (\ ~ ->
+                                                                                                 ifThenElse!
+                                                                                                   (equalsData#
+                                                                                                      x_ds
+                                                                                                      (constrData_0
+                                                                                                         (mkCons!
+                                                                                                            (headList! x_ae)
+                                                                                                            (mkCons!
+                                                                                                               headList!_tailList!_x
+                                                                                                               (mkCons!
+                                                                                                                  x_be
+                                                                                                                  (mkCons!
+                                                                                                                     (headList! x_af)
+                                                                                                                     (mkCons!
+                                                                                                                        (iData# (subtractInteger# x_bd unIData_headList!_x_x))
+                                                                                                                        (mkCons!
+                                                                                                                           x_bf
+                                                                                                                           (mkCons!
+                                                                                                                              x_bg
+                                                                                                                              (mkCons!
+                                                                                                                                 (bData# x_b3)
+                                                                                                                                 (mkCons!
+                                                                                                                                    (headList! x_ak)
+                                                                                                                                    (mkCons!
+                                                                                                                                       (headList! x_am)
+                                                                                                                                       (mkCons!
+                                                                                                                                          (iData# (addInteger# (unIData# (headList! x_an)) 1#))
+                                                                                                                                          (mkCons!
+                                                                                                                                             (headList! x_ap)
+                                                                                                                                             (mkCons!
+                                                                                                                                                x_cf
+                                                                                                                                                (mkCons!
+                                                                                                                                                   (constrData_0
+                                                                                                                                                      (mkCons!
+                                                                                                                                                         (iData# (addInteger# (unIData# x_dk) x_dw))
+                                                                                                                                                         (mkCons! x_cc (mkCons! (iData# (addInteger# x_cd x_dv)) []#))))
+                                                                                                                                                   (mkCons! (iData# x_ce) []#)))))))))))))))))
+                                                                                                   (\ ~ ->
+                                                                                                      ifThenElse!
+                                                                                                        (lessThanEqualsInteger#
+                                                                                                           (x_3s
+                                                                                                              (\ x_dx x_dy ->
+                                                                                                                 addInteger#
+                                                                                                                   x_dx
+                                                                                                                   (zComb
+                                                                                                                      (\ x_dz x_e0 x_e1 -> chooseList!! x_e1 (\ ~ -> x_e0) (\ ~ -> x_dz (addInteger# x_e0 1#) (tailList! x_e1)) !)
+                                                                                                                      0#
+                                                                                                                      (unMapData# (sndPair!! x_dy))))
+                                                                                                              0#
+                                                                                                              unMapData_headList!_x)
+                                                                                                           10#)
+                                                                                                        (\ ~ -> tt)
+                                                                                                        (\ ~ -> ERROR)
+                                                                                                        !)
+                                                                                                   (\ ~ -> ERROR)
+                                                                                                   !)
+                                                                                              (\ ~ -> ERROR)
+                                                                                              !)))
+                                                                         (\ ~ -> ERROR))
+                                                                 (\ ~ -> ERROR)
+                                                                 !)
+                                                            (\ ~ -> ERROR)
+                                                            !)
+                                                    (\ ~ -> ERROR)
+                                                    !)
+                                               (\ ~ -> ERROR)
+                                               !)
+                                       (\ ~ ->
+                                          ifThenElse!
+                                            (equalsInteger# x_bc (x_1t 1#))
+                                            (\ ~ ->
+                                               let* x_e2 = headList! x_az
+                                               in ifThenElse!
+                                                    (x_a3 x_e2 (headList! x_ak))
+                                                    (\ ~ ->
+                                                       ifThenElse!
+                                                         (x_a7 x_e2 (headList! x_am))
+                                                         (\ ~ ->
+                                                            let* x_e3 = x_e x_bh
+                                                                 x_e4 = tailList! x_e3
+                                                                 x_e5 = x_86 x_be x_bf (headList! x_e3) (headList! x_e4) (headList! (tailList! x_e4))
+                                                            in ifThenElse!
+                                                                 (x_3m (x_2w x_aw headList!_tailList!_x x_b9 x_ba) (x_1i addInteger# (x_bj x_e5) (x_2a x_bf (iData# (x_bm x_bd)))))
+                                                                 (\ ~ ->
+                                                                    let* x_e6 = headList! x_ar
+                                                                         x_e7 = x_g x_bh (constrData_0 (mkCons! _00 (mkCons! _00 (mkCons! _00 []#))))
+                                                                    in ifThenElse!
+                                                                         (x_4f
+                                                                            x_ba
+                                                                            x_b9
+                                                                            headList!_tailList!_x_x_x
+                                                                            x_e6
+                                                                            (x_j x_e7 (\ ~ -> equalsData# x_e6 _00) !)
+                                                                            (\ x_e8 -> x_2f x_7a x_aw x_e8 (\ x_e9 -> x_lessThanEqualsInteger x_e5 x_e9) (\ ~ -> x_e7)))
+                                                                         (\ ~ -> tt)
+                                                                         (\ ~ -> ERROR)
+                                                                         !)
+                                                                 (\ ~ -> ERROR)
+                                                                 !)
+                                                         (\ ~ -> ERROR)
+                                                         !)
+                                                    (\ ~ -> ERROR)
+                                                    !)
+                                            (\ ~ -> ERROR)
+                                            !)
+                                       !)
+                                  !)
+                          (\ ~ -> tt)
+                          !)
+                  (\ ~ -> ERROR))
+          (\ ~ -> ERROR)
+          !

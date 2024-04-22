@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 {- |
 Module      : GeniusYield.Api.Dex.PartialOrder
 Copyright   : (c) 2023 GYELD GMBH
@@ -7,6 +9,7 @@ Stability   : develop
 -}
 module GeniusYield.Api.Dex.PartialOrder (
   PORefs (..),
+  PORef (..),
 
   -- * PartialOrderInfo
   PartialOrderInfo (..),
@@ -28,6 +31,7 @@ module GeniusYield.Api.Dex.PartialOrder (
   -- * Queries
   partialOrders,
   partialOrdersHavingAsset,
+  partialOrdersWithTransformerPredicate,
   orderByNft,
   getPartialOrderInfo,
   getPartialOrdersInfos,
@@ -44,48 +48,45 @@ module GeniusYield.Api.Dex.PartialOrder (
   completelyFillMultiplePartialOrders,
   fillMultiplePartialOrders',
   cancelPartialOrder,
-  cancelPartialOrder',
   cancelMultiplePartialOrders,
+  cancelMultiplePartialOrders',
 
   -- * Utilities
   partialOrderAddr,
   partialOrderPrice,
   partialOrderPrice',
+  roundFunctionForPOCVersion,
+  getVersionsInOrders,
+  preferentiallySelectLatestVersion,
+  preferentiallySelectLatestPocd,
 ) where
 
 import Control.Monad.Except (ExceptT (..), liftEither, runExceptT)
 import Control.Monad.Reader (ask)
+import Data.Bifunctor (Bifunctor)
 import Data.Foldable (foldlM)
 import Data.Map.Merge.Strict qualified as Map
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromJust)
 import Data.Ratio ((%))
 import Data.Set qualified as Set
+import Data.Strict.Tuple (Pair (..), (:!:))
 import Data.Swagger qualified as Swagger
 import Data.Text qualified as Text
-import GeniusYield.Api.Dex.PartialOrderConfig (fetchPartialOrderConfig)
+import GeniusYield.Api.Dex.PartialOrderConfig (PORef (..), PORefs (..), RefPocd (..), RefPocds, SomePORef (..), SomeRefPocd (..), fetchPartialOrderConfig, fetchPartialOrderConfigs, selectPor, selectRefPocd, selectV1RefPocd, selectV1_1RefPocd, withSomePORef)
 import GeniusYield.Api.Dex.Types (GYDexApiMonad, GYDexApiQueryMonad, HasDexScripts)
 import GeniusYield.HTTP.Errors
 import GeniusYield.Imports
 import GeniusYield.Scripts.Dex.Nft (gyExpectedTokenName, mkNftRedeemer)
 import GeniusYield.Scripts.Dex.PartialOrder (PartialOrderAction (..), PartialOrderContainedFee (..), PartialOrderDatum (..), PartialOrderFeeOutput (..), partialOrderValidator)
-import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
+import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfo, PartialOrderConfigInfoF (..))
 import GeniusYield.Scripts.Dex.PartialOrderNft (partialOrderNftMintingPolicy)
+import GeniusYield.Scripts.Dex.Version
 import GeniusYield.TxBuilder
 import GeniusYield.Types
 import Network.HTTP.Types.Status
 import PlutusTx.AssocMap qualified as PlutusTx
 import PlutusTx.Ratio qualified as PlutusTx
-
-data PORefs = PORefs
-  { -- | The reference NFT.
-    porRefNft ∷ !GYAssetClass,
-    -- | The location of the reference NFT minting policy reference script.
-    porMintRef ∷ !GYTxOutRef,
-    -- | The location of the validator reference script.
-    porValRef ∷ !GYTxOutRef
-  }
-  deriving (Show)
 
 data PodException
   = PodNftNotAvailable
@@ -105,6 +106,8 @@ data PodException
     PodNotAllOrderRefsPresent
       !(Set.Set GYTxOutRef)
       -- ^ Missing output refs.
+  | -- | Such an order does not belong to supported swap script credentials.
+    PodOrderDoesntBelongToScript !GYTxOutRef
   deriving stock (Show)
   deriving anyclass (Exception)
 
@@ -163,6 +166,12 @@ instance IsGYApiError PodException where
         gaeHttpStatus = status400,
         gaeMsg = Text.pack $ "Not all of given references are present, missing ones: " ++ show missingRefs
       }
+  toApiError (PodOrderDoesntBelongToScript ref) =
+    GYApiError
+      { gaeErrorCode = "ORDER_DOESNT_BELONG_TO_SCRIPT",
+        gaeHttpStatus = status400,
+        gaeMsg = Text.pack $ "Order doesn't belong to supported swap script credentials: " ++ show ref
+      }
 
 -------------------------------------------------------------------------------
 -- Order info
@@ -173,7 +182,7 @@ data POIContainedFee = POIContainedFee
     poifOfferedTokens ∷ !Natural,
     poifAskedTokens ∷ !Natural
   }
-  deriving stock (Eq, Show, Generic)
+  deriving stock (Show, Generic, Eq)
   deriving anyclass (Swagger.ToSchema)
 
 instance Semigroup POIContainedFee where
@@ -224,9 +233,11 @@ data PartialOrderInfo = PartialOrderInfo
     -- | Address of the order UTxO.
     poiUTxOAddr ∷ !GYAddress,
     -- | Caching the CS to avoid recalculating for it.
-    poiNFTCS ∷ !GYMintingPolicyId
+    poiNFTCS ∷ !GYMintingPolicyId,
+    -- | Version of the partial order.
+    poiVersion ∷ !POCVersion
   }
-  deriving stock (Eq, Show, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (Swagger.ToSchema)
 
 poiContainedFeeToPlutus ∷ POIContainedFee → PartialOrderContainedFee
@@ -274,25 +285,35 @@ poiContainedFeeToValue POIContainedFee {..} offAC askAC = valueSingleton GYLovel
 partialOrderInfoToIn
   ∷ HasDexScripts a
   ⇒ a
+  → POCVersion
   → PORefs
   → PartialOrderInfo
   → PartialOrderAction
   → GYTxIn 'PlutusV2
-partialOrderInfoToIn a PORefs {..} oi@PartialOrderInfo {..} oa =
-  GYTxIn
-    { gyTxInTxOutRef = poiRef,
-      gyTxInWitness =
-        GYTxInWitnessScript
-          (GYInReference porValRef $ validatorToScript $ partialOrderValidator a porRefNft)
-          (datumFromPlutusData $ partialOrderInfoToPartialOrderDatum oi)
-          $ redeemerFromPlutusData oa
-    }
+partialOrderInfoToIn a pocVersion pors oi@PartialOrderInfo {..} oa =
+  let SomePORef PORef {..} = selectPor pors pocVersion
+   in GYTxIn
+        { gyTxInTxOutRef = poiRef,
+          gyTxInWitness =
+            GYTxInWitnessScript
+              (GYInReference porValRef $ validatorToScript $ partialOrderValidator a pocVersion porRefNft)
+              (datumFromPlutusData $ partialOrderInfoToPartialOrderDatum oi)
+              $ redeemerFromPlutusData oa
+        }
 
 partialOrderInfoToPayment ∷ PartialOrderInfo → GYValue → GYTxOut 'PlutusV2
 partialOrderInfoToPayment oi v = mkGYTxOut (poiOwnerAddr oi) v (datumFromPlutusData $ txOutRefToPlutus $ poiRef oi)
 
 partialOrderPrice ∷ PartialOrderInfo → Natural → GYValue
 partialOrderPrice oi@PartialOrderInfo {poiAskedAsset} amt = valueSingleton poiAskedAsset $ fromIntegral $ partialOrderPrice' oi amt
+
+roundFunctionForPOCVersion1_1 ∷ Integral a ⇒ Rational → a
+roundFunctionForPOCVersion1_1 = floor
+
+roundFunctionForPOCVersion ∷ Integral a ⇒ POCVersion → Rational → a
+roundFunctionForPOCVersion = \case
+  POCVersion1 → ceiling
+  POCVersion1_1 → roundFunctionForPOCVersion1_1
 
 partialOrderPrice' ∷ PartialOrderInfo → Natural → Natural
 partialOrderPrice' PartialOrderInfo {poiPrice} amt = ceiling $ rationalToGHC poiPrice * toRational amt
@@ -314,27 +335,44 @@ expectedPaymentWithDeposit poi@PartialOrderInfo {..} isCompleteFill =
 -- script address
 -------------------------------------------------------------------------------
 
-partialOrderAddr ∷ GYDexApiQueryMonad m a ⇒ PORefs → m GYAddress
-partialOrderAddr PORefs {..} = do
+partialOrderAddr ∷ ∀ v m a. (GYDexApiQueryMonad m a, SingPOCVersionI v) ⇒ PORef v → m GYAddress
+partialOrderAddr PORef {..} = do
   a ← ask
-  scriptAddress $ partialOrderValidator a porRefNft
+  scriptAddress $ partialOrderValidator a (fromSingPOCVersion $ singPOCVersion @v) porRefNft
+
+partialOrderAddrTuple ∷ GYDexApiQueryMonad m a ⇒ PORefs → m (GYAddress :!: GYAddress)
+partialOrderAddrTuple PORefs {..} = do
+  addrV1 ← partialOrderAddr porV1
+  addrV1_1 ← partialOrderAddr porV1_1
+  pure $ addrV1 :!: addrV1_1
 
 -------------------------------------------------------------------------------
 -- partial order NFT policy
 -------------------------------------------------------------------------------
 
 partialOrderNftPolicy
-  ∷ GYDexApiQueryMonad m a
-  ⇒ PORefs
+  ∷ ∀ v m a
+   . (GYDexApiQueryMonad m a, SingPOCVersionI v)
+  ⇒ PORef v
   → m (GYMintingPolicy 'PlutusV2)
   -- ^ The minting policy of the partial order NFT.
-partialOrderNftPolicy PORefs {..} = do
+partialOrderNftPolicy por = do
   a ← ask
-  pure $ partialOrderNftMintingPolicy a porRefNft
+  pure $ partialOrderNftPolicy' a por
+
+partialOrderNftPolicy'
+  ∷ ∀ v a
+   . (SingPOCVersionI v, HasDexScripts a)
+  ⇒ a
+  → PORef v
+  → GYMintingPolicy 'PlutusV2
+  -- ^ The minting policy of the partial order NFT.
+partialOrderNftPolicy' a PORef {..} = partialOrderNftMintingPolicy a (fromSingPOCVersion $ singPOCVersion @v) porRefNft
 
 partialOrderNftPolicyId
-  ∷ GYDexApiQueryMonad m a
-  ⇒ PORefs
+  ∷ ∀ v m a
+   . (GYDexApiQueryMonad m a, SingPOCVersionI v)
+  ⇒ PORef v
   → m GYMintingPolicyId
   -- ^ The minting policy id of the partial order NFT.
 partialOrderNftPolicyId por =
@@ -355,18 +393,40 @@ partialOrdersHavingAsset
   ⇒ PORefs
   → Maybe GYAssetClass
   → m (Map.Map GYTxOutRef PartialOrderInfo)
-partialOrdersHavingAsset por hasAsset = do
-  addr ← partialOrderAddr por
-  let paymentCred = addressToPaymentCredential addr & fromJust
-  utxosWithDatums ← utxosAtPaymentCredentialWithDatums paymentCred hasAsset
-  policyId ← partialOrderNftPolicyId por
-  let datums = utxosDatumsPure utxosWithDatums
-  iwither
-    ( \oref vod →
-        either (const Nothing) Just
-          <$> runExceptT (makePartialOrderInfo policyId oref vod)
-    )
-    datums
+partialOrdersHavingAsset pors hasAsset = do
+  addrTuple ← partialOrderAddrTuple pors
+  let pV1 :!: pV1_1 = applyToBoth (fromJust . addressToPaymentCredential) addrTuple
+  utxosWithDatumsV1 ← utxosAtPaymentCredentialWithDatums pV1 hasAsset
+  -- TODO: Add support in Atlas to query multiple payment credentials in one go.
+  utxosWithDatumsV1_1 ← utxosAtPaymentCredentialWithDatums pV1_1 hasAsset
+  policyIdV1 ← partialOrderNftPolicyId (porV1 pors)
+  policyIdV1_1 ← partialOrderNftPolicyId (porV1_1 pors)
+  let datumsV1 = utxosDatumsPure utxosWithDatumsV1
+      datumsV1_1 = utxosDatumsPure utxosWithDatumsV1_1
+  m1 ←
+    iwither
+      ( \oref vod →
+          either (const Nothing) Just
+            <$> runExceptT (makePartialOrderInfo policyIdV1 oref vod POCVersion1)
+      )
+      datumsV1
+  m1_1 ←
+    iwither
+      ( \oref vod →
+          either (const Nothing) Just
+            <$> runExceptT (makePartialOrderInfo policyIdV1_1 oref vod POCVersion1_1)
+      )
+      datumsV1_1
+  pure $! m1 <> m1_1
+
+partialOrdersWithTransformerPredicate
+  ∷ GYDexApiQueryMonad m a
+  ⇒ PORefs
+  → (PartialOrderInfo → Maybe b)
+  → m [b]
+partialOrdersWithTransformerPredicate pors transformerPredicate = do
+  ois ← Map.elems <$> partialOrders pors
+  pure $ mapMaybe transformerPredicate ois
 
 orderByNft
   ∷ GYDexApiQueryMonad m a
@@ -379,29 +439,48 @@ orderByNft por orderNft = do
     [oi] → pure $ Just oi
     _ → pure Nothing
 
+getPartialOrderVersion ∷ GYDexApiQueryMonad m a ⇒ PORefs → (GYAddress :!: GYTxOutRef) → m POCVersion
+getPartialOrderVersion pors outxo = do
+  ps ← applyToBoth addressToPaymentCredential <$> partialOrderAddrTuple pors
+  getPartialOrderVersion' ps outxo
+
+getPartialOrderVersion' ∷ GYDexApiQueryMonad m a ⇒ (Maybe GYPaymentCredential :!: Maybe GYPaymentCredential) → (GYAddress :!: GYTxOutRef) → m POCVersion
+getPartialOrderVersion' (p1 :!: p1_1) (addr :!: oref) = do
+  let pc = addressToPaymentCredential addr
+  if
+      | p1 == pc → pure POCVersion1
+      | p1_1 == pc → pure POCVersion1_1
+      | otherwise → throwAppError $ PodOrderDoesntBelongToScript oref
+
 getPartialOrderInfo
   ∷ GYDexApiQueryMonad m a
   ⇒ PORefs
   → GYTxOutRef
   → m PartialOrderInfo
-getPartialOrderInfo por orderRef = do
+getPartialOrderInfo pors orderRef = do
   utxoWithDatum ← utxoAtTxOutRefWithDatum' orderRef
+  let utxo = fst utxoWithDatum
+  pocVersion ← getPartialOrderVersion pors (utxoAddress utxo :!: utxoRef utxo)
   vod ← utxoDatumPure' utxoWithDatum
-  policyId ← partialOrderNftPolicyId por
+  policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
 
-  runExceptT (makePartialOrderInfo policyId orderRef vod) >>= liftEither
+  runExceptT (makePartialOrderInfo policyId orderRef vod pocVersion) >>= liftEither
 
 getPartialOrdersInfos
   ∷ GYDexApiQueryMonad m a
   ⇒ PORefs
   → [GYTxOutRef]
   → m (Map.Map GYTxOutRef PartialOrderInfo)
-getPartialOrdersInfos por orderRefs = do
+getPartialOrdersInfos pors orderRefs = do
   utxosWithDatums ← utxosAtTxOutRefsWithDatums orderRefs
+  ps ← applyToBoth addressToPaymentCredential <$> partialOrderAddrTuple pors
   let vod = utxosDatumsPure utxosWithDatums
   when (Map.size vod /= length orderRefs) $ throwAppError $ PodNotAllOrderRefsPresent $ Set.fromList orderRefs `Set.difference` Map.keysSet vod
-  policyId ← partialOrderNftPolicyId por
-  runExceptT (Map.traverseWithKey (makePartialOrderInfo policyId) vod) >>= liftEither
+  let makePartialOrderInfo' oref v@(addr, _, _) = do
+        pocVersion ← getPartialOrderVersion' ps (addr :!: oref)
+        policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
+        makePartialOrderInfo policyId oref v pocVersion
+  runExceptT (Map.traverseWithKey makePartialOrderInfo' vod) >>= liftEither
 
 getPartialOrdersInfos' ∷ GYDexApiQueryMonad m a ⇒ PORefs → [(GYTxOutRef, Natural)] → m [(PartialOrderInfo, Natural)]
 getPartialOrdersInfos' por ordersWithTokenBuyAmount = do
@@ -415,8 +494,9 @@ makePartialOrderInfo
   ⇒ GYMintingPolicyId
   → GYTxOutRef
   → (GYAddress, GYValue, PartialOrderDatum)
+  → POCVersion
   → ExceptT GYTxMonadException m PartialOrderInfo
-makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) = do
+makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) pocVersion = do
   addr ← addressFromPlutus' podOwnerAddr
 
   key ← pubKeyHashFromPlutus' podOwnerKey
@@ -448,7 +528,8 @@ makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) = d
         poiContainedPayment = fromInteger podContainedPayment,
         poiUTxOValue = v,
         poiUTxOAddr = utxoAddr,
-        poiNFTCS = policyId
+        poiNFTCS = policyId,
+        poiVersion = pocVersion
       }
 
 -------------------------------------------------------------------------------
@@ -473,9 +554,30 @@ placePartialOrder
   → Maybe GYStakeCredential
   -- ^ Stake credential of user. We do not support pointer reference.
   → m (GYTxSkeleton 'PlutusV2)
-placePartialOrder por@PORefs {..} addr (offerAmt, offerAC) priceAC price start end stakeCred = do
-  (cfgRef, pocd) ← fetchPartialOrderConfig porRefNft
-  placePartialOrder' por addr (offerAmt, offerAC) priceAC price start end 0 0 stakeCred cfgRef pocd
+placePartialOrder pors = placePartialOrderWithVersion pors defaultPOCVersion
+
+placePartialOrderWithVersion
+  ∷ GYDexApiMonad m a
+  ⇒ PORefs
+  → POCVersion
+  → GYAddress
+  -- ^ Order owner
+  → (Natural, GYAssetClass)
+  -- ^ Amount and asset to offer.
+  → GYAssetClass
+  -- ^ The asset being asked for as payment.
+  → GYRational
+  -- ^ The price for one unit of the offered asset.
+  → Maybe GYTime
+  -- ^ The earliest time when the order can be filled (optional).
+  → Maybe GYTime
+  -- ^ The latest time when the order can be filled (optional).
+  → Maybe GYStakeCredential
+  -- ^ Stake credential of user. We do not support pointer reference.
+  → m (GYTxSkeleton 'PlutusV2)
+placePartialOrderWithVersion pors pocVersion addr (offerAmt, offerAC) priceAC price start end stakeCred = do
+  SomeRefPocd (RefPocd (cfgRef :!: pocd)) ← fetchPartialOrderConfig pocVersion pors
+  placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC price start end 0 0 stakeCred cfgRef pocd
 
 placePartialOrder'
   ∷ (GYDexApiMonad m a, HasCallStack)
@@ -501,7 +603,34 @@ placePartialOrder'
   → GYTxOutRef
   → PartialOrderConfigInfoF GYAddress
   → m (GYTxSkeleton 'PlutusV2)
-placePartialOrder' por@PORefs {..} addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = do
+placePartialOrder' pors = placePartialOrderWithVersion' pors defaultPOCVersion
+
+placePartialOrderWithVersion'
+  ∷ (GYDexApiMonad m a, HasCallStack)
+  ⇒ PORefs
+  → POCVersion
+  → GYAddress
+  -- ^ Order owner
+  → (Natural, GYAssetClass)
+  -- ^ Amount and asset to offer.
+  → GYAssetClass
+  -- ^ The asset being asked for as payment.
+  → GYRational
+  -- ^ The price for one unit of the offered asset.
+  → Maybe GYTime
+  -- ^ The earliest time when the order can be filled (optional).
+  → Maybe GYTime
+  -- ^ The latest time when the order can be filled (optional).
+  → Natural
+  -- ^ Additional lovelace fee.
+  → Natural
+  -- ^ Additional fee in offered tokens.
+  → Maybe GYStakeCredential
+  -- ^ Stake credential of user. We do not support pointer reference.
+  → GYTxOutRef
+  → PartialOrderConfigInfoF GYAddress
+  → m (GYTxSkeleton 'PlutusV2)
+placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = do
   when (offerAmt == 0) $ throwAppError $ PodNonPositiveAmount $ toInteger offerAmt
   when (price <= 0) $ throwAppError $ PodNonPositivePrice price
   when (offerAC == priceAC) $ throwAppError $ PodNonDifferentAssets offerAC
@@ -510,11 +639,13 @@ placePartialOrder' por@PORefs {..} addr (offerAmt, offerAC) priceAC price start 
     (Just start', Just end') → when (end' < start') $ throwAppError $ PodEndEarlierThanStart start' end'
     _ → pure ()
 
+  let por@(SomePORef PORef {..}) = selectPor pors pocVersion
+
   pkh ← addressToPubKeyHash' addr
-  outAddr ← partialOrderAddr por
+  outAddr ← withSomePORef por partialOrderAddr
   nid ← networkId
   let outAddr' = addressFromCredential nid (addressToPaymentCredential outAddr & fromJust) stakeCred
-  policy ← partialOrderNftPolicy por
+  policy ← withSomePORef por partialOrderNftPolicy
   nftRef ← someUTxOWithoutRefScript
 
   let nftName = gyExpectedTokenName nftRef
@@ -528,7 +659,7 @@ placePartialOrder' por@PORefs {..} addr (offerAmt, offerAC) priceAC price start 
       nftV = valueSingleton nft 1
       offerAmt' = toInteger offerAmt
       makerFeeFlat = fromIntegral addLov + pociMakerFeeFlat pocd
-      makerFeeOff = (+) (fromIntegral addOff) $ ceiling $ toRational offerAmt * rationalToGHC (pociMakerFeeRatio pocd)
+      makerFeeOff = (+) (fromIntegral addOff) $ roundFunctionForPOCVersion pocVersion $ toRational offerAmt * rationalToGHC (pociMakerFeeRatio pocd)
       makerFee =
         valueFromLovelace makerFeeFlat
           <> valueSingleton offerAC makerFeeOff
@@ -569,6 +700,7 @@ placePartialOrder' por@PORefs {..} addr (offerAmt, offerAC) priceAC price start 
       <> mustHaveOutput o
       <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
       <> mustHaveRefInput cfgRef
+      <> mustHaveTxMetadata stampPlaced
 
 -- | Fills an order. If the provided amount of offered tokens to buy is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillPartialOrder
@@ -578,7 +710,7 @@ fillPartialOrder
   -- ^ The order reference.
   → Natural
   -- ^ The amount of offered tokens to buy.
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   -- ^ Additional taker fee in payment tokens.
   → m (GYTxSkeleton 'PlutusV2)
@@ -597,7 +729,7 @@ fillPartialOrder'
   -- ^ The order information.
   → Natural
   -- ^ The amount of offered tokens to buy.
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   -- ^ Additional taker fee in payment tokens.
   → m (GYTxSkeleton 'PlutusV2)
@@ -612,7 +744,7 @@ completelyFillPartialOrder
   ⇒ PORefs
   → GYTxOutRef
   -- ^ The order reference.
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   -- ^ Additional taker fee in payment tokens.
   → m (GYTxSkeleton 'PlutusV2)
@@ -628,31 +760,33 @@ partiallyFillPartialOrder
   -- ^ The order reference.
   → Natural
   -- ^ The amount of offered tokens to buy.
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   -- ^ Additional taker fee in payment tokens.
   → m (GYTxSkeleton 'PlutusV2)
-partiallyFillPartialOrder por orderRef amt mRefPocd addTakerFee = do
-  oi ← getPartialOrderInfo por orderRef
+partiallyFillPartialOrder pors orderRef amt mRefPocd addTakerFee = do
+  oi ← getPartialOrderInfo pors orderRef
 
-  mkSkeletonPartiallyFillPartialOrder por oi amt mRefPocd addTakerFee
+  mkSkeletonPartiallyFillPartialOrder pors oi amt mRefPocd addTakerFee
 
 -- | Creates the complete fill skeleton of a partial order.
 mkSkeletonCompletelyFillPartialOrder
   ∷ (HasCallStack, GYDexApiQueryMonad m a)
   ⇒ PORefs
   → PartialOrderInfo
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   → m (GYTxSkeleton 'PlutusV2)
-mkSkeletonCompletelyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} mRefPocd addTakerFee = do
+mkSkeletonCompletelyFillPartialOrder pors oi@PartialOrderInfo {..} mRefPocd addTakerFee = do
+  pocVersion ← getPartialOrderVersion pors (poiUTxOAddr :!: poiRef)
+  let por@(SomePORef PORef {..}) = selectPor pors pocVersion
   cs ← validFillRangeConstraints poiStart poiEnd
   gycs ← ask
-  script ← mintingPolicyToScript <$> partialOrderNftPolicy por
-  (cfgRef, pocd) ←
+  script ← mintingPolicyToScript <$> withSomePORef por partialOrderNftPolicy
+  SomeRefPocd (RefPocd (cfgRef :!: pocd)) ←
     case mRefPocd of
-      Just (cfgRef', pocd') → pure (cfgRef', pocd')
-      Nothing → fetchPartialOrderConfig porRefNft
+      Just refPocd → pure refPocd
+      Nothing → fetchPartialOrderConfig pocVersion pors
 
   let containedFee = poiGetContainedFeeValue oi
       fee = containedFee <> valueFromLovelace (fromIntegral poiTakerLovelaceFlatFee) <> valueSingleton poiAskedAsset (fromIntegral addTakerFee) -- Note that SC is fine if @addTakerFee@ is not included.
@@ -673,12 +807,13 @@ mkSkeletonCompletelyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} mR
       expectedValueOut = expectedPaymentWithDeposit oi True
 
   return $
-    mustHaveInput (partialOrderInfoToIn gycs por oi CompleteFill)
+    mustHaveInput (partialOrderInfoToIn gycs pocVersion pors oi CompleteFill)
       <> mustHaveRefInput cfgRef
       <> mustHaveOutput (partialOrderInfoToPayment oi expectedValueOut)
       <> feeOutput
       <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
       <> cs
+      <> mustHaveTxMetadata stampFilled
 
 -- | Creates the partial fill skeleton of a partial order.
 mkSkeletonPartiallyFillPartialOrder
@@ -687,17 +822,18 @@ mkSkeletonPartiallyFillPartialOrder
   → PartialOrderInfo
   → Natural
   -- ^ The amount of offered tokens to buy.
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe SomeRefPocd
   → Natural
   → m (GYTxSkeleton 'PlutusV2)
-mkSkeletonPartiallyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} amt mRefPocd addTakerFee = do
+mkSkeletonPartiallyFillPartialOrder pors oi@PartialOrderInfo {..} amt mRefPocd addTakerFee = do
+  pocVersion ← getPartialOrderVersion pors (poiUTxOAddr :!: poiRef)
   when (amt == 0) . throwAppError $ PodNonPositiveAmount $ toInteger amt
   when (amt >= poiOfferedAmount) . throwAppError $ PodRequestedAmountGreaterOrEqualToOfferedAmount amt poiOfferedAmount
 
-  (cfgRef, _pocd) ←
+  SomeRefPocd (RefPocd (cfgRef :!: _pocd)) ←
     case mRefPocd of
-      Just (cfgRef', pocd') → pure (cfgRef', pocd')
-      Nothing → fetchPartialOrderConfig porRefNft
+      Just refPocd → pure refPocd
+      Nothing → fetchPartialOrderConfig pocVersion pors
 
   let price' = partialOrderPrice oi amt
       od =
@@ -716,48 +852,76 @@ mkSkeletonPartiallyFillPartialOrder por@PORefs {..} oi@PartialOrderInfo {..} amt
   gycs ← ask
 
   return $
-    mustHaveInput (partialOrderInfoToIn gycs por oi $ PartialFill $ toInteger amt)
+    mustHaveInput (partialOrderInfoToIn gycs pocVersion pors oi $ PartialFill $ toInteger amt)
       <> mustHaveOutput o
       <> cs
       <> mustHaveRefInput cfgRef
+      <> mustHaveTxMetadata stampFilled
 
 cancelPartialOrder
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
   → GYTxOutRef
-  -- ^ The order reference.
   → m (GYTxSkeleton 'PlutusV2)
-cancelPartialOrder por orderRef = do
-  poi ← getPartialOrderInfo por orderRef
-  cancelMultiplePartialOrders por [poi]
-
-cancelPartialOrder'
-  ∷ (HasCallStack, GYDexApiMonad m a)
-  ⇒ PORefs
-  → PartialOrderInfo
-  -- ^ The order information.
-  → m (GYTxSkeleton 'PlutusV2)
-cancelPartialOrder' por poi = cancelMultiplePartialOrders por [poi]
+cancelPartialOrder por orderRef = cancelMultiplePartialOrders por (pure orderRef)
 
 -- | Cancel multiple partial orders.
 cancelMultiplePartialOrders
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
+  → [GYTxOutRef]
+  → m (GYTxSkeleton 'PlutusV2)
+cancelMultiplePartialOrders pors orderRefs = do
+  ois ← Map.elems <$> getPartialOrdersInfos pors orderRefs
+  cancelMultiplePartialOrders' pors ois
+
+getVersionsInOrders ∷ [PartialOrderInfo] → Set POCVersion
+getVersionsInOrders = foldl' (\acc PartialOrderInfo {..} → Set.insert poiVersion acc) Set.empty
+
+addCfgRefInputs ∷ Set POCVersion → RefPocds → GYTxSkeleton 'PlutusV2
+addCfgRefInputs versionsSet cfgRefs =
+  let RefPocd (cfgRefV1 :!: _) = selectV1RefPocd cfgRefs
+      RefPocd (cfgRefV1_1 :!: _) = selectV1_1RefPocd cfgRefs
+   in ( if Set.member POCVersion1 versionsSet
+          then mustHaveRefInput cfgRefV1
+          else mempty
+      )
+        <> ( if Set.member POCVersion1_1 versionsSet
+              then mustHaveRefInput cfgRefV1_1
+              else mempty
+           )
+
+preferentiallySelectLatestVersion ∷ Set POCVersion → POCVersion
+preferentiallySelectLatestVersion versionsSet = fromMaybe maxBound (Set.lookupMax versionsSet)
+
+-- | If there is a version 1.1 order in the set, then preferentially select it's config reference datum. Idea behind this is that when orders we are interacting with are all of same version, then we select that version's config reference datum but if it's a mixed bag, we select for the latest version.
+preferentiallySelectLatestPocd ∷ Set POCVersion → RefPocds → PartialOrderConfigInfo
+preferentiallySelectLatestPocd versionsSet cfgRefs =
+  let overallVersion = preferentiallySelectLatestVersion versionsSet
+      SomeRefPocd (RefPocd (_ :!: pocd)) = selectRefPocd cfgRefs overallVersion
+   in pocd
+
+-- | Cancel multiple partial orders.
+cancelMultiplePartialOrders'
+  ∷ (HasCallStack, GYDexApiMonad m a)
+  ⇒ PORefs
   → [PartialOrderInfo]
   → m (GYTxSkeleton 'PlutusV2)
-cancelMultiplePartialOrders por@PORefs {..} ois = do
+cancelMultiplePartialOrders' pors ois = do
   gycs ← ask
-  script ← mintingPolicyToScript <$> partialOrderNftPolicy por
-  (cfgRef, pocd) ← fetchPartialOrderConfig porRefNft
+  cfgRefs ← fetchPartialOrderConfigs pors
+  let versionsSet = getVersionsInOrders ois
+  let pocd = preferentiallySelectLatestPocd versionsSet cfgRefs
 
   let (!feeOutputMap, !totalRequiredFees, !accumulatedSkeleton) =
         foldl'
           ( \(!mapAcc, !feeAcc, !skelAcc) poi@PartialOrderInfo {..} →
-              let skelAdd =
-                    mustHaveInput (partialOrderInfoToIn gycs por poi PartialCancel)
+              let por@(SomePORef PORef {..}) = selectPor pors poiVersion
+                  skelAdd =
+                    mustHaveInput (partialOrderInfoToIn gycs poiVersion pors poi PartialCancel)
                       <> mustHaveOutput (partialOrderInfoToPayment poi (expectedPaymentWithDeposit poi False))
                       <> mustBeSignedBy poiOwnerKey
-                      <> mustMint (GYMintReference porMintRef script) nothingRedeemer poiNFT (-1)
+                      <> mustMint (GYMintReference porMintRef (withSomePORef por (partialOrderNftPolicy' gycs) & mintingPolicyToScript)) nothingRedeemer poiNFT (-1)
                in if poiPartialFills == 0 || poiContainedFee == mempty
                     then (mapAcc, feeAcc, skelAcc <> skelAdd)
                     else
@@ -777,25 +941,26 @@ cancelMultiplePartialOrders por@PORefs {..} ois = do
   pure $
     feeOutput
       <> accumulatedSkeleton
-      <> mustHaveRefInput cfgRef
+      <> addCfgRefInputs versionsSet cfgRefs
+      <> mustHaveTxMetadata stampCancel
 
 -- | Fills multiple orders. If the provided amount of offered tokens to buy in an order is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillMultiplePartialOrders
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
   → [(GYTxOutRef, Natural)]
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe RefPocds
   → m (GYTxSkeleton 'PlutusV2)
-fillMultiplePartialOrders por ordersWithTokenBuyAmount mRefPocd = do
-  ordersWithTokenBuyAmount' ← getPartialOrdersInfos' por ordersWithTokenBuyAmount
-  fillMultiplePartialOrders' por ordersWithTokenBuyAmount' mRefPocd mempty
+fillMultiplePartialOrders pors ordersWithTokenBuyAmount mRefPocd = do
+  ordersWithTokenBuyAmount' ← getPartialOrdersInfos' pors ordersWithTokenBuyAmount
+  fillMultiplePartialOrders' pors ordersWithTokenBuyAmount' mRefPocd mempty
 
 -- | Completely fill multiple orders.
 completelyFillMultiplePartialOrders
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
   → [GYTxOutRef]
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe RefPocds
   → m (GYTxSkeleton 'PlutusV2)
 completelyFillMultiplePartialOrders por ordersRefs mRefPocd = do
   orders ← getPartialOrdersInfos por ordersRefs
@@ -806,17 +971,20 @@ fillMultiplePartialOrders'
   ∷ (HasCallStack, GYDexApiMonad m a)
   ⇒ PORefs
   → [(PartialOrderInfo, Natural)]
-  → Maybe (GYTxOutRef, PartialOrderConfigInfoF GYAddress)
+  → Maybe RefPocds
   → GYValue
+  -- ^ Additional taker fee.
   → m (GYTxSkeleton 'PlutusV2)
-fillMultiplePartialOrders' por orders mRefPocd addTakerFee = do
-  (cfgRef, pocd) ←
+fillMultiplePartialOrders' pors orders mRefPocd addTakerFee = do
+  cfgRefs ←
     case mRefPocd of
-      Just (cfgRef', pocd') → pure (cfgRef', pocd')
-      Nothing → fetchPartialOrderConfig (porRefNft por)
+      Just refPocds → pure refPocds
+      Nothing → fetchPartialOrderConfigs pors
   gycs ← ask
-
-  let buildWithFeeOutput = do
+  let versionsSet = getVersionsInOrders $ map fst orders
+      pocd = preferentiallySelectLatestPocd versionsSet cfgRefs
+      cfgRefInputs = addCfgRefInputs versionsSet cfgRefs
+      buildWithFeeOutput = do
         let (!feeOutputMap, !totalContainedFee, !maxTakerFee) =
               foldl'
                 ( \(!mapAcc, !feeAcc, !prevMaxTakerFee) (PartialOrderInfo {..}, amtToFill) →
@@ -834,18 +1002,18 @@ fillMultiplePartialOrders' por orders mRefPocd addTakerFee = do
               | fee == mempty = mempty
               | otherwise =
                   mustHaveOutput $ mkGYTxOut (pociFeeAddr pocd) (fee <> addTakerFee) $ datumFromPlutusData $ PartialOrderFeeOutput feeOutputMap mempty Nothing
-        script ← mintingPolicyToScript <$> partialOrderNftPolicy por
         foldlM
           ( \(!prevSkel) (poi@PartialOrderInfo {..}, amt) → do
               commonCheck amt poiOfferedAmount
               cs ← validFillRangeConstraints poiStart poiEnd
-              let skel =
+              let por@(SomePORef PORef {..}) = selectPor pors poiVersion
+                  skel =
                     if amt == poiOfferedAmount
                       then
                         let expectedValueOut = expectedPaymentWithDeposit poi True
-                         in mustHaveInput (partialOrderInfoToIn gycs por poi CompleteFill)
+                         in mustHaveInput (partialOrderInfoToIn gycs poiVersion pors poi CompleteFill)
                               <> mustHaveOutput (partialOrderInfoToPayment poi expectedValueOut)
-                              <> mustMint (GYMintReference (porMintRef por) script) nothingRedeemer poiNFT (-1)
+                              <> mustMint (GYMintReference porMintRef (withSomePORef por (partialOrderNftPolicy' gycs) & mintingPolicyToScript)) nothingRedeemer poiNFT (-1)
                               <> cs
                       else
                         let price' = partialOrderPrice poi amt
@@ -859,13 +1027,13 @@ fillMultiplePartialOrders' por orders mRefPocd addTakerFee = do
 
                             expectedValueOut = poiUTxOValue <> price' `valueMinus` valueSingleton poiOfferedAsset (toInteger amt)
                             o = mkGYTxOut poiUTxOAddr expectedValueOut (datumFromPlutusData od)
-                         in mustHaveInput (partialOrderInfoToIn gycs por poi $ PartialFill $ toInteger amt)
+                         in mustHaveInput (partialOrderInfoToIn gycs poiVersion pors poi $ PartialFill $ toInteger amt)
                               <> mustHaveOutput o
                               <> cs
 
               pure $! prevSkel <> skel
           )
-          (mustHaveRefInput cfgRef <> feeOutput)
+          (cfgRefInputs <> feeOutput <> mustHaveTxMetadata stampFilled)
           orders
 
   let buildWithoutFeeOutput = do
@@ -891,20 +1059,23 @@ fillMultiplePartialOrders' por orders mRefPocd addTakerFee = do
 
               pure $!
                 prevSkel
-                  <> mustHaveInput (partialOrderInfoToIn gycs por poi $ PartialFill $ toInteger amt)
+                  <> mustHaveInput (partialOrderInfoToIn gycs poiVersion pors poi $ PartialFill $ toInteger amt)
                   <> mustHaveOutput o
                   <> cs
           )
-          (mustHaveRefInput cfgRef)
+          (cfgRefInputs <> mustHaveTxMetadata stampFilled)
           (zip [(1 ∷ Natural) ..] orders)
-
-  if isJust $ find (\(PartialOrderInfo {..}, amt) → amt == poiOfferedAmount) orders
+  -- If all orders are of same version, we can keep earlier logic of not requiring fee output when all orders are filled partially.
+  if (Set.size versionsSet > 1) || isJust (find (\(PartialOrderInfo {..}, amt) → amt == poiOfferedAmount) orders)
     then buildWithFeeOutput
     else buildWithoutFeeOutput
  where
   commonCheck amt poiOfferedAmount = do
     when (amt == 0) . throwAppError $ PodNonPositiveAmount $ toInteger amt
     when (amt > poiOfferedAmount) . throwAppError $ PodRequestedAmountGreaterThanOfferedAmount amt poiOfferedAmount
+
+applyToBoth ∷ Bifunctor p ⇒ (c → d) → p c c → p d d
+applyToBoth f = bimap f f
 
 -- | Exceptions raised while (partially) filling (partial) orders.
 data FillOrderException
@@ -951,3 +1122,9 @@ validFillRangeConstraints mstart mend = (<>) <$> startConstraint <*> endConstrai
       if now <= endSlot
         then return $ isInvalidAfter $ min endSlot $ unsafeAdvanceSlot now 120
         else throwAppError $ TooLateFill {foeEnd = endSlot, foeNow = now}
+
+-- | Metadata stamps
+stampPlaced, stampFilled, stampCancel ∷ Maybe GYTxMetadata
+stampPlaced = metadataMsg "GeniusYield: Order placed"
+stampFilled = metadataMsg "GeniusYield: Order filled"
+stampCancel = metadataMsg "GeniusYield: Order canceled"

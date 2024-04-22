@@ -4,7 +4,7 @@ name:            geniusyield-dex-api
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:         0.1.0.0
+version:         0.2.0.0
 synopsis:        API code to interact with GeniusYield DEX.
 description:
   API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
@@ -21,11 +21,6 @@ extra-doc-files:
   README.md
 
 tested-with:     GHC ==9.2.8
-data-dir:        data
-data-files:
-  compiled-scripts/minting-policy.txt
-  compiled-scripts/partial-order-config.uplc
-  compiled-scripts/partial-order.txt
 
 source-repository head
   type:     git
@@ -59,6 +54,7 @@ library
   import:          common
   hs-source-dirs:  src
   exposed-modules:
+    GeniusYield.Api.Dex.Constants
     GeniusYield.Api.Dex.PartialOrder
     GeniusYield.Api.Dex.PartialOrderConfig
     GeniusYield.Api.Dex.Types
@@ -71,21 +67,27 @@ library
     GeniusYield.Scripts.Dex.PartialOrderConfig
     GeniusYield.Scripts.Dex.PartialOrderConfig.Internal
     GeniusYield.Scripts.Dex.PartialOrderNft
+    GeniusYield.Scripts.Dex.Version
 
   build-depends:
     , aeson
-    , base        ^>=4.16.4.0
+    , base          ^>=4.16.4.0
     , bytestring
     , containers
+    , data-default
     , file-embed
     , http-types
+    , lens
     , mtl
+    , some
+    , strict
     , swagger2
     , text
 
   -- Dependencies whose version is fixed by @cabal.project@ file.
   build-depends:
     , atlas-cardano
+    , geniusyield-common
     , ply-core
 
   -- Cardano libraries which are not on hackage. Their version is pinned in @cabal.project@ file or derived from other related dependencies.
