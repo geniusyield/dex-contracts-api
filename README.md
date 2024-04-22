@@ -10,6 +10,8 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
   - [Building locally from source using Docker](#building-locally-from-source-using-docker)
   - [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain)
   - [Swagger API documentation](#swagger-api-documentation)
+  - [Trading Strategy Executor (Python SDK)](#trading-strategy-executor-python-sdk)
+  - [Trading Bot API Video Tutorial](#trading-bot-api-video-tutorial)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -193,6 +195,24 @@ Further test requests are available in the Makefile of the strategy executor:
 ### Swagger API documentation
 
 Endpoints made available by server are specified [here](./web/swagger/api.yaml).
+
+### Trading Strategy Executor (Python SDK)
+
+Although the Bot API specification can be used to generate clients for any modern programming language,
+there is a dedicated Software Development Kit available for Python.
+
+The Trading Strategy Exeuctor Framework can be used to implement and execute various trading strategies in Python:
+- [Trading Strategy Executor GitHub Repository (Python SDK)](https://github.com/geniusyield/strategy-executor)
+
+Please see the the [Video Tutorial](#trading-bot-api-video-tutorial) for further details.
+
+### Trading Bot API Video Tutorial
+
+<p align="center">
+  <a href="https://youtu.be/yilEO3myGLA?si=5GsHjx662EZUrLVp"><img src="https://github.com/geniusyield/strategy-executor/assets/2914096/6afee7ca-7550-48c5-b1a5-cde456a1b63f"></a>
+  <br />
+  <a href="https://youtu.be/yilEO3myGLA?si=5GsHjx662EZUrLVp">Trading Bot API | Explainer Video</a>
+</p>
 
 ## Contributing
 
