@@ -35,6 +35,8 @@ jobs:
       packages: write
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to GitHub Container Registry
@@ -53,6 +55,7 @@ jobs:
       - name: ${{ github.ref == 'refs/heads/main' && 'Build and Push Docker image' || 'Build Docker image' }}
         uses: docker/build-push-action@v5
         with:
+          context: .
           push: ${{ github.ref == 'refs/heads/main'}}
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}

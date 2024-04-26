@@ -3,3 +3,4 @@ secrets
 secrets/*
 dist-newstyle
 .*
+!.git
