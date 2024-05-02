@@ -10,7 +10,7 @@ Please find the terms and conditions, and how to submit reports here : https://i
 
 ### Others 
 
-Vulnerability outside the smart contracts scope, please report with the built-in Github functionality in the *Security* tab:
+For any vulnerability outside the smart contracts scope, please report with the built-in Github functionality in the *Security* tab:
  - [Security Advisories](https://github.com/geniusyield/market-maker/security/advisories)
 
 Further information is availabe in the official GitHub Documentation:
