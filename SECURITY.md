@@ -4,7 +4,7 @@
 
 ### Smart contracts - Bug bounty program
 
-As part of our commitment to the security of our smart contracts (https://github.com/geniusyield/dex-contracts-api/tree/main/geniusyield-onchain), we are inviting ethical hackers and security researchers to help us identify vulnerabilities in our smart contracts. 
+As part of our commitment to the security of [our smart contracts](https://github.com/geniusyield/dex-contracts-api/tree/main/geniusyield-onchain), we are inviting ethical hackers and security researchers to help us identify vulnerabilities in our smart contracts. 
 By participating in our program, you will have the opportunity to earn rewards for responsibly disclosing and reporting security issues to us.
 Please find the terms and conditions, and how to submit reports here : https://immunefi.com/bug-bounty/geniusyield/
 
