@@ -37,6 +37,7 @@ import GeniusYield.Server.Dex.HistoricalPrices.Maestro
 import GeniusYield.Server.Dex.HistoricalPrices.TapTools (TapToolsPriceHistoryAPI, handleTapToolsPriceHistoryApi)
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
 import GeniusYield.Server.Dex.PartialOrder (OrderInfo (..), OrdersAPI, handleOrdersApi, poiToOrderInfo)
+import GeniusYield.Server.Orphans ()
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.TxBuilder (GYTxQueryMonad (utxosAtAddress))

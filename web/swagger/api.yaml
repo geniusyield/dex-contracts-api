@@ -925,6 +925,39 @@ paths:
       summary: Get order(s) details
       tags:
       - Orders
+  /v0/orders/details/{nft-token}:
+    get:
+      description: Get details of an order using it's unique NFT token. Note that
+        each order is identified uniquely by an associated NFT token which can then
+        later be used to retrieve it's details across partial fills.
+      parameters:
+      - in: path
+        name: nft-token
+        required: true
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/OrderInfoDetailed'
+        '400':
+          description: Invalid `nft-token`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get order details
+      tags:
+      - Orders
   /v0/orders/tx/build-cancel:
     post:
       consumes:
