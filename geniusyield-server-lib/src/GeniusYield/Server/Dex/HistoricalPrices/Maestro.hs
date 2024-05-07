@@ -12,7 +12,7 @@ import Data.Swagger qualified as Swagger
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Deriving.Aeson
 import Fmt
-import GHC.TypeLits (Symbol)
+import GHC.TypeLits (AppendSymbol, Symbol)
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (..), handleMaestroError)
 import GeniusYield.OrderBot.Domain.Assets (AssetDetails (adAssetTicker), AssetTicker (..))
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
@@ -110,7 +110,7 @@ instance Swagger.ToParamSchema MaestroDex where
 
 type MaestroPriceHistoryAPI =
   Summary "Get price history using Maestro."
-    :> Description "This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint."
+    :> Description ("This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint. " `AppendSymbol` CommonMaestroKeyRequirementText)
     :> Capture "market-id" OrderAssetPair
     :> Capture "dex" MaestroDex
     :> QueryParam "resolution" MaestroResolution

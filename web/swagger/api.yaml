@@ -573,7 +573,8 @@ info:
 paths:
   /v0/assets/{asset}:
     get:
-      description: Get information for a specific asset.
+      description: Get information for a specific asset. "maestroToken" field in the
+        configuration is required for this operation.
       parameters:
       - in: path
         name: asset
@@ -633,6 +634,7 @@ paths:
   /v0/historical-prices/maestro/{market-id}/{dex}:
     get:
       description: This endpoint internally calls Maestro's "DEX And Pair OHLC" endpoint.
+        "maestroToken" field in the configuration is required for this operation.
       parameters:
       - in: path
         name: market-id
@@ -766,7 +768,7 @@ paths:
   /v0/markets:
     get:
       description: Returns the list of markets information supported by GeniusYield
-        DEX.
+        DEX. "maestroToken" field in the configuration is required for this operation.
       produces:
       - application/json;charset=utf-8
       responses:
@@ -827,7 +829,9 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Cancel order(s). This endpoint would also sign & submit the built
-        transaction.
+        transaction. It uses the signing key from configuration to compute for wallet
+        address. If collateral is specified in the configuration, then it would be
+        used for.
       parameters:
       - in: body
         name: body
@@ -859,7 +863,10 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Create an order. This endpoint would also sign & submit the built
-        transaction.
+        transaction. It uses the signing key from configuration to compute for wallet
+        address. If collateral is specified in the configuration, then it would be
+        used for. "stakeAddress" field from configuration, if provided, is used to
+        place order at a mangled address.
       parameters:
       - in: body
         name: body

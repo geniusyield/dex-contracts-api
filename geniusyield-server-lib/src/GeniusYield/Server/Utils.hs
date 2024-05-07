@@ -11,11 +11,13 @@ module GeniusYield.Server.Utils (
   bytestringToString,
   hideServantClientErrorHeader,
   commonEnumParamSchemaRecipe,
+  CommonMaestroKeyRequirementText,
 ) where
 
 import Control.Lens ((?~))
 import Data.Swagger qualified as Swagger
 import Data.Swagger.Internal qualified as Swagger
+import GHC.TypeLits (Symbol)
 import GeniusYield.Imports
 import GeniusYield.Server.Ctx
 import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
@@ -64,3 +66,6 @@ hideServantClientErrorHeader headerName clientError = case clientError of
 
 commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
 commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
+
+type CommonMaestroKeyRequirementText ∷ Symbol
+type CommonMaestroKeyRequirementText = "\"maestroToken\" field in the configuration is required for this operation."

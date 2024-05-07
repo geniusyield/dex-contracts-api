@@ -343,6 +343,9 @@ instance Swagger.ToSchema FillOrderTransactionDetails where
 type CommonCollateralText ∷ Symbol
 type CommonCollateralText = "Note that if \"collateral\" field is not provided, then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
 
+type CommonSignText ∷ Symbol
+type CommonSignText = "It uses the signing key from configuration to compute for wallet address. If collateral is specified in the configuration, then it would be used for."
+
 type OrdersAPI =
   Summary "Build transaction to create order"
     :> Description ("Build a transaction to create an order. In case \"stakeAddress\" field is provided then order is placed at a mangled address having the given staking credential. " `AppendSymbol` CommonCollateralText)
@@ -351,7 +354,7 @@ type OrdersAPI =
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description "Create an order. This endpoint would also sign & submit the built transaction."
+      :> Description ("Create an order. This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText `AppendSymbol` " \"stakeAddress\" field from configuration, if provided, is used to place order at a mangled address.")
       :> ReqBody '[JSON] BotPlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -361,7 +364,7 @@ type OrdersAPI =
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction."
+      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText)
       :> ReqBody '[JSON] BotCancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Get order(s) details"
