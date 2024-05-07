@@ -137,7 +137,7 @@ data TapToolsException
   deriving anyclass (Exception)
 
 handleTapToolsError ∷ Text → Either ClientError a → IO a
-handleTapToolsError locationInfo = either (throwIO . TapToolsApiError locationInfo . hideServantClientErrorHeader (fromString $ symbolVal (Proxy @TapToolsApiKeyHeaderName))) pure -- TODO: Check if api-key is actually hidden.
+handleTapToolsError locationInfo = either (throwIO . TapToolsApiError locationInfo . hideServantClientErrorHeader (fromString $ symbolVal (Proxy @TapToolsApiKeyHeaderName))) pure
 
 tapToolsOHLCV ∷ TapToolsEnv → Maybe TapToolsUnit → TapToolsInterval → Maybe Natural → IO [TapToolsOHLCV]
 tapToolsOHLCV env@(tteApiKey → apiKey) ttu tti mttni = _tapToolsOHLCV apiKey ttu tti mttni & runTapToolsClient env >>= handleTapToolsError "tapToolsOHLCV"
