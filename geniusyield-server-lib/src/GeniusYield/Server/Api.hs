@@ -34,6 +34,7 @@ import GeniusYield.Server.Auth (APIKeyAuthProtect, V0)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
 import GeniusYield.Server.Dex.HistoricalPrices.Maestro
+import GeniusYield.Server.Dex.HistoricalPrices.TapTools (TapToolsPriceHistoryAPI, handleTapToolsPriceHistoryApi)
 import GeniusYield.Server.Dex.Markets (MarketsAPI, handleMarketsApi)
 import GeniusYield.Server.Dex.PartialOrder (OrderInfo (..), OrdersAPI, handleOrdersApi, poiToOrderInfo)
 import GeniusYield.Server.Tx (TxAPI, handleTxApi)
@@ -186,6 +187,10 @@ type OrderBookAPI = Summary "Order book" :> Description "Get order book for a sp
 
 type BalancesAPI = Summary "Balances" :> Description "Get token balances of an address." :> Capture "address" GYAddressBech32 :> Get '[JSON] GYBalance
 
+type HistoricalPricesAPI =
+  "maestro" :> MaestroPriceHistoryAPI
+    :<|> "tap-tools" :> TapToolsPriceHistoryAPI
+
 type V0API =
   "settings" :> SettingsAPI
     :<|> "orders" :> OrdersAPI
@@ -194,7 +199,7 @@ type V0API =
     :<|> "trading-fees" :> TradingFeesAPI
     :<|> "assets" :> AssetsAPI
     :<|> "order-books" :> OrderBookAPI
-    :<|> "historical-prices" :> "maestro" :> MaestroPriceHistoryAPI
+    :<|> "historical-prices" :> HistoricalPricesAPI
     :<|> "balances" :> BalancesAPI
 
 type GeniusYieldAPI = APIKeyAuthProtect :> V0 :> V0API
@@ -239,7 +244,7 @@ geniusYieldAPISwagger =
     & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
     & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
     & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-books" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
-    & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> "maestro" :> MaestroPriceHistoryAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
+    & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> HistoricalPricesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
     & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & description ?~ "Endpoint to fetch token balances."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
@@ -252,10 +257,15 @@ geniusYieldServer ctx =
       :<|> handleTradingFeesApi ctx
       :<|> handleAssetsApi ctx
       :<|> handleOrderBookApi ctx
-      :<|> handleMaestroPriceHistoryApi ctx
+      :<|> handleHistoricalPricesApi ctx
       :<|> handleBalancesApi ctx
  where
   ignoredAuthResult f _authResult = f
+
+handleHistoricalPricesApi ∷ Ctx → ServerT HistoricalPricesAPI IO
+handleHistoricalPricesApi ctx =
+  handleMaestroPriceHistoryApi ctx
+    :<|> handleTapToolsPriceHistoryApi ctx
 
 type MainAPI =
   GeniusYieldAPI

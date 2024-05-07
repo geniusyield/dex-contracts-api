@@ -2,6 +2,8 @@ module GeniusYield.Server.Ctx (
   DEXInfo (..),
   dexInfoDefaultMainnet,
   dexInfoDefaultPreprod,
+  TapToolsApiKey,
+  TapToolsEnv (..),
   Ctx (..),
   runSkeletonI,
   runSkeletonWithStrategyI,
@@ -19,6 +21,14 @@ import GeniusYield.Transaction
 import GeniusYield.TxBuilder
 import GeniusYield.Types
 import RIO
+import Servant.Client (ClientEnv)
+
+type TapToolsApiKey = Text
+
+data TapToolsEnv = TapToolsEnv
+  { tteClientEnv ∷ !ClientEnv,
+    tteApiKey ∷ !TapToolsApiKey
+  }
 
 -- | Server context: configuration & shared state.
 data Ctx = Ctx
@@ -26,6 +36,7 @@ data Ctx = Ctx
     ctxProviders ∷ !GYProviders,
     ctxDexInfo ∷ !DEXInfo,
     ctxMaestroProvider ∷ !MaestroProvider,
+    ctxTapToolsProvider ∷ !(Maybe TapToolsEnv),
     ctxSigningKey ∷ !(Maybe (Pair GYSomePaymentSigningKey GYAddress)),
     ctxCollateral ∷ !(Maybe GYTxOutRef),
     ctxStakeAddress ∷ !(Maybe GYStakeAddressBech32)

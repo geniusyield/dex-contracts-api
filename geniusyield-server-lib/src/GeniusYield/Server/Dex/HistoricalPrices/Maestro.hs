@@ -8,9 +8,7 @@ module GeniusYield.Server.Dex.HistoricalPrices.Maestro (
 
 import Control.Lens ((?~))
 import Data.Aeson (FromJSON (..), ToJSON (..))
-import Data.Kind (Type)
 import Data.Swagger qualified as Swagger
-import Data.Swagger.Internal qualified as Swagger
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Deriving.Aeson
 import Fmt
@@ -92,9 +90,6 @@ instance Swagger.ToSchema Limit where
 newtype MaestroOrder = MaestroOrder {unMaestroOrder ∷ Order}
   deriving stock (Show)
   deriving newtype (ToHttpApiData, FromHttpApiData, Enum, Bounded, ToJSON)
-
-commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
-commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
 
 instance Swagger.ToParamSchema MaestroOrder where
   toParamSchema = commonEnumParamSchemaRecipe

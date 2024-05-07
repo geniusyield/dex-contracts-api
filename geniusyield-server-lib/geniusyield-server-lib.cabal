@@ -58,6 +58,8 @@ library
     GeniusYield.Server.Constants
     GeniusYield.Server.Ctx
     GeniusYield.Server.Dex.HistoricalPrices.Maestro
+    GeniusYield.Server.Dex.HistoricalPrices.TapTools
+    GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client
     GeniusYield.Server.Dex.Markets
     GeniusYield.Server.Dex.PartialOrder
     GeniusYield.Server.ErrorMiddleware
@@ -89,6 +91,8 @@ library
     , geniusyield-dex-api
     , geniusyield-orderbot-lib
     , githash
+    , http-client
+    , http-client-tls
     , http-types
     , insert-ordered-containers
     , lens
@@ -96,6 +100,9 @@ library
     , plutus-ledger-api
     , ply-core
     , rio
+    , servant
+    , servant-client
+    , servant-client-core
     , servant-foreign
     , servant-server
     , servant-swagger

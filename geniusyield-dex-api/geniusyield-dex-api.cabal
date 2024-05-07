@@ -72,10 +72,8 @@ library
   build-depends:
     , aeson
     , base          ^>=4.16.4.0
-    , bytestring
     , containers
     , data-default
-    , file-embed
     , http-types
     , lens
     , mtl

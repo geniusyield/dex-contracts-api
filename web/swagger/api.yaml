@@ -457,6 +457,8 @@ definitions:
         type: string
       maker_offered_percent_fee_amount:
         $ref: '#/definitions/GYNatural'
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
       order_ref:
         $ref: '#/definitions/GYTxOutRef'
       transaction:
@@ -474,6 +476,7 @@ definitions:
     - maker_offered_percent_fee_amount
     - lovelace_deposit
     - order_ref
+    - nft_token
     type: object
   Settings:
     description: Genius Yield Server settings.
@@ -497,6 +500,43 @@ definitions:
     - version
     - revision
     - backend
+    type: object
+  TapToolsOHLCV:
+    description: Get a specific token's trended (open, high, low, close, volume) price
+      data.
+    example:
+      close: 0.15800583264941748
+      high: 0.15800583264941748
+      low: 0.15800583264941748
+      open: 0.15800583264941748
+      time: 1715007300
+      volume: 120
+    properties:
+      close:
+        format: double
+        type: number
+      high:
+        format: double
+        type: number
+      low:
+        format: double
+        type: number
+      open:
+        format: double
+        type: number
+      time:
+        multipleOf: 1.0e-12
+        type: number
+      volume:
+        format: double
+        type: number
+    required:
+    - time
+    - open
+    - high
+    - low
+    - close
+    - volume
     type: object
   TradingFees:
     description: Trading fees of DEX.
@@ -664,6 +704,63 @@ paths:
       security:
       - api-key: []
       summary: Get price history using Maestro.
+      tags:
+      - Historical Prices
+  /v0/historical-prices/tap-tools/{asset}:
+    get:
+      description: This endpoint internally calls TapTools's "Token price OHLCV" endpoint.
+        Note that only the liquidity pools involving ADA and the given asset class
+        is considered to get for aggregated price information. Price returned is in
+        ADA.
+      parameters:
+      - in: path
+        name: asset
+        required: true
+        type: string
+      - enum:
+        - 3m
+        - 5m
+        - 15m
+        - 30m
+        - 1h
+        - 2h
+        - 4h
+        - 12h
+        - 1d
+        - 3d
+        - 1w
+        - 1M
+        in: query
+        name: interval
+        required: true
+        type: string
+      - exclusiveMinimum: false
+        in: query
+        minimum: 0
+        name: numIntervals
+        required: false
+        type: integer
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/TapToolsOHLCV'
+            type: array
+        '400':
+          description: Invalid `numIntervals` or `interval` or `asset`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get price history using TapTools.
       tags:
       - Historical Prices
   /v0/markets:

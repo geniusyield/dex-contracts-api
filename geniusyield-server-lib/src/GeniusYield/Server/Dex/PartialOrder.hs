@@ -15,7 +15,7 @@ import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
+import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder'', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
 import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig, fetchPartialOrderConfigs)
 import GeniusYield.HTTP.Errors
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
@@ -211,7 +211,8 @@ data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
     potdMakerOfferedPercentFee ∷ !GYRational,
     potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
     potdLovelaceDeposit ∷ !GYNatural,
-    potdOrderRef ∷ !GYTxOutRef
+    potdOrderRef ∷ !GYTxOutRef,
+    potdNFTToken ∷ !GYAssetClass
   }
   deriving stock (Generic)
   deriving
@@ -370,9 +371,9 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
   let unitPrice =
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount
-  txBody ←
-    runSkeletonI ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
-      placePartialOrder'
+  (nftAC, txBody) ←
+    runSkeletonF ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
+      placePartialOrder''
         porefs
         changeAddr
         (naturalToGHC popOfferAmount, popOfferToken)
@@ -395,7 +396,8 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         potdMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
         potdMakerOfferedPercentFeeAmount = roundFunctionForPOCVersion pocVersion $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
         potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd,
-        potdOrderRef = txOutRefFromTuple (txId, 0)
+        potdOrderRef = txOutRefFromTuple (txId, 0),
+        potdNFTToken = nftAC
       }
 
 resolveCtxSigningKeyInfo ∷ Ctx → IO (Strict.Pair GYSomePaymentSigningKey GYAddress)

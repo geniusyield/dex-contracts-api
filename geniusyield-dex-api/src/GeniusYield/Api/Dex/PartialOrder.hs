@@ -40,6 +40,10 @@ module GeniusYield.Api.Dex.PartialOrder (
   -- * Tx constructors
   placePartialOrder,
   placePartialOrder',
+  placePartialOrder'',
+  placePartialOrderWithVersion,
+  placePartialOrderWithVersion',
+  placePartialOrderWithVersion'',
   completelyFillPartialOrder,
   partiallyFillPartialOrder,
   fillPartialOrder,
@@ -603,7 +607,33 @@ placePartialOrder'
   → GYTxOutRef
   → PartialOrderConfigInfoF GYAddress
   → m (GYTxSkeleton 'PlutusV2)
-placePartialOrder' pors = placePartialOrderWithVersion' pors defaultPOCVersion
+placePartialOrder' pors addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = snd <$> placePartialOrder'' pors addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd
+
+placePartialOrder''
+  ∷ (GYDexApiMonad m a, HasCallStack)
+  ⇒ PORefs
+  → GYAddress
+  -- ^ Order owner
+  → (Natural, GYAssetClass)
+  -- ^ Amount and asset to offer.
+  → GYAssetClass
+  -- ^ The asset being asked for as payment.
+  → GYRational
+  -- ^ The price for one unit of the offered asset.
+  → Maybe GYTime
+  -- ^ The earliest time when the order can be filled (optional).
+  → Maybe GYTime
+  -- ^ The latest time when the order can be filled (optional).
+  → Natural
+  -- ^ Additional lovelace fee.
+  → Natural
+  -- ^ Additional fee in offered tokens.
+  → Maybe GYStakeCredential
+  -- ^ Stake credential of user. We do not support pointer reference.
+  → GYTxOutRef
+  → PartialOrderConfigInfoF GYAddress
+  → m (GYAssetClass, GYTxSkeleton 'PlutusV2)
+placePartialOrder'' pors = placePartialOrderWithVersion'' pors defaultPOCVersion
 
 placePartialOrderWithVersion'
   ∷ (GYDexApiMonad m a, HasCallStack)
@@ -630,7 +660,34 @@ placePartialOrderWithVersion'
   → GYTxOutRef
   → PartialOrderConfigInfoF GYAddress
   → m (GYTxSkeleton 'PlutusV2)
-placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = do
+placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = snd <$> placePartialOrderWithVersion'' pors pocVersion addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd
+
+placePartialOrderWithVersion''
+  ∷ (GYDexApiMonad m a, HasCallStack)
+  ⇒ PORefs
+  → POCVersion
+  → GYAddress
+  -- ^ Order owner
+  → (Natural, GYAssetClass)
+  -- ^ Amount and asset to offer.
+  → GYAssetClass
+  -- ^ The asset being asked for as payment.
+  → GYRational
+  -- ^ The price for one unit of the offered asset.
+  → Maybe GYTime
+  -- ^ The earliest time when the order can be filled (optional).
+  → Maybe GYTime
+  -- ^ The latest time when the order can be filled (optional).
+  → Natural
+  -- ^ Additional lovelace fee.
+  → Natural
+  -- ^ Additional fee in offered tokens.
+  → Maybe GYStakeCredential
+  -- ^ Stake credential of user. We do not support pointer reference.
+  → GYTxOutRef
+  → PartialOrderConfigInfoF GYAddress
+  → m (GYAssetClass, GYTxSkeleton 'PlutusV2)
+placePartialOrderWithVersion'' pors pocVersion addr (offerAmt, offerAC) priceAC price start end addLov addOff stakeCred cfgRef pocd = do
   when (offerAmt == 0) $ throwAppError $ PodNonPositiveAmount $ toInteger offerAmt
   when (price <= 0) $ throwAppError $ PodNonPositivePrice price
   when (offerAC == priceAC) $ throwAppError $ PodNonDifferentAssets offerAC
@@ -696,11 +753,12 @@ placePartialOrderWithVersion' pors pocVersion addr (offerAmt, offerAC) priceAC p
       o = mkGYTxOut outAddr' offerV (datumFromPlutusData od)
 
   return $
-    mustHaveInput nftInput
-      <> mustHaveOutput o
-      <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
-      <> mustHaveRefInput cfgRef
-      <> mustHaveTxMetadata stampPlaced
+    (nft,) $
+      mustHaveInput nftInput
+        <> mustHaveOutput o
+        <> mustMint (GYMintReference porMintRef $ mintingPolicyToScript policy) nftRedeemer nftName 1
+        <> mustHaveRefInput cfgRef
+        <> mustHaveTxMetadata stampPlaced
 
 -- | Fills an order. If the provided amount of offered tokens to buy is equal to the offered amount, then we completely fill the order. Otherwise, it gets partially filled.
 fillPartialOrder
