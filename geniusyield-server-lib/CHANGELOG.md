@@ -1,5 +1,13 @@
 # Revision history for geniusyield-server-lib
 
+## 0.3.0 -- 2024-05-07
+
+* Adds TapTools OHLCV endpoint.
+* Adds NFT token in response of place order family of endpoints.
+* Adds GET variant for getting details of an order from it's NFT token identifier.
+* Clarifies which endpoints require `maestroToken` field to be set.
+* Clarifies which endpoints require signing key to be configured in the server to derive for wallet's address, likewise it is clarified that which endpoints use fields such as `collateral`, etc. from server's configuration.
+
 ## 0.2.0 -- 2024-04-22
 
 * Uses latest version of `geniusyield-dex-api` which adds support of v1.1 script.

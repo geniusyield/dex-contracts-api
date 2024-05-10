@@ -56,6 +56,7 @@ data ServerConfig = ServerConfig
     scPort ∷ !Port,
     scWallet ∷ !(Maybe UserWallet),
     scServerApiKey ∷ !(Confidential Text),
+    scTapToolsApiKey ∷ !(Maybe (Confidential Text)),
     scCollateral ∷ !(Maybe GYTxOutRef),
     scStakeAddress ∷ !(Maybe GYStakeAddressBech32)
   }

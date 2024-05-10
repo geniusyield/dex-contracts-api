@@ -457,6 +457,8 @@ definitions:
         type: string
       maker_offered_percent_fee_amount:
         $ref: '#/definitions/GYNatural'
+      nft_token:
+        $ref: '#/definitions/GYAssetClass'
       order_ref:
         $ref: '#/definitions/GYTxOutRef'
       transaction:
@@ -474,6 +476,7 @@ definitions:
     - maker_offered_percent_fee_amount
     - lovelace_deposit
     - order_ref
+    - nft_token
     type: object
   Settings:
     description: Genius Yield Server settings.
@@ -497,6 +500,43 @@ definitions:
     - version
     - revision
     - backend
+    type: object
+  TapToolsOHLCV:
+    description: Get a specific token's trended (open, high, low, close, volume) price
+      data.
+    example:
+      close: 0.15800583264941748
+      high: 0.15800583264941748
+      low: 0.15800583264941748
+      open: 0.15800583264941748
+      time: 1715007300
+      volume: 120
+    properties:
+      close:
+        format: double
+        type: number
+      high:
+        format: double
+        type: number
+      low:
+        format: double
+        type: number
+      open:
+        format: double
+        type: number
+      time:
+        multipleOf: 1.0e-12
+        type: number
+      volume:
+        format: double
+        type: number
+    required:
+    - time
+    - open
+    - high
+    - low
+    - close
+    - volume
     type: object
   TradingFees:
     description: Trading fees of DEX.
@@ -533,7 +573,8 @@ info:
 paths:
   /v0/assets/{asset}:
     get:
-      description: Get information for a specific asset.
+      description: Get information for a specific asset. "maestroToken" field in the
+        configuration is required for this operation.
       parameters:
       - in: path
         name: asset
@@ -593,6 +634,7 @@ paths:
   /v0/historical-prices/maestro/{market-id}/{dex}:
     get:
       description: This endpoint internally calls Maestro's "DEX And Pair OHLC" endpoint.
+        "maestroToken" field in the configuration is required for this operation.
       parameters:
       - in: path
         name: market-id
@@ -666,10 +708,67 @@ paths:
       summary: Get price history using Maestro.
       tags:
       - Historical Prices
+  /v0/historical-prices/tap-tools/{asset}:
+    get:
+      description: This endpoint internally calls TapTools's "Token price OHLCV" endpoint.
+        Note that only the liquidity pools involving ADA and the given asset class
+        is considered to get for aggregated price information. Price returned is in
+        ADA.
+      parameters:
+      - in: path
+        name: asset
+        required: true
+        type: string
+      - enum:
+        - 3m
+        - 5m
+        - 15m
+        - 30m
+        - 1h
+        - 2h
+        - 4h
+        - 12h
+        - 1d
+        - 3d
+        - 1w
+        - 1M
+        in: query
+        name: interval
+        required: true
+        type: string
+      - exclusiveMinimum: false
+        in: query
+        minimum: 0
+        name: numIntervals
+        required: false
+        type: integer
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            items:
+              $ref: '#/definitions/TapToolsOHLCV'
+            type: array
+        '400':
+          description: Invalid `numIntervals` or `interval` or `asset`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get price history using TapTools.
+      tags:
+      - Historical Prices
   /v0/markets:
     get:
       description: Returns the list of markets information supported by GeniusYield
-        DEX.
+        DEX. "maestroToken" field in the configuration is required for this operation.
       produces:
       - application/json;charset=utf-8
       responses:
@@ -730,7 +829,9 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Cancel order(s). This endpoint would also sign & submit the built
-        transaction.
+        transaction. It uses the signing key from configuration to compute for wallet
+        address. If collateral is specified in the configuration, then it would be
+        used for.
       parameters:
       - in: body
         name: body
@@ -762,7 +863,10 @@ paths:
       consumes:
       - application/json;charset=utf-8
       description: Create an order. This endpoint would also sign & submit the built
-        transaction.
+        transaction. It uses the signing key from configuration to compute for wallet
+        address. If collateral is specified in the configuration, then it would be
+        used for. "stakeAddress" field from configuration, if provided, is used to
+        place order at a mangled address.
       parameters:
       - in: body
         name: body
@@ -826,6 +930,39 @@ paths:
       security:
       - api-key: []
       summary: Get order(s) details
+      tags:
+      - Orders
+  /v0/orders/details/{nft-token}:
+    get:
+      description: Get details of an order using it's unique NFT token. Note that
+        each order is identified uniquely by an associated NFT token which can then
+        later be used to retrieve it's details across partial fills.
+      parameters:
+      - in: path
+        name: nft-token
+        required: true
+        type: string
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/OrderInfoDetailed'
+        '400':
+          description: Invalid `nft-token`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Get order details
       tags:
       - Orders
   /v0/orders/tx/build-cancel:

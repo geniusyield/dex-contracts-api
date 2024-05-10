@@ -6,9 +6,10 @@ module GeniusYield.Server.Dex.Markets (
 import Data.Aeson (camelTo2)
 import Data.Swagger qualified as Swagger
 import Deriving.Aeson
+import GHC.TypeLits (AppendSymbol)
 import GeniusYield.OrderBot.Domain.Markets (HasMarkets (getMarkets), OrderAssetPair (commodityAsset, currencyAsset))
 import GeniusYield.Server.Ctx
-import GeniusYield.Server.Utils (addSwaggerDescription, logInfo)
+import GeniusYield.Server.Utils (CommonMaestroKeyRequirementText, addSwaggerDescription, logInfo)
 import GeniusYield.Types
 import RIO hiding (logDebug, logInfo)
 import Servant
@@ -43,7 +44,7 @@ instance Swagger.ToSchema Market where
 
 type MarketsAPI =
   Summary "Get markets information for the DEX."
-    :> Description "Returns the list of markets information supported by GeniusYield DEX."
+    :> Description ("Returns the list of markets information supported by GeniusYield DEX. " `AppendSymbol` CommonMaestroKeyRequirementText)
     :> Get '[JSON] [Market]
 
 handleMarketsApi ∷ Ctx → ServerT MarketsAPI IO

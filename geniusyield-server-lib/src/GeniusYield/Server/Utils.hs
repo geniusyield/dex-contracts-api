@@ -9,14 +9,25 @@ module GeniusYield.Server.Utils (
   addSwaggerDescription,
   addSwaggerExample,
   bytestringToString,
+  hideServantClientErrorHeader,
+  commonEnumParamSchemaRecipe,
+  CommonMaestroKeyRequirementText,
 ) where
 
+import Control.Lens ((?~))
+import Data.Swagger qualified as Swagger
+import Data.Swagger.Internal qualified as Swagger
+import GHC.TypeLits (Symbol)
 import GeniusYield.Imports
 import GeniusYield.Server.Ctx
 import GeniusYield.Swagger.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake)
 import GeniusYield.Types
+import Network.HTTP.Client qualified as Http
+import Network.HTTP.Types qualified as Http
 import RIO hiding (logDebug, logInfo)
 import RIO.Text qualified as Text
+import Servant.Client qualified as Servant
+import Servant.Client.Core qualified as Servant
 
 logDebug ∷ HasCallStack ⇒ Ctx → String → IO ()
 logDebug ctx = gyLogDebug (ctxProviders ctx) mempty
@@ -40,3 +51,21 @@ isMatchedException (etype :>> etypes) se = isJust (f etype) || isMatchedExceptio
 
 bytestringToString ∷ ByteString → String
 bytestringToString = RIO.decodeUtf8Lenient >>> Text.unpack
+
+hideServantClientErrorHeader ∷ Http.HeaderName → Servant.ClientError → Servant.ClientError
+hideServantClientErrorHeader headerName clientError = case clientError of
+  Servant.FailureResponse reqF res → Servant.FailureResponse reqF {Servant.requestHeaders = renameHeader <$> Servant.requestHeaders reqF} res
+  Servant.ConnectionError se → case fromException @Http.HttpException se of
+    Just he → case he of
+      Http.HttpExceptionRequest req content → Servant.ConnectionError $ SomeException $ Http.HttpExceptionRequest req {Http.requestHeaders = renameHeader <$> Http.requestHeaders req} content
+      _anyOther → clientError
+    Nothing → clientError
+  _anyOther → clientError
+ where
+  renameHeader (h, v) = if h == headerName then (h, "hidden") else (h, v)
+
+commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
+commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
+
+type CommonMaestroKeyRequirementText ∷ Symbol
+type CommonMaestroKeyRequirementText = "\"maestroToken\" field in the configuration is required for this operation."

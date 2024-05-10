@@ -8,13 +8,11 @@ module GeniusYield.Server.Dex.HistoricalPrices.Maestro (
 
 import Control.Lens ((?~))
 import Data.Aeson (FromJSON (..), ToJSON (..))
-import Data.Kind (Type)
 import Data.Swagger qualified as Swagger
-import Data.Swagger.Internal qualified as Swagger
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Deriving.Aeson
 import Fmt
-import GHC.TypeLits (Symbol)
+import GHC.TypeLits (AppendSymbol, Symbol)
 import GeniusYield.OrderBot.Adapter.Maestro (MaestroProvider (..), handleMaestroError)
 import GeniusYield.OrderBot.Domain.Assets (AssetDetails (adAssetTicker), AssetTicker (..))
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
@@ -93,9 +91,6 @@ newtype MaestroOrder = MaestroOrder {unMaestroOrder ∷ Order}
   deriving stock (Show)
   deriving newtype (ToHttpApiData, FromHttpApiData, Enum, Bounded, ToJSON)
 
-commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
-commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
-
 instance Swagger.ToParamSchema MaestroOrder where
   toParamSchema = commonEnumParamSchemaRecipe
 
@@ -115,7 +110,7 @@ instance Swagger.ToParamSchema MaestroDex where
 
 type MaestroPriceHistoryAPI =
   Summary "Get price history using Maestro."
-    :> Description "This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint."
+    :> Description ("This endpoint internally calls Maestro's \"DEX And Pair OHLC\" endpoint. " `AppendSymbol` CommonMaestroKeyRequirementText)
     :> Capture "market-id" OrderAssetPair
     :> Capture "dex" MaestroDex
     :> QueryParam "resolution" MaestroResolution

@@ -4,6 +4,8 @@ module GeniusYield.Server.Dex.PartialOrder (
   OrderInfo (..),
   poiToOrderInfo,
   PodServerException (..),
+  PodOrderNotFound (..),
+  ErrDescription (..),
 ) where
 
 import Data.Aeson (ToJSON (..))
@@ -15,7 +17,7 @@ import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
+import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder'', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
 import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig, fetchPartialOrderConfigs)
 import GeniusYield.HTTP.Errors
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
@@ -31,6 +33,7 @@ import RIO.Map qualified as Map
 import RIO.NonEmpty qualified as NonEmpty
 import RIO.Text qualified as T
 import Servant
+import Servant.Checked.Exceptions
 
 -- | Number of orders that we at most allow to be filled in a single transaction.
 maxFillOrders ∷ GYNatural
@@ -44,6 +47,20 @@ data PodServerException
   deriving stock (Show)
   deriving anyclass (Exception)
 
+-- | When order whose details is queried for is not found.
+data PodOrderNotFound = PodOrderNotFound
+  deriving (Eq, Show, Generic)
+  deriving anyclass (Exception, ToJSON)
+
+instance ErrStatus PodOrderNotFound where
+  toErrStatus _ = status404
+
+class ErrDescription e where
+  toErrDescription ∷ e → Text
+
+instance ErrDescription PodOrderNotFound where
+  toErrDescription _ = "Order not found"
+
 instance IsGYApiError PodServerException where
   toApiError PodMultiFillMoreThanAllowed =
     GYApiError
@@ -56,6 +73,14 @@ instance IsGYApiError PodServerException where
       { gaeErrorCode = "MULTI_FILL_NOT_SAME_PAIR",
         gaeHttpStatus = status400,
         gaeMsg = "Given orders are not having same payment token"
+      }
+
+instance IsGYApiError PodOrderNotFound where
+  toApiError PodOrderNotFound =
+    GYApiError
+      { gaeErrorCode = "ORDER_NOT_FOUND",
+        gaeHttpStatus = status404,
+        gaeMsg = toErrDescription PodOrderNotFound
       }
 
 type OrderInfoPrefix ∷ Symbol
@@ -211,7 +236,8 @@ data PlaceOrderTransactionDetails = PlaceOrderTransactionDetails
     potdMakerOfferedPercentFee ∷ !GYRational,
     potdMakerOfferedPercentFeeAmount ∷ !GYNatural,
     potdLovelaceDeposit ∷ !GYNatural,
-    potdOrderRef ∷ !GYTxOutRef
+    potdOrderRef ∷ !GYTxOutRef,
+    potdNFTToken ∷ !GYAssetClass
   }
   deriving stock (Generic)
   deriving
@@ -317,6 +343,9 @@ instance Swagger.ToSchema FillOrderTransactionDetails where
 type CommonCollateralText ∷ Symbol
 type CommonCollateralText = "Note that if \"collateral\" field is not provided, then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
 
+type CommonSignText ∷ Symbol
+type CommonSignText = "It uses the signing key from configuration to compute for wallet address. If collateral is specified in the configuration, then it would be used for."
+
 type OrdersAPI =
   Summary "Build transaction to create order"
     :> Description ("Build a transaction to create an order. In case \"stakeAddress\" field is provided then order is placed at a mangled address having the given staking credential. " `AppendSymbol` CommonCollateralText)
@@ -325,7 +354,7 @@ type OrdersAPI =
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description "Create an order. This endpoint would also sign & submit the built transaction."
+      :> Description ("Create an order. This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText `AppendSymbol` " \"stakeAddress\" field from configuration, if provided, is used to place order at a mangled address.")
       :> ReqBody '[JSON] BotPlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -335,7 +364,7 @@ type OrdersAPI =
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description "Cancel order(s). This endpoint would also sign & submit the built transaction."
+      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText)
       :> ReqBody '[JSON] BotCancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Get order(s) details"
@@ -343,6 +372,12 @@ type OrdersAPI =
       :> "details"
       :> ReqBody '[JSON] [GYAssetClass]
       :> Post '[JSON] [OrderInfoDetailed]
+    :<|> Summary "Get order details"
+      :> Description "Get details of an order using it's unique NFT token. Note that each order is identified uniquely by an associated NFT token which can then later be used to retrieve it's details across partial fills."
+      :> "details"
+      :> Capture "nft-token" GYAssetClass
+      :> Throws PodOrderNotFound
+      :> Get '[JSON] OrderInfoDetailed
     :<|> Summary "Build transaction to fill order(s)"
       :> Description ("Build a transaction to fill order(s). " `AppendSymbol` CommonCollateralText)
       :> "tx"
@@ -357,6 +392,7 @@ handleOrdersApi ctx =
     :<|> handleCancelOrders ctx
     :<|> handleCancelOrdersAndSignSubmit ctx
     :<|> handleOrdersDetails ctx
+    :<|> handleOrderDetails ctx
     :<|> handleFillOrders ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
@@ -370,9 +406,9 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
   let unitPrice =
         rationalFromGHC $
           toInteger popPriceAmount % toInteger popOfferAmount
-  txBody ←
-    runSkeletonI ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
-      placePartialOrder'
+  (nftAC, txBody) ←
+    runSkeletonF ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
+      placePartialOrder''
         porefs
         changeAddr
         (naturalToGHC popOfferAmount, popOfferToken)
@@ -395,7 +431,8 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
         potdMakerOfferedPercentFee = 100 * pociMakerFeeRatio pocd,
         potdMakerOfferedPercentFeeAmount = roundFunctionForPOCVersion pocVersion $ toRational popOfferAmount * rationalToGHC (pociMakerFeeRatio pocd),
         potdLovelaceDeposit = fromIntegral $ pociMinDeposit pocd,
-        potdOrderRef = txOutRefFromTuple (txId, 0)
+        potdOrderRef = txOutRefFromTuple (txId, 0),
+        potdNFTToken = nftAC
       }
 
 resolveCtxSigningKeyInfo ∷ Ctx → IO (Strict.Pair GYSomePaymentSigningKey GYAddress)
@@ -439,6 +476,15 @@ handleCancelOrdersAndSignSubmit ctx BotCancelOrderParameters {..} = do
   txId ← handleTxSubmit ctx signedTx
   -- Though transaction id would be same, but we are returning it again, just in case...
   pure $ details {cotdTransactionId = txId, cotdTransaction = signedTx}
+
+handleOrderDetails ∷ Ctx → GYAssetClass → IO (Envelope '[PodOrderNotFound] OrderInfoDetailed)
+handleOrderDetails ctx@Ctx {..} ac = do
+  logInfo ctx $ "Getting order details for NFT token: " +|| ac ||+ ""
+  let porefs = dexPORefs ctxDexInfo
+  os ← runQuery ctx $ fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
+  case os of
+    Nothing → throwIO PodOrderNotFound
+    Just o → pureSuccEnvelope o
 
 handleOrdersDetails ∷ Ctx → [GYAssetClass] → IO [OrderInfoDetailed]
 handleOrdersDetails ctx@Ctx {..} acs = do

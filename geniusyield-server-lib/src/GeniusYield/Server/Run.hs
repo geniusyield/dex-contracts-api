@@ -18,6 +18,11 @@ import GeniusYield.Server.Auth
 import GeniusYield.Server.Config (ServerConfig (..), coreConfigFromServerConfig, optionalSigningKeyFromServerConfig, serverConfigOptionalFPIO)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
+-- import RIO.ByteString.Lazy qualified as BL
+
+-- import Servant.PY (requests, writePythonForAPI)
+
+import GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client (tapToolsClientEnv)
 import GeniusYield.Server.ErrorMiddleware
 import GeniusYield.Server.RequestLoggerMiddleware (gcpReqLogger)
 import GeniusYield.Server.Utils
@@ -27,10 +32,8 @@ import Network.Wai.Handler.Warp qualified as Warp
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import RIO hiding (Handler, logDebug, logErrorS, logInfo, logInfoS, onException)
 import RIO.ByteString qualified as B
--- import RIO.ByteString.Lazy qualified as BL
 import RIO.Text.Lazy qualified as LT
 import Servant
--- import Servant.PY (requests, writePythonForAPI)
 import Servant.Server.Experimental.Auth (AuthHandler)
 import Servant.Server.Internal.ServerError (responseServerError)
 import System.TimeManager (TimeoutThread (..))
@@ -39,6 +42,12 @@ runServer ∷ Maybe FilePath → IO ()
 runServer mfp = do
   serverConfig ← serverConfigOptionalFPIO mfp
   menv ← networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t → t) (scNetworkId serverConfig)
+  mtenv ←
+    case scTapToolsApiKey serverConfig of
+      Nothing → pure Nothing
+      Just (Confidential apiKey) → do
+        tce ← tapToolsClientEnv
+        pure $ Just $ TapToolsEnv {tteClientEnv = tce, tteApiKey = apiKey}
   optionalSigningKey ← optionalSigningKeyFromServerConfig serverConfig
   let nid = scNetworkId serverConfig
       coreCfg = coreConfigFromServerConfig serverConfig
@@ -82,6 +91,7 @@ runServer mfp = do
                   | nid == GYTestnetPreprod → dexInfoDefaultPreprod
                   | otherwise → error "Only mainnet & preprod network are supported",
             ctxMaestroProvider = MaestroProvider menv,
+            ctxTapToolsProvider = mtenv,
             ctxSigningKey = optionalSigningKey,
             ctxCollateral = scCollateral serverConfig,
             ctxStakeAddress = scStakeAddress serverConfig

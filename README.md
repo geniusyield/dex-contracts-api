@@ -131,6 +131,8 @@ For details please see the following section:
     maestroToken: YOUR_MAESTRO_TOKEN
      # API key to protect server endpoints with. It's value must be provided under `api-key` header of request.
     serverApiKey: YOUR_SECRET_KEY
+     # TapTools API key, to access historical prices using TapTools.
+    tapToolsApiKey: YOUR_TAP_TOOLS_KEY
      # Optionally, wallet key details if one wants server to be able to sign transactions using this key.
     wallet:
       tag: mnemonicWallet
