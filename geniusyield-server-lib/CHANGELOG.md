@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.4.0 -- 2024-05-20
+
+* Fix response of GET `/v0/orders/details/{nft-token}` endpoint to not return response under a `data` field nesting.
+
 ## 0.3.0 -- 2024-05-07
 
 * Adds TapTools OHLCV endpoint.
