@@ -5,7 +5,6 @@ module GeniusYield.Server.Dex.PartialOrder (
   poiToOrderInfo,
   PodServerException (..),
   PodOrderNotFound (..),
-  ErrDescription (..),
 ) where
 
 import Data.Aeson (ToJSON (..))
@@ -33,7 +32,6 @@ import RIO.Map qualified as Map
 import RIO.NonEmpty qualified as NonEmpty
 import RIO.Text qualified as T
 import Servant
-import Servant.Checked.Exceptions
 
 -- | Number of orders that we at most allow to be filled in a single transaction.
 maxFillOrders ∷ GYNatural
@@ -52,8 +50,10 @@ data PodOrderNotFound = PodOrderNotFound
   deriving (Eq, Show, Generic)
   deriving anyclass (Exception, ToJSON)
 
-instance ErrStatus PodOrderNotFound where
-  toErrStatus _ = status404
+instance Swagger.ToSchema PodOrderNotFound where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions
+      & addSwaggerDescription (toErrDescription PodOrderNotFound)
 
 class ErrDescription e where
   toErrDescription ∷ e → Text
@@ -376,8 +376,7 @@ type OrdersAPI =
       :> Description "Get details of an order using it's unique NFT token. Note that each order is identified uniquely by an associated NFT token which can then later be used to retrieve it's details across partial fills."
       :> "details"
       :> Capture "nft-token" GYAssetClass
-      :> Throws PodOrderNotFound
-      :> Get '[JSON] OrderInfoDetailed
+      :> UVerb 'GET '[JSON] '[WithStatus 200 OrderInfoDetailed, WithStatus 404 PodOrderNotFound]
     :<|> Summary "Build transaction to fill order(s)"
       :> Description ("Build a transaction to fill order(s). " `AppendSymbol` CommonCollateralText)
       :> "tx"
@@ -477,14 +476,14 @@ handleCancelOrdersAndSignSubmit ctx BotCancelOrderParameters {..} = do
   -- Though transaction id would be same, but we are returning it again, just in case...
   pure $ details {cotdTransactionId = txId, cotdTransaction = signedTx}
 
-handleOrderDetails ∷ Ctx → GYAssetClass → IO (Envelope '[PodOrderNotFound] OrderInfoDetailed)
+handleOrderDetails ∷ Ctx → GYAssetClass → IO (Union '[WithStatus 200 OrderInfoDetailed, WithStatus 404 PodOrderNotFound])
 handleOrderDetails ctx@Ctx {..} ac = do
   logInfo ctx $ "Getting order details for NFT token: " +|| ac ||+ ""
   let porefs = dexPORefs ctxDexInfo
   os ← runQuery ctx $ fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
   case os of
     Nothing → throwIO PodOrderNotFound
-    Just o → pureSuccEnvelope o
+    Just o → respond (WithStatus @200 o)
 
 handleOrdersDetails ∷ Ctx → [GYAssetClass] → IO [OrderInfoDetailed]
 handleOrdersDetails ctx@Ctx {..} acs = do

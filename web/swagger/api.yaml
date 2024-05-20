@@ -478,6 +478,11 @@ definitions:
     - order_ref
     - nft_token
     type: object
+  PodOrderNotFound:
+    description: Order not found
+    enum:
+    - PodOrderNotFound
+    type: string
   Settings:
     description: Genius Yield Server settings.
     properties:
@@ -957,7 +962,9 @@ paths:
           description: Forbidden - The API key does not have permission to perform
             the request
         '404':
-          description: Order not found
+          description: ''
+          schema:
+            $ref: '#/definitions/PodOrderNotFound'
         '500':
           description: Internal server error
       security:

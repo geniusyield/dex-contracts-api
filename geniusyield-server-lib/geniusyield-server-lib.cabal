@@ -98,11 +98,8 @@ library
     , insert-ordered-containers
     , lens
     , optparse-applicative
-    , plutus-ledger-api
-    , ply-core
     , rio
     , servant
-    , servant-checked-exceptions
     , servant-client
     , servant-client-core
     , servant-foreign
