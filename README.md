@@ -75,7 +75,10 @@ using the [Trading Strategy Executor Framework](https://github.com/geniusyield/s
 Thanks to the programming language agnostic RESTful API, any modern programming
 language could be used to implement trading strategies and/or SOR, MMBs.
 
-Intergration with the Genius Yield DEX has never been easier.
+Integration with the Genius Yield DEX has never been easier.
+
+> [!TIP]
+> Have a look at sample configuration in [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain) section for thorough explanation of options made available to configure the server.
 
 ### Building locally from source using Docker
 
@@ -106,20 +109,16 @@ For details please see the following section:
 
     ```yaml
      # Blockchain provider used by Atlas, our off-chain transaction building tool.
-     # Supported values of `coreProvider` represented as JSON for brevity:
-     # Local node in combination of Kupo, `{ socketPath: string, kupoUrl: string }`
-     # Maestro, `{ maestroToken: string, turboSubmit: boolean }`
-     # Blockfrost, `{ blockfrostKey: string }`
-     # Note that Blockfrost is not recommended as some of the operations performed aren't optimal with it.
+     # Head over to https://atlas-app.io/getting-started/endpoints#providing-data-provider section to know how to configure `coreProvider` and what all options are available for it.
     coreProvider:
       maestroToken: YOUR_MAESTRO_TOKEN
       turboSubmit: false
      # Network id, only `mainnet` and `preprod` are supported for at the moment.
     networkId: mainnet
      # Logging configuration. It's an array to cater for potentially multiple scribes.
+     # See it's description mentioned at https://atlas-app.io/getting-started/endpoints#providing-data-provider for more information.
     logging:
       - type:
-           # TODO: Possible values of `tag` are to be documented.
           tag: stderr
          # Possible values of `severity` are `Debug`, `Info`, `Warning` and `Error`.
         severity: Debug
