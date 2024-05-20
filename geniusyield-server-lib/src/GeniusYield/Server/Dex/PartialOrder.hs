@@ -482,7 +482,7 @@ handleOrderDetails ctx@Ctx {..} ac = do
   let porefs = dexPORefs ctxDexInfo
   os ← runQuery ctx $ fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
   case os of
-    Nothing → throwIO PodOrderNotFound
+    Nothing → throwIO PodOrderNotFound -- We could use `respond` here as well but then as it would not have @application/json@ header, it would not be caught by our @errorJsonWrapMiddleware@.
     Just o → respond (WithStatus @200 o)
 
 handleOrdersDetails ∷ Ctx → [GYAssetClass] → IO [OrderInfoDetailed]
