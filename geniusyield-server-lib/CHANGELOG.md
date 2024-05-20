@@ -3,6 +3,7 @@
 ## 0.4.0 -- 2024-05-20
 
 * Fix response of GET `/v0/orders/details/{nft-token}` endpoint to not return response under a `data` field nesting.
+* Added `/v0/orders/fill` endpoint.
 
 ## 0.3.0 -- 2024-05-07
 

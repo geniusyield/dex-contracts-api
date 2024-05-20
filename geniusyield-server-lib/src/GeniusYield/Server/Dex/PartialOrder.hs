@@ -320,6 +320,23 @@ instance Swagger.ToSchema FillOrderParameters where
       & addSwaggerDescription "Fill order(s) request parameters."
       & addSwaggerExample (toJSON $ FillOrderParameters {fopAddresses = pure "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5", fopChangeAddress = Just (ChangeAddress "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5"), fopCollateral = Just "4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1", fopOrderReferencesWithAmount = ("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0", 100) :| [("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0", 100)]})
 
+newtype BotFillOrderParameters = BotFillOrderParameters
+  { bfopOrderReferencesWithAmount ∷ NonEmpty (GYTxOutRef, GYNatural)
+  }
+  deriving stock (Show, Generic)
+  deriving
+    (FromJSON, ToJSON)
+    via CustomJSON '[FieldLabelModifier '[StripPrefix BotFillOrderReqPrefix, CamelToSnake]] BotFillOrderParameters
+
+type BotFillOrderReqPrefix ∷ Symbol
+type BotFillOrderReqPrefix = "bfop"
+
+instance Swagger.ToSchema BotFillOrderParameters where
+  declareNamedSchema =
+    Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @BotFillOrderReqPrefix}
+      & addSwaggerDescription "Fill order(s) request parameters specialized towards configured bot."
+      & addSwaggerExample (toJSON $ BotFillOrderParameters {bfopOrderReferencesWithAmount = ("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0", 100) :| [("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0", 100)]})
+
 type FillOrderResPrefix ∷ Symbol
 type FillOrderResPrefix = "fotd"
 
@@ -344,7 +361,7 @@ type CommonCollateralText ∷ Symbol
 type CommonCollateralText = "Note that if \"collateral\" field is not provided, then framework would try to pick collateral UTxO on it's own and in that case would also be free to spend it (i.e., would be made available to coin balancer)."
 
 type CommonSignText ∷ Symbol
-type CommonSignText = "It uses the signing key from configuration to compute for wallet address. If collateral is specified in the configuration, then it would be used for."
+type CommonSignText = "This endpoint would also sign & submit the built transaction. It uses the signing key from configuration to compute for wallet address. If collateral is specified in the configuration, then it would be used for."
 
 type OrdersAPI =
   Summary "Build transaction to create order"
@@ -354,7 +371,7 @@ type OrdersAPI =
     :> ReqBody '[JSON] PlaceOrderParameters
     :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Create an order"
-      :> Description ("Create an order. This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText `AppendSymbol` " \"stakeAddress\" field from configuration, if provided, is used to place order at a mangled address.")
+      :> Description ("Create an order. " `AppendSymbol` CommonSignText `AppendSymbol` " \"stakeAddress\" field from configuration, if provided, is used to place order at a mangled address.")
       :> ReqBody '[JSON] BotPlaceOrderParameters
       :> Post '[JSON] PlaceOrderTransactionDetails
     :<|> Summary "Build transaction to cancel order(s)"
@@ -364,7 +381,7 @@ type OrdersAPI =
       :> ReqBody '[JSON] CancelOrderParameters
       :> Post '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Cancel order(s)"
-      :> Description ("Cancel order(s). This endpoint would also sign & submit the built transaction. " `AppendSymbol` CommonSignText)
+      :> Description ("Cancel order(s). " `AppendSymbol` CommonSignText)
       :> ReqBody '[JSON] BotCancelOrderParameters
       :> Delete '[JSON] CancelOrderTransactionDetails
     :<|> Summary "Get order(s) details"
@@ -383,6 +400,11 @@ type OrdersAPI =
       :> "build-fill"
       :> ReqBody '[JSON] FillOrderParameters
       :> Post '[JSON] FillOrderTransactionDetails
+    :<|> Summary "Build transaction to fill order(s)"
+      :> Description ("Build a transaction to fill order(s). " `AppendSymbol` CommonSignText)
+      :> "fill"
+      :> ReqBody '[JSON] BotFillOrderParameters
+      :> Post '[JSON] FillOrderTransactionDetails
 
 handleOrdersApi ∷ Ctx → ServerT OrdersAPI IO
 handleOrdersApi ctx =
@@ -393,6 +415,7 @@ handleOrdersApi ctx =
     :<|> handleOrdersDetails ctx
     :<|> handleOrderDetails ctx
     :<|> handleFillOrders ctx
+    :<|> handleFillOrdersAndSignSubmit ctx
 
 handlePlaceOrder ∷ Ctx → PlaceOrderParameters → IO PlaceOrderTransactionDetails
 handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
@@ -538,3 +561,13 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
         takerFee =
           Map.foldlWithKey' (\acc ac amt → acc <> valueSingleton ac (roundFunctionForPOCVersion overallPocVersion $ toRational amt * rationalToGHC takerFeeRatio)) mempty takerACWithAmt
      in takerFee
+
+handleFillOrdersAndSignSubmit ∷ Ctx → BotFillOrderParameters → IO FillOrderTransactionDetails
+handleFillOrdersAndSignSubmit ctx BotFillOrderParameters {..} = do
+  logInfo ctx "Filling order(s) and signing & submitting the transaction."
+  ctxAddr ← addressToBech32 <$> resolveCtxAddr ctx
+  details ← handleFillOrders ctx $ FillOrderParameters {fopAddresses = pure ctxAddr, fopChangeAddress = Just (ChangeAddress ctxAddr), fopCollateral = ctxCollateral ctx, fopOrderReferencesWithAmount = bfopOrderReferencesWithAmount}
+  signedTx ← handleTxSign ctx $ fotdTransaction details
+  txId ← handleTxSubmit ctx signedTx
+  -- Though transaction id would be same, but we are returning it again, just in case...
+  pure $ details {fotdTransactionId = txId, fotdTransaction = signedTx}
