@@ -1,6 +1,9 @@
 name: Validate
 
 on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+
   push:
     branches: [ "main" ]
   pull_request: {} # run for all pull requests targeting any branch
