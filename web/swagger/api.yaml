@@ -33,6 +33,28 @@ definitions:
     required:
     - order_references
     type: object
+  BotFillOrderParameters:
+    description: Fill order(s) request parameters specialized towards configured bot.
+    example:
+      order_references_with_amount:
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0
+        - '100'
+      - - 0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0
+        - '100'
+    properties:
+      order_references_with_amount:
+        items:
+          items:
+          - $ref: '#/definitions/GYTxOutRef'
+          - $ref: '#/definitions/GYNatural'
+          maxItems: 2
+          minItems: 2
+          type: array
+        minItems: 1
+        type: array
+    required:
+    - order_references_with_amount
+    type: object
   BotPlaceOrderParameters:
     description: Place order request parameters specialized towards configured bot.
     properties:
@@ -478,6 +500,11 @@ definitions:
     - order_ref
     - nft_token
     type: object
+  PodOrderNotFound:
+    description: Order not found
+    enum:
+    - PodOrderNotFound
+    type: string
   Settings:
     description: Genius Yield Server settings.
     properties:
@@ -957,12 +984,49 @@ paths:
           description: Forbidden - The API key does not have permission to perform
             the request
         '404':
-          description: Order not found
+          description: ''
+          schema:
+            $ref: '#/definitions/PodOrderNotFound'
         '500':
           description: Internal server error
       security:
       - api-key: []
       summary: Get order details
+      tags:
+      - Orders
+  /v0/orders/fill:
+    post:
+      consumes:
+      - application/json;charset=utf-8
+      description: Build a transaction to fill order(s). This endpoint would also
+        sign & submit the built transaction. It uses the signing key from configuration
+        to compute for wallet address. If collateral is specified in the configuration,
+        then it would be used for.
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/BotFillOrderParameters'
+      produces:
+      - application/json;charset=utf-8
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/FillOrderTransactionDetails'
+        '400':
+          description: Invalid `body`
+        '401':
+          description: Unauthorized access - API key missing
+        '403':
+          description: Forbidden - The API key does not have permission to perform
+            the request
+        '500':
+          description: Internal server error
+      security:
+      - api-key: []
+      summary: Build transaction to fill order(s)
       tags:
       - Orders
   /v0/orders/tx/build-cancel:

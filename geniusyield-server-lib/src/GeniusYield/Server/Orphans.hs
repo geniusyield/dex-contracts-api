@@ -6,25 +6,10 @@ import Control.Lens (at, (?~))
 import Data.HashMap.Strict.InsOrd qualified as IOHM
 import Data.Swagger
 import GeniusYield.Server.Auth (APIKeyAuthProtect, apiKeyHeaderText)
-import GeniusYield.Server.Dex.PartialOrder (ErrDescription (..))
 import RIO
 import Servant
-import Servant.Checked.Exceptions
 import Servant.Foreign
 import Servant.Swagger
-
-type IsErr err = (ErrDescription err, ErrStatus err)
-
-instance (IsErr err, HasSwagger sub) ⇒ HasSwagger (Throws err :> sub) where
-  toSwagger _ =
-    toSwagger (Proxy ∷ Proxy sub)
-      & setResponseWith
-        (\old _ → addDescription old)
-        (fromEnum $ toErrStatus (undefined ∷ err))
-        (return $ mempty & description .~ errDescription)
-   where
-    addDescription = description %~ ((errDescription <> " OR ") <>)
-    errDescription = toErrDescription (undefined ∷ err)
 
 instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
   toSwagger _ =
