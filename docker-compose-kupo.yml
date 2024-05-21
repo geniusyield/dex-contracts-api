@@ -1,0 +1,63 @@
+version: '3.8'
+services:
+  server:
+    image: ghcr.io/geniusyield/dex-contracts-api:latest
+    container_name: server
+    restart: always
+    volumes: ["node-ipc:/ipc"]
+    ports: ["8082:8082"]
+    depends_on: { node: { condition: service_healthy } }
+    environment:
+      MAESTRO_API_KEY: ${MAESTRO_API_KEY}
+      SERVER_API_KEY: ${SERVER_API_KEY}
+      SEED_PHRASE: ${SEED_PHRASE}
+      SERVER_CONFIG: |
+        coreProvider:
+          socketPath: /ipc/node.socket
+          kupoUrl: "kupo:1442"
+        networkId: mainnet
+        logging: [{type: {tag: stderr}, severity: "Debug", verbosity: "V2"}]
+        maestroToken: <<MAESTRO_API_KEY>>
+        serverApiKey: <<SERVER_API_KEY>>
+        wallet:
+          tag: mnemonicWallet
+          contents:
+            mnemonic: <<SEED_PHRASE>>
+        port: 8082
+  kupo:
+    image: cardanosolutions/kupo
+    container_name: kupo
+    restart: always
+    volumes: ["node-ipc:/ipc", "./cardano-configurations/network:/network"]
+    ports: ['1442:1442']
+    depends_on: { node: { condition: service_healthy } }
+    command: [
+     --node-socket, /ipc/node.socket,
+     --since, origin,
+     --match, "*",
+     --host, "0.0.0.0",
+     --node-config, "/network/${NETWORK-mainnet}/cardano-node/config.json",
+     --in-memory,
+     --prune-utxo,
+    ]
+    healthcheck:
+        test: ["CMD", "/bin/kupo", "health-check"]
+        interval: 30s
+        timeout: 10s
+        retries: 100
+  node:
+    image: ghcr.io/intersectmbo/cardano-node:8.9.1
+    container_name: node
+    restart: always
+    environment:
+     - NETWORK=${NETWORK-mainnet}
+    volumes: ["${NETWORK-mainnet}-node-db:/data/db", "node-ipc:/ipc"]
+    healthcheck:
+        test: ["CMD", "test", "-S", "/ipc/node.socket"]
+        interval: 30s
+        timeout: 10s
+        retries: 100
+volumes:
+  preprod-node-db: null
+  mainnet-node-db: null
+  node-ipc: null

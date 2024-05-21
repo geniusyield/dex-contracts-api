@@ -7,19 +7,25 @@ if [ -z "$SERVER_CONFIG" ]; then
     exit 1 # Exit code 1 for unset variable
 fi
 
+if [[ "$SERVER_CONFIG" == *"<<CORE_MAESTRO_API_KEY>>"* ]]; then
+    if [ -z "$CORE_MAESTRO_API_KEY" ]; then
+        echo "Error: CORE_MAESTRO_API_KEY environment variable is not set." >&2
+        exit 1 # Exit code 1 for unset variable
+    fi
+fi
 
-if [ -z "$CORE_MAESTRO_API_KEY" ]; then
-    echo "Error: CORE_MAESTRO_API_KEY environment variable is not set." >&2
-    exit 1 # Exit code 1 for unset variable
+if [[ "$SERVER_CONFIG" == *"<<MAESTRO_API_KEY>>"* ]]; then
+    if [ -z "$MAESTRO_API_KEY" ]; then
+        echo "Error: MAESTRO_API_KEY environment variable is not set." >&2
+        exit 1 # Exit code 1 for unset variable
+    fi
 fi
-if [ -z "$MAESTRO_API_KEY" ]; then
-    echo "Error: MAESTRO_API_KEY environment variable is not set." >&2
-    exit 1 # Exit code 1 for unset variable
-fi
+
 if [ -z "$SERVER_API_KEY" ]; then
     echo "Error: SERVER_API_KEY environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
 fi
+
 if [ -z "$SEED_PHRASE" ]; then
     echo "Error: SEED_PHRASE environment variable is not set." >&2
     exit 1 # Exit code 1 for unset variable
