@@ -7,6 +7,8 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 - [Structure of repository](#structure-of-repository)
 - [Bot API Server](#bot-api-server)
   - [Spinning up the api server using docker](#spinning-up-the-api-server-using-docker)
+    - [Setting up the API Server with Docker (Maestro)](#setting-up-the-API-Server-with-docker-maestro)
+    - [Setting up the API Server with Docker (Kupo)](#setting-up-the-API-Server-with-docker-kupo)
   - [Building locally from source using Docker](#building-locally-from-source-using-docker)
   - [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain)
   - [Swagger API documentation](#swagger-api-documentation)
@@ -25,6 +27,8 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 ## Bot API Server
 
 ### Spinning up the api server using docker
+
+#### Setting up the API Server with Docker (Maestro)
 
 The api server can be started using [docker-compose](https://github.com/geniusyield/dex-contracts-api/blob/main/docker-compose.yml). Simply clone the repository,
 prepare a `.env` file with the necessary secrets and use the make targets from
@@ -80,7 +84,7 @@ Integration with the Genius Yield DEX has never been easier.
 > [!TIP]
 > Have a look at sample configuration in [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain) section for thorough explanation of options made available to configure the server.
 
-### Setting up the API Server with Docker (Kupo)
+#### Setting up the API Server with Docker (Kupo)
 
 If you're looking to utilize the API server alongside the Kupo provider backend, you're in luck! We've streamlined the process for you.
 
