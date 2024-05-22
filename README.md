@@ -80,6 +80,34 @@ Integration with the Genius Yield DEX has never been easier.
 > [!TIP]
 > Have a look at sample configuration in [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain) section for thorough explanation of options made available to configure the server.
 
+### Setting up the API Server with Docker (Kupo)
+
+If you're looking to utilize the API server alongside the Kupo provider backend, you're in luck! We've streamlined the process for you.
+
+Inside the repository, you'll find a `docker-compose-kupo.yml` file, which serves as a blueprint for running a local Cardano node, Kupo, and the API server seamlessly.
+
+```bash
+# Step 1: Clone the repository
+git clone git@github.com:geniusyield/dex-contracts-api.git
+
+# Step 2: Initialize and update submodules
+cd dex-contracts-api
+git submodule init
+git submodule update
+
+# Step 3: Configure your environment variables
+# Create a .env file and populate it with the necessary secrets
+echo """
+SERVER_API_KEY=___REPLACE_ME___
+SEED_PHRASE=[word_1, word_2, ... word_23, word_24]""" > .env
+nano .env  # Use your preferred text editor to replace placeholders with actual values
+
+# Step 4: Launch the API server with Kupo
+docker-compose -f docker-compose-kupo.yml up -d
+```
+
+By following these steps, you'll have the API server up and running smoothly, integrated with the powerful capabilities of the Kupo provider backend.
+
 ### Building locally from source using Docker
 
 The easiest way to build the software is using docker.
