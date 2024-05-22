@@ -7,6 +7,8 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 - [Structure of repository](#structure-of-repository)
 - [Bot API Server](#bot-api-server)
   - [Spinning up the api server using docker](#spinning-up-the-api-server-using-docker)
+    - [Setting up the API Server with Docker (Maestro)](#setting-up-the-API-Server-with-docker-maestro)
+    - [Setting up the API Server with Docker (Kupo)](#setting-up-the-API-Server-with-docker-kupo)
   - [Building locally from source using Docker](#building-locally-from-source-using-docker)
   - [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain)
   - [Swagger API documentation](#swagger-api-documentation)
@@ -25,6 +27,8 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
 ## Bot API Server
 
 ### Spinning up the api server using docker
+
+#### Setting up the API Server with Docker (Maestro)
 
 The api server can be started using [docker-compose](https://github.com/geniusyield/dex-contracts-api/blob/main/docker-compose.yml). Simply clone the repository,
 prepare a `.env` file with the necessary secrets and use the make targets from
@@ -79,6 +83,33 @@ Integration with the Genius Yield DEX has never been easier.
 
 > [!TIP]
 > Have a look at sample configuration in [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain) section for thorough explanation of options made available to configure the server.
+
+#### Setting up the API Server with Docker (Kupo)
+
+If you're looking to utilize the API server alongside the Kupo provider backend, you're in luck! We've streamlined the process for you.
+
+Inside the repository, you'll find a `docker-compose-kupo.yml` file, which serves as a blueprint for running a local Cardano node, Kupo, and the API server seamlessly.
+
+```bash
+# Step 1: Clone the repository
+git clone git@github.com:geniusyield/dex-contracts-api.git
+
+# Step 2: Initialize and update submodules
+cd dex-contracts-api
+git submodule update --init --recursive
+
+# Step 3: Configure your environment variables
+# Create a .env file and populate it with the necessary secrets
+echo """
+SERVER_API_KEY=___REPLACE_ME___
+SEED_PHRASE=[word_1, word_2, ... word_23, word_24]""" > .env
+nano .env  # Use your preferred text editor to replace placeholders with actual values
+
+# Step 4: Launch the API server with Kupo
+docker-compose -f docker-compose-kupo.yml up -d
+```
+
+By following these steps, you'll have the API server up and running smoothly, integrated with the powerful capabilities of the Kupo provider backend.
 
 ### Building locally from source using Docker
 

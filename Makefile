@@ -11,6 +11,12 @@ pull:
 start:
 	docker compose up -d --remove-orphans
 
+start-kupo:
+	docker-compose -f docker-compose-kupo.yml up -d
+
+node-logs:
+	docker compose logs -f node
+
 logs:
 	docker compose logs -f
 
