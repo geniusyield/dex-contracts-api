@@ -25,7 +25,7 @@ services:
             mnemonic: <<SEED_PHRASE>>
         port: 8082
   kupo:
-    image: cardanosolutions/kupo
+    image: cardanosolutions/kupo:v2.8.0
     container_name: kupo
     restart: always
     volumes: ["node-ipc:/ipc", "./cardano-configurations/network:/network"]
