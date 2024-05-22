@@ -37,7 +37,7 @@ services:
      --match, "*",
      --host, "0.0.0.0",
      --node-config, "/network/${NETWORK-mainnet}/cardano-node/config.json",
-     --in-memory,
+     --workdir,
      --prune-utxo,
     ]
     healthcheck:

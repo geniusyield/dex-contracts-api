@@ -96,8 +96,7 @@ git clone git@github.com:geniusyield/dex-contracts-api.git
 
 # Step 2: Initialize and update submodules
 cd dex-contracts-api
-git submodule init
-git submodule update
+git submodule update --init --recursive
 
 # Step 3: Configure your environment variables
 # Create a .env file and populate it with the necessary secrets
