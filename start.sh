@@ -65,4 +65,4 @@ fi
 echo "===================================="
 echo "Starting geniusyield-server..."
 set -x
-cabal run geniusyield-server -- serve
+/DEX/geniusyield-server -- serve
