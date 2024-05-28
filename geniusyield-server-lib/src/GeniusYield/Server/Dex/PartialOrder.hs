@@ -33,6 +33,12 @@ import RIO.NonEmpty qualified as NonEmpty
 import RIO.Text qualified as T
 import Servant
 
+{- $setup
+
+>>> :set -XOverloadedStrings -XTypeApplications
+>>> import qualified Data.Aeson                 as Aeson
+-}
+
 -- | Number of orders that we at most allow to be filled in a single transaction.
 maxFillOrders ∷ GYNatural
 maxFillOrders = 5
@@ -320,6 +326,8 @@ instance Swagger.ToSchema FillOrderParameters where
       & addSwaggerDescription "Fill order(s) request parameters."
       & addSwaggerExample (toJSON $ FillOrderParameters {fopAddresses = pure "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5", fopChangeAddress = Just (ChangeAddress "addr_test1qrsuhwqdhz0zjgnf46unas27h93amfghddnff8lpc2n28rgmjv8f77ka0zshfgssqr5cnl64zdnde5f8q2xt923e7ctqu49mg5"), fopCollateral = Just "4293386fef391299c9886dc0ef3e8676cbdbc2c9f2773507f1f838e00043a189#1", fopOrderReferencesWithAmount = ("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0", 100) :| [("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e144444#0", 100)]})
 
+-- >>> Aeson.encode . BotFillOrderParameters $ pure ("0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0", 100)
+-- "{\"order_references_with_amount\":[[\"0018dbaa1611531b9f11a31765e8abe875f9c43750b82b5f321350f31e1ea747#0\",\"100\"]]}"
 newtype BotFillOrderParameters = BotFillOrderParameters
   { bfopOrderReferencesWithAmount ∷ NonEmpty (GYTxOutRef, GYNatural)
   }
@@ -535,6 +543,7 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
       changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
   takerFee' ← case valueToList takerFee of
     [(_, feeAmt)] → pure $ fromIntegral feeAmt
+    [] → pure 0
     _ → throwIO PodMultiFillNotAllSamePaymentToken
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
     fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee

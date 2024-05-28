@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.4.1 -- 2024-05-28
+
+* Fix `/v0/orders/fill` endpoint to account for case when percent taker fees is zero.
+
 ## 0.4.0 -- 2024-05-20
 
 * Fix response of GET `/v0/orders/details/{nft-token}` endpoint to not return response under a `data` field nesting.
