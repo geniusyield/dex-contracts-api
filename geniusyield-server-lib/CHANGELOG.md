@@ -1,6 +1,6 @@
 # Revision history for geniusyield-server-lib
 
-## 0.4.0 -- 2024-05-28
+## 0.4.1 -- 2024-05-28
 
 * Fix `/v0/orders/fill` endpoint to account for case when percent taker fees is zero.
 
