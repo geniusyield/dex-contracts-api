@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.5.0 -- 2024-06-05
+
+* Makes use of latest `geniusyield-dex-api` version, namely, v0.3.0.0. It includes a fix where original UTxO's datum bytes are used to provide for witness.
+
 ## 0.4.1 -- 2024-05-28
 
 * Fix `/v0/orders/fill` endpoint to account for case when percent taker fees is zero.
