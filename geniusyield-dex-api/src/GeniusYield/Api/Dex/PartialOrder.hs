@@ -239,10 +239,11 @@ data PartialOrderInfo = PartialOrderInfo
     -- | Caching the CS to avoid recalculating for it.
     poiNFTCS ∷ !GYMintingPolicyId,
     -- | Version of the partial order.
-    poiVersion ∷ !POCVersion
+    poiVersion ∷ !POCVersion,
+    -- | Raw datum.
+    poiRawDatum ∷ !GYDatum
   }
   deriving stock (Show, Eq, Generic)
-  deriving anyclass (Swagger.ToSchema)
 
 poiContainedFeeToPlutus ∷ POIContainedFee → PartialOrderContainedFee
 poiContainedFeeToPlutus POIContainedFee {..} =
@@ -405,8 +406,8 @@ partialOrdersHavingAsset pors hasAsset = do
   utxosWithDatumsV1_1 ← utxosAtPaymentCredentialWithDatums pV1_1 hasAsset
   policyIdV1 ← partialOrderNftPolicyId (porV1 pors)
   policyIdV1_1 ← partialOrderNftPolicyId (porV1_1 pors)
-  let datumsV1 = utxosDatumsPure utxosWithDatumsV1
-      datumsV1_1 = utxosDatumsPure utxosWithDatumsV1_1
+  let datumsV1 = utxosDatumsPureWithOriginalDatum utxosWithDatumsV1
+      datumsV1_1 = utxosDatumsPureWithOriginalDatum utxosWithDatumsV1_1
   m1 ←
     iwither
       ( \oref vod →
@@ -465,7 +466,7 @@ getPartialOrderInfo pors orderRef = do
   utxoWithDatum ← utxoAtTxOutRefWithDatum' orderRef
   let utxo = fst utxoWithDatum
   pocVersion ← getPartialOrderVersion pors (utxoAddress utxo :!: utxoRef utxo)
-  vod ← utxoDatumPure' utxoWithDatum
+  vod ← utxoDatumPureWithOriginalDatum' utxoWithDatum
   policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
 
   runExceptT (makePartialOrderInfo policyId orderRef vod pocVersion) >>= liftEither
@@ -478,9 +479,9 @@ getPartialOrdersInfos
 getPartialOrdersInfos pors orderRefs = do
   utxosWithDatums ← utxosAtTxOutRefsWithDatums orderRefs
   ps ← applyToBoth addressToPaymentCredential <$> partialOrderAddrTuple pors
-  let vod = utxosDatumsPure utxosWithDatums
+  let vod = utxosDatumsPureWithOriginalDatum utxosWithDatums
   when (Map.size vod /= length orderRefs) $ throwAppError $ PodNotAllOrderRefsPresent $ Set.fromList orderRefs `Set.difference` Map.keysSet vod
-  let makePartialOrderInfo' oref v@(addr, _, _) = do
+  let makePartialOrderInfo' oref v@(addr, _, _, _) = do
         pocVersion ← getPartialOrderVersion' ps (addr :!: oref)
         policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
         makePartialOrderInfo policyId oref v pocVersion
@@ -497,10 +498,10 @@ makePartialOrderInfo
   ∷ GYDexApiQueryMonad m a
   ⇒ GYMintingPolicyId
   → GYTxOutRef
-  → (GYAddress, GYValue, PartialOrderDatum)
+  → (GYAddress, GYValue, PartialOrderDatum, GYDatum)
   → POCVersion
   → ExceptT GYTxMonadException m PartialOrderInfo
-makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) pocVersion = do
+makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}, origDatum) pocVersion = do
   addr ← addressFromPlutus' podOwnerAddr
 
   key ← pubKeyHashFromPlutus' podOwnerKey
@@ -533,7 +534,8 @@ makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}) poc
         poiUTxOValue = v,
         poiUTxOAddr = utxoAddr,
         poiNFTCS = policyId,
-        poiVersion = pocVersion
+        poiVersion = pocVersion,
+        poiRawDatum = origDatum
       }
 
 -------------------------------------------------------------------------------

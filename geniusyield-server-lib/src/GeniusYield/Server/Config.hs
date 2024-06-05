@@ -98,7 +98,8 @@ coreConfigFromServerConfig ServerConfig {..} =
   GYCoreConfig
     { cfgCoreProvider = scCoreProvider,
       cfgNetworkId = scNetworkId,
-      cfgLogging = scLogging
+      cfgLogging = scLogging,
+      cfgLogTiming = Nothing
     }
 
 optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe (Pair GYSomePaymentSigningKey GYAddress))
