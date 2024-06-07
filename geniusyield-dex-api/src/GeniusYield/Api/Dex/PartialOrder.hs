@@ -302,7 +302,7 @@ partialOrderInfoToIn a pocVersion pors oi@PartialOrderInfo {..} oa =
           gyTxInWitness =
             GYTxInWitnessScript
               (GYInReference porValRef $ validatorToScript $ partialOrderValidator a pocVersion porRefNft)
-              (datumFromPlutusData $ partialOrderInfoToPartialOrderDatum oi)
+              poiRawDatum
               $ redeemerFromPlutusData oa
         }
 

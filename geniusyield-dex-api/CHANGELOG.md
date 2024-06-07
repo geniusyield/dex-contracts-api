@@ -1,5 +1,9 @@
 # Revision history for geniusyield-dex-api
 
+## 0.3.1.0 -- 2024-06-06
+
+* Adds a fix to earlier `0.3.0.0`, to actually consider `poiRawDatum` as witness.
+
 ## 0.3.0.0 -- 2024-06-05
 
 * Updates to make use of latest Atlas commit, `1c20f2a65de8e087b495d1f3ad524d6e659167ad`.
