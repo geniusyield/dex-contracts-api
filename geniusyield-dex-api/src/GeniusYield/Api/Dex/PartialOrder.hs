@@ -295,7 +295,7 @@ partialOrderInfoToIn
   → PartialOrderInfo
   → PartialOrderAction
   → GYTxIn 'PlutusV2
-partialOrderInfoToIn a pocVersion pors oi@PartialOrderInfo {..} oa =
+partialOrderInfoToIn a pocVersion pors PartialOrderInfo {..} oa =
   let SomePORef PORef {..} = selectPor pors pocVersion
    in GYTxIn
         { gyTxInTxOutRef = poiRef,

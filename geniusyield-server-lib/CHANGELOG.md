@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.6.0 -- 2024-06-10
+
+* Makes a move to OpenApi 3.0 specification from earlier 2.0.
+
 ## 0.5.1 -- 2024-06-06
 
 * Incorporates 0.3.1.0 of `geniusyield-dex-api`.

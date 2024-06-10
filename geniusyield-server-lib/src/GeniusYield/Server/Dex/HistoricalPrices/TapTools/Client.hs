@@ -10,6 +10,7 @@ module GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client (
   handleTapToolsError,
 ) where
 
+import Control.Lens ((?~))
 import Data.Aeson (ToJSON (..))
 import Data.Swagger qualified as Swagger
 import Data.Time.Clock.POSIX
@@ -76,6 +77,16 @@ instance FromHttpApiData TapToolsInterval where
 
 instance Swagger.ToParamSchema TapToolsInterval where
   toParamSchema = commonEnumParamSchemaRecipe
+
+instance Swagger.ToSchema TapToolsInterval where
+  declareNamedSchema p =
+    pure $
+      Swagger.NamedSchema (Just "TapToolsInterval") $
+        Swagger.paramSchemaToSchema p
+          & Swagger.example
+            ?~ toJSON TTI1M
+          & Swagger.description
+            ?~ "The time interval"
 
 type TapToolsOHLCVPrefix ∷ Symbol
 type TapToolsOHLCVPrefix = "tapToolsOHLCV"

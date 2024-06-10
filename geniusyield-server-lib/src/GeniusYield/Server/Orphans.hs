@@ -4,17 +4,17 @@ module GeniusYield.Server.Orphans () where
 
 import Control.Lens (at, (?~))
 import Data.HashMap.Strict.InsOrd qualified as IOHM
-import Data.Swagger
+import Data.OpenApi
 import GeniusYield.Server.Auth (APIKeyAuthProtect, apiKeyHeaderText)
 import RIO
 import Servant
 import Servant.Foreign
-import Servant.Swagger
+import Servant.OpenApi
 
-instance HasSwagger api ⇒ HasSwagger (APIKeyAuthProtect :> api) where
-  toSwagger _ =
-    toSwagger (Proxy ∷ Proxy api)
-      & securityDefinitions
+instance HasOpenApi api ⇒ HasOpenApi (APIKeyAuthProtect :> api) where
+  toOpenApi _ =
+    toOpenApi (Proxy ∷ Proxy api)
+      & (components . securitySchemes)
         .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
       & allOperations
         . security

@@ -57,7 +57,7 @@ runServer mfp = do
         logErrorS = gyLogError providers mempty
     logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ "\nOptional collateral configuration: " +|| scCollateral serverConfig ||+ "\nAddress of optional wallet: " +|| fmap Strict.snd optionalSigningKey ||+ "\nOptional stake address: " +|| scStakeAddress serverConfig ||+ ""
     -- BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
-    B.writeFile "web/swagger/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPISwagger)
+    B.writeFile "web/openapi/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPIOpenApi)
     reqLoggerMiddleware ← gcpReqLogger
     let
       -- These are only meant to catch fatal exceptions, application thrown exceptions should be caught beforehand.

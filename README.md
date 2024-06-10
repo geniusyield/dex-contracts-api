@@ -11,7 +11,7 @@ This repository houses on-chain smart contracts, Haskell off-chain interaction l
     - [Setting up the API Server with Docker (Kupo)](#setting-up-the-API-Server-with-docker-kupo)
   - [Building locally from source using Docker](#building-locally-from-source-using-docker)
   - [Building locally from source using the Haskell Toolchain](#building-locally-from-source-using-the-haskell-toolchain)
-  - [Swagger API documentation](#swagger-api-documentation)
+  - [OpenApi documentation](#openapi-documentation)
   - [Trading Strategy Executor (Python SDK)](#trading-strategy-executor-python-sdk)
   - [Trading Bot API Video Tutorial](#trading-bot-api-video-tutorial)
 - [Contributing](#contributing)
@@ -224,9 +224,9 @@ Alternatively you could also test using `make test`. This is sending a test GET 
 Further test requests are available in the Makefile of the strategy executor:
 - [Make targets sending test HTTP requests to the Bot API](https://github.com/geniusyield/strategy-executor/blob/6b5a1b1d9f117831e409989335bd48875eef4189/Makefile#L32-L57)
 
-### Swagger API documentation
+### OpenApi documentation
 
-Endpoints made available by server are specified [here](./web/swagger/api.yaml).
+Endpoints made available by server are specified [here](./web/openapi/api.yaml).
 
 ### Trading Strategy Executor (Python SDK)
 

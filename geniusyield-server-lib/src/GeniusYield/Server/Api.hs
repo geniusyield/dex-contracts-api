@@ -6,7 +6,7 @@ module GeniusYield.Server.Api (
   MainAPI,
   mainAPI,
   mainServer,
-  geniusYieldAPISwagger,
+  geniusYieldAPIOpenApi,
 ) where
 
 import Control.Lens ((?~))
@@ -15,9 +15,9 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as K
 import Data.Kind (Type)
 import Data.List (sortBy)
+import Data.OpenApi
 import Data.Strict qualified as Strict
 import Data.Strict.Tuple
-import Data.Swagger
 import Data.Swagger qualified as Swagger
 import Data.Swagger.Internal.Schema qualified as Swagger
 import Data.Version (showVersion)
@@ -42,6 +42,7 @@ import GeniusYield.Server.Tx (TxAPI, handleTxApi)
 import GeniusYield.Server.Utils
 import GeniusYield.TxBuilder (GYTxQueryMonad (utxosAtAddress))
 import GeniusYield.Types
+import GeniusYield.Types.OpenApi ()
 import PackageInfo_geniusyield_server_lib qualified as PackageInfo
 import RIO hiding (asks, logDebug, logInfo)
 import RIO.Char (toLower)
@@ -49,7 +50,7 @@ import RIO.List (isPrefixOf)
 import RIO.Map qualified as Map
 import RIO.Text qualified as T
 import Servant
-import Servant.Swagger
+import Servant.OpenApi
 
 {- $setup
 
@@ -213,9 +214,9 @@ infixr 4 +>
 type family (+>) (api1 ∷ k) (api2 ∷ Type) where
   (+>) api1 api2 = APIKeyAuthProtect :> V0 :> api1 :> api2
 
-geniusYieldAPISwagger ∷ Swagger
-geniusYieldAPISwagger =
-  toSwagger geniusYieldAPI
+geniusYieldAPIOpenApi ∷ OpenApi
+geniusYieldAPIOpenApi =
+  toOpenApi geniusYieldAPI
     & info
       . title
       .~ "GeniusYield DEX Server API"
