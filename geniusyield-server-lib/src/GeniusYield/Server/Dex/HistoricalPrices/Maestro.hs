@@ -21,7 +21,7 @@ import GeniusYield.Server.Ctx
 import GeniusYield.Server.Utils
 import GeniusYield.Types
 import Maestro.Client.V1 (pricesFromDex)
-import Maestro.Types.V1 (Dex, OHLCCandleInfo (..), Order, Resolution, TaggedText (TaggedText))
+import Maestro.Types.V1 (Dex (..), OHLCCandleInfo (..), Order (..), Resolution (..), TaggedText (TaggedText))
 import RIO hiding (logDebug, logInfo)
 import RIO.Text (unpack)
 import RIO.Time (Day)
@@ -94,6 +94,16 @@ newtype MaestroOrder = MaestroOrder {unMaestroOrder ∷ Order}
 instance Swagger.ToParamSchema MaestroOrder where
   toParamSchema = commonEnumParamSchemaRecipe
 
+instance Swagger.ToSchema MaestroOrder where
+  declareNamedSchema p =
+    pure $
+      Swagger.NamedSchema (Just "MaestroOrder") $
+        Swagger.paramSchemaToSchema p
+          & Swagger.example
+            ?~ toJSON (MaestroOrder Ascending)
+          & Swagger.description
+            ?~ "Order of the results"
+
 newtype MaestroResolution = MaestroResolution {unMaestroResolution ∷ Resolution}
   deriving stock (Show)
   deriving newtype (ToHttpApiData, FromHttpApiData, FromJSON, ToJSON, Enum, Bounded)
@@ -101,12 +111,32 @@ newtype MaestroResolution = MaestroResolution {unMaestroResolution ∷ Resolutio
 instance Swagger.ToParamSchema MaestroResolution where
   toParamSchema = commonEnumParamSchemaRecipe
 
+instance Swagger.ToSchema MaestroResolution where
+  declareNamedSchema p =
+    pure $
+      Swagger.NamedSchema (Just "MaestroResolution") $
+        Swagger.paramSchemaToSchema p
+          & Swagger.example
+            ?~ toJSON (MaestroResolution Res1m)
+          & Swagger.description
+            ?~ "Resolution of the data"
+
 newtype MaestroDex = MaestroDex {unMaestroDex ∷ Dex}
   deriving stock (Show)
   deriving newtype (ToHttpApiData, FromHttpApiData, FromJSON, ToJSON, Enum, Bounded)
 
 instance Swagger.ToParamSchema MaestroDex where
   toParamSchema = commonEnumParamSchemaRecipe
+
+instance Swagger.ToSchema MaestroDex where
+  declareNamedSchema p =
+    pure $
+      Swagger.NamedSchema (Just "MaestroDex") $
+        Swagger.paramSchemaToSchema p
+          & Swagger.example
+            ?~ toJSON (MaestroDex GeniusYield)
+          & Swagger.description
+            ?~ "DEX to fetch data from"
 
 type MaestroPriceHistoryAPI =
   Summary "Get price history using Maestro."

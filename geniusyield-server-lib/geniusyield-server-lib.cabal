@@ -97,14 +97,15 @@ library
     , http-types
     , insert-ordered-containers
     , lens
+    , openapi3
     , optparse-applicative
     , rio
     , servant
     , servant-client
     , servant-client-core
+    , servant-openapi3
     , servant-foreign
     , servant-server
-    , servant-swagger
     , strict
     , swagger2
     , time
