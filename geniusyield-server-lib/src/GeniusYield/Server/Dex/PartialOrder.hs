@@ -46,8 +46,6 @@ maxFillOrders = 5
 data PodServerException
   = -- | Cannot fill more than allowed number of orders.
     PodMultiFillMoreThanAllowed
-  | -- | When filling multiple orders, they all should have same payment token so that taker fee is charged in only one token.
-    PodMultiFillNotAllSamePaymentToken
   deriving stock (Show)
   deriving anyclass (Exception)
 
@@ -73,12 +71,6 @@ instance IsGYApiError PodServerException where
       { gaeErrorCode = "MULTI_FILL_MORE_THAN_ALLOWED",
         gaeHttpStatus = status400,
         gaeMsg = T.pack $ "Orders to fill is more than " <> show maxFillOrders
-      }
-  toApiError PodMultiFillNotAllSamePaymentToken =
-    GYApiError
-      { gaeErrorCode = "MULTI_FILL_NOT_SAME_PAIR",
-        gaeHttpStatus = status400,
-        gaeMsg = "Given orders are not having same payment token"
       }
 
 instance IsGYApiError PodOrderNotFound where
