@@ -354,7 +354,7 @@ data FillOrderTransactionDetails = FillOrderTransactionDetails
     fotdTransactionFee ∷ !GYNatural,
     fotdTakerLovelaceFlatFee ∷ !GYNatural,
     fotdTakerOfferedPercentFee ∷ !GYRational,
-    fotdTakerOfferedPercentFeeAmount ∷ !GYNatural
+    fotdTakerOfferedPercentFeeAmount ∷ !GYValue
   }
   deriving stock (Generic)
   deriving
@@ -541,10 +541,6 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
       maxFlatTakerFee = foldl' (\prevMax (poi, _) → max prevMax $ poiTakerLovelaceFlatFee poi) 0 ordersWithTokenBuyAmount
       fopAddresses' = addressFromBech32 <$> fopAddresses
       changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
-  takerFee' ← case valueToList takerFee of
-    [(_, feeAmt)] → pure $ fromIntegral feeAmt
-    [] → pure 0
-    _ → throwIO PodMultiFillNotAllSamePaymentToken
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
     fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
   pure
@@ -554,7 +550,7 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
         fotdTransactionFee = fromIntegral $ txBodyFee txBody,
         fotdTakerLovelaceFlatFee = fromIntegral maxFlatTakerFee,
         fotdTakerOfferedPercentFee = 100 * takerFeeRatio,
-        fotdTakerOfferedPercentFeeAmount = takerFee'
+        fotdTakerOfferedPercentFeeAmount = takerFee
       }
  where
   computePercentTakerFees ∷ Foldable t ⇒ POCVersion → t (PartialOrderInfo, Natural) → GYRational → GYValue

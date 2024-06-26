@@ -149,7 +149,7 @@ components:
           format: float
           type: string
         taker_offered_percent_fee_amount:
-          $ref: '#/components/schemas/GYNatural'
+          $ref: '#/components/schemas/GYValue'
         transaction:
           $ref: '#/components/schemas/GYTx'
         transaction_fee:
@@ -211,6 +211,15 @@ components:
       format: hex
       pattern: '[0-9a-fA-F]{64}#"d+'
       type: string
+    GYValue:
+      additionalProperties:
+        type: integer
+      description: 'A multi asset quantity, represented as map where each key represents
+        an asset: policy ID and token name in hex concatenated by a dot.'
+      example:
+        ff80aaaf03a273b8f5c558168dc0e2377eea810badbae6eceefc14ef.474f4c44: 101
+        lovelace: 22
+      type: object
     Market:
       description: Market information
       properties:
