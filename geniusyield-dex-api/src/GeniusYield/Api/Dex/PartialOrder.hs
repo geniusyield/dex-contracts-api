@@ -1125,8 +1125,8 @@ fillMultiplePartialOrders' pors orders mRefPocd addTakerFee = do
           )
           (cfgRefInputs <> mustHaveTxMetadata stampFilled)
           (zip [(1 ∷ Natural) ..] orders)
-  -- If all orders are of same version, we can keep earlier logic of not requiring fee output when all orders are filled partially.
-  if (Set.size versionsSet > 1) || isJust (find (\(PartialOrderInfo {..}, amt) → amt == poiOfferedAmount) orders)
+  -- Even though we could exercise @buildWithoutFeeOutput@ in case all orders belong to same version and are being partially filled, we insist on generating fee output if there is more than one order being filled as it simplifies the logic related to charging percent taker fee if taker fee is charged in more than one token.
+  if length orders > 1 || isJust (find (\(PartialOrderInfo {..}, amt) → amt == poiOfferedAmount) orders)
     then buildWithFeeOutput
     else buildWithoutFeeOutput
  where

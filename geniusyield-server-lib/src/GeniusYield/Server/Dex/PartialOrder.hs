@@ -46,8 +46,6 @@ maxFillOrders = 5
 data PodServerException
   = -- | Cannot fill more than allowed number of orders.
     PodMultiFillMoreThanAllowed
-  | -- | When filling multiple orders, they all should have same payment token so that taker fee is charged in only one token.
-    PodMultiFillNotAllSamePaymentToken
   deriving stock (Show)
   deriving anyclass (Exception)
 
@@ -73,12 +71,6 @@ instance IsGYApiError PodServerException where
       { gaeErrorCode = "MULTI_FILL_MORE_THAN_ALLOWED",
         gaeHttpStatus = status400,
         gaeMsg = T.pack $ "Orders to fill is more than " <> show maxFillOrders
-      }
-  toApiError PodMultiFillNotAllSamePaymentToken =
-    GYApiError
-      { gaeErrorCode = "MULTI_FILL_NOT_SAME_PAIR",
-        gaeHttpStatus = status400,
-        gaeMsg = "Given orders are not having same payment token"
       }
 
 instance IsGYApiError PodOrderNotFound where
@@ -354,7 +346,7 @@ data FillOrderTransactionDetails = FillOrderTransactionDetails
     fotdTransactionFee ∷ !GYNatural,
     fotdTakerLovelaceFlatFee ∷ !GYNatural,
     fotdTakerOfferedPercentFee ∷ !GYRational,
-    fotdTakerOfferedPercentFeeAmount ∷ !GYNatural
+    fotdTakerOfferedPercentFeeAmount ∷ !GYValue
   }
   deriving stock (Generic)
   deriving
@@ -541,10 +533,6 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
       maxFlatTakerFee = foldl' (\prevMax (poi, _) → max prevMax $ poiTakerLovelaceFlatFee poi) 0 ordersWithTokenBuyAmount
       fopAddresses' = addressFromBech32 <$> fopAddresses
       changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
-  takerFee' ← case valueToList takerFee of
-    [(_, feeAmt)] → pure $ fromIntegral feeAmt
-    [] → pure 0
-    _ → throwIO PodMultiFillNotAllSamePaymentToken
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
     fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
   pure
@@ -554,7 +542,7 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
         fotdTransactionFee = fromIntegral $ txBodyFee txBody,
         fotdTakerLovelaceFlatFee = fromIntegral maxFlatTakerFee,
         fotdTakerOfferedPercentFee = 100 * takerFeeRatio,
-        fotdTakerOfferedPercentFeeAmount = takerFee'
+        fotdTakerOfferedPercentFeeAmount = takerFee
       }
  where
   computePercentTakerFees ∷ Foldable t ⇒ POCVersion → t (PartialOrderInfo, Natural) → GYRational → GYValue

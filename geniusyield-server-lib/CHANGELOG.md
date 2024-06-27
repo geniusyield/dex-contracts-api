@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.7.0 -- 2024-06-26
+
+* Updates `fotdTakerOfferedPercentFeeAmount` field of response of `/v0/orders/fill` and `/v0/orders/tx/build-fill` to now return bag of tokens in which taker fee is charged. These two endpoints now also supports filling of payment tokens where not all of them belong to same pair.
+
 ## 0.6.0 -- 2024-06-10
 
 * Makes a move to OpenApi 3.0 specification from earlier 2.0.
