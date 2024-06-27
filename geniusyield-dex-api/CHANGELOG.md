@@ -1,5 +1,9 @@
 # Revision history for geniusyield-dex-api
 
+## 0.4.0.0 -- 2024-27-06
+
+* Updates definition of `fillMultiplePartialOrders'` to call `buildWithFeeOutput` even in case more than one order is being filled.
+
 ## 0.3.1.0 -- 2024-06-06
 
 * Adds a fix to earlier `0.3.0.0`, to actually consider `poiRawDatum` as witness.
