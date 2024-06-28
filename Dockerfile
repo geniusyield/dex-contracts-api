@@ -54,6 +54,21 @@ RUN git clone https://github.com/bitcoin-core/secp256k1 && \
     make && \
     make install
 
+ARG BLST_VERSION=v0.3.11
+ENV BLST_VERSION=${BLST_VERSION}
+RUN git clone --depth 1 --branch ${BLST_VERSION} https://github.com/supranational/blst && \
+    cd blst && \
+    ./build.sh && \
+    printf 'prefix=/usr/local\nexec_prefix=${prefix}\nlibdir=${exec_prefix}/lib\nincludedir=${prefix}/include\nName: libblst\nDescription: Multilingual BLS12-381 signature library\nURL: https://github.com/supranational/blst\nVersion: '${BLST_VERSION#v}'\nCflags: -I${includedir}\nLibs: -L${libdir} -lblst\n' > libblst.pc && \
+    cp libblst.pc /usr/local/lib/pkgconfig/ && \
+    cp bindings/blst_aux.h bindings/blst.h bindings/blst.hpp /usr/local/include/ && \
+    cp libblst.a /usr/local/lib && \
+    chmod 644 /usr/local/lib/libblst.a && \
+    chmod 644 /usr/local/lib/pkgconfig/libblst.pc && \
+    chmod 644 /usr/local/include/blst.h && \
+    chmod 644 /usr/local/include/blst.hpp && \
+    chmod 644 /usr/local/include/blst_aux.h
+
 ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
 
@@ -65,7 +80,7 @@ RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 7D1E8AFD1D4A16D71FA
 
 # ghcup:
 ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
-ENV BOOTSTRAP_HASKELL_GHC_VERSION=9.2.8
+ENV BOOTSTRAP_HASKELL_GHC_VERSION=9.6.5
 ENV BOOTSTRAP_HASKELL_CABAL_VERSION=3.10.2.0
 RUN bash -c "curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh"
 ENV PATH=${PATH}:/root/.local/bin
