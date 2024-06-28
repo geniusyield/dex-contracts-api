@@ -150,7 +150,7 @@ instance Aeson.ToJSON GYBalance where
   toJSON = Aeson.object . map (RIO.uncurry assetPairToKVT) . valueToList . unGYBalance
   toEncoding = Aeson.pairs . foldMap (RIO.uncurry assetPairToKVT) . valueToList . unGYBalance
 
-assetPairToKVT ∷ Aeson.KeyValue kv ⇒ GYAssetClass → Integer → kv
+assetPairToKVT ∷ Aeson.KeyValue e kv ⇒ GYAssetClass → Integer → kv
 assetPairToKVT ac i = K.fromText (f ac) Aeson..= toUrlPiece i
  where
   f GYLovelace = "lovelace"
