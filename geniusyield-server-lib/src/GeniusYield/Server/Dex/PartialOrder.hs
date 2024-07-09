@@ -89,14 +89,14 @@ data OrderInfo = OrderInfo
   { oiOfferAmount ∷ !GYRational,
     oiOfferAmountInDatum ∷ !GYNatural,
     oiPrice ∷ !GYRational,
-    oiPriceInDatum :: !Rational,
+    oiPriceInDatum ∷ !Rational,
     oiStart ∷ !(Maybe GYTime),
     oiEnd ∷ !(Maybe GYTime),
     oiOwnerAddress ∷ !GYAddressBech32,
     oiOwnerKeyHash ∷ !GYPubKeyHash,
     oiOutputReference ∷ !GYTxOutRef,
     oiNFTToken ∷ !GYAssetClass,
-    oiVersion :: !POCVersion
+    oiVersion ∷ !POCVersion
   }
   deriving stock (Generic)
   deriving
@@ -543,8 +543,8 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
       changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
     case ordersWithTokenBuyAmount of
-      [(oi, amt)] -> fillPartialOrder' porefs oi amt (Just $ selectRefPocd refPocds overallPocVersion) (fromIntegral $ valueAssetClass takerFee (poiAskedAsset oi))
-      _ -> fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
+      [(oi, amt)] → fillPartialOrder' porefs oi amt (Just $ selectRefPocd refPocds overallPocVersion) (fromIntegral $ valueAssetClass takerFee (poiAskedAsset oi))
+      _ → fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
   pure
     FillOrderTransactionDetails
       { fotdTransaction = unsignedTx txBody,

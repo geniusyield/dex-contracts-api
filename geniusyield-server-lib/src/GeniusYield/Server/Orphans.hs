@@ -15,12 +15,15 @@ import Servant.OpenApi
 
 instance Swagger.ToSchema Rational where
   declareNamedSchema _ = do
-    integerSchema <- Swagger.declareSchemaRef @Integer Proxy
-    return $ Swagger.named "Rational" $ mempty
+    integerSchema ← Swagger.declareSchemaRef @Integer Proxy
+    return $
+      Swagger.named "Rational" $
+        mempty
           & Swagger.type_ ?~ Swagger.SwaggerObject
-          & Swagger.properties .~ IOHM.fromList
-              [ ("numerator", integerSchema)
-              , ("denominator", integerSchema)
+          & Swagger.properties
+            .~ IOHM.fromList
+              [ ("numerator", integerSchema),
+                ("denominator", integerSchema)
               ]
           & Swagger.required .~ ["numerator", "denominator"]
 
