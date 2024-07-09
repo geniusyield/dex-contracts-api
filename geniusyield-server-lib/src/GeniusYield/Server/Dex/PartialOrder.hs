@@ -16,13 +16,14 @@ import Data.Swagger.Internal.Schema qualified as Swagger
 import Deriving.Aeson
 import Fmt
 import GHC.TypeLits (AppendSymbol, Symbol)
-import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder'', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
-import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig, fetchPartialOrderConfigs)
+import GeniusYield.Api.Dex.PartialOrder (PartialOrderInfo (..), cancelMultiplePartialOrders', fillMultiplePartialOrders', fillPartialOrder', getPartialOrdersInfos, getPartialOrdersInfos', getVersionsInOrders, orderByNft, partialOrderPrice', placePartialOrder'', preferentiallySelectLatestPocd, preferentiallySelectLatestVersion, roundFunctionForPOCVersion)
+import GeniusYield.Api.Dex.PartialOrderConfig (RefPocd (..), SomeRefPocd (SomeRefPocd), fetchPartialOrderConfig, fetchPartialOrderConfigs, selectRefPocd)
 import GeniusYield.HTTP.Errors
 import GeniusYield.OrderBot.Domain.Markets (OrderAssetPair (..))
 import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfoF (..))
 import GeniusYield.Scripts.Dex.Version (POCVersion (POCVersion1_1))
 import GeniusYield.Server.Ctx
+import GeniusYield.Server.Orphans ()
 import GeniusYield.Server.Tx (handleTxSign, handleTxSubmit, throwNoSigningKeyError)
 import GeniusYield.Server.Utils (addSwaggerDescription, addSwaggerExample, dropSymbolAndCamelToSnake, logDebug, logInfo)
 import GeniusYield.Types
@@ -86,13 +87,16 @@ type OrderInfoPrefix = "oi"
 
 data OrderInfo = OrderInfo
   { oiOfferAmount ∷ !GYRational,
+    oiOfferAmountInDatum ∷ !GYNatural,
     oiPrice ∷ !GYRational,
+    oiPriceInDatum :: !Rational,
     oiStart ∷ !(Maybe GYTime),
     oiEnd ∷ !(Maybe GYTime),
     oiOwnerAddress ∷ !GYAddressBech32,
     oiOwnerKeyHash ∷ !GYPubKeyHash,
     oiOutputReference ∷ !GYTxOutRef,
-    oiNFTToken ∷ !GYAssetClass
+    oiNFTToken ∷ !GYAssetClass,
+    oiVersion :: !POCVersion
   }
   deriving stock (Generic)
   deriving
@@ -102,6 +106,7 @@ data OrderInfo = OrderInfo
 instance Swagger.ToSchema OrderInfo where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @OrderInfoPrefix}
+      & addSwaggerDescription "Order details given as part of order-book (bid and ask). Note that \"price_in_datum\" is the price given in datum whereas \"price\" is the rounded price in terms of currency asset per commodity asset. I.e., for a sell order, \"price\" is rounded value of \"price_in_datum\" whereas for buy order, \"price\" is rounded value of reciprocal of \"price_in_datum\". Likewise, \"offer_amount_in_datum\" is the amount given in datum whereas \"offer_amount\" is the rounded value in terms of commodity asset."
 
 type OrderInfoDetailedPrefix ∷ Symbol
 type OrderInfoDetailedPrefix = "oid"
@@ -136,13 +141,16 @@ poiToOrderInfo PartialOrderInfo {..} oap =
       poiOfferedAmount' = fromIntegral poiOfferedAmount
    in OrderInfo
         { oiOfferAmount = if isSell then poiOfferedAmount' else poiOfferedAmount' * poiPrice,
+          oiOfferAmountInDatum = naturalFromGHC poiOfferedAmount,
           oiPrice = if isSell then poiPrice else 1 / poiPrice,
+          oiPriceInDatum = rationalToGHC poiPrice,
           oiStart = poiStart,
           oiEnd = poiEnd,
           oiOwnerAddress = addressToBech32 poiOwnerAddr,
           oiOwnerKeyHash = poiOwnerKey,
           oiOutputReference = poiRef,
-          oiNFTToken = GYToken poiNFTCS poiNFT
+          oiNFTToken = GYToken poiNFTCS poiNFT,
+          oiVersion = poiVersion
         }
         :!: isSell
 
@@ -534,7 +542,9 @@ handleFillOrders ctx@Ctx {..} fops@FillOrderParameters {..} = do
       fopAddresses' = addressFromBech32 <$> fopAddresses
       changeAddr = maybe (NonEmpty.head fopAddresses') (\(ChangeAddress addr) → addressFromBech32 addr) fopChangeAddress
   txBody ← runSkeletonI ctx (NonEmpty.toList fopAddresses') changeAddr fopCollateral $ do
-    fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
+    case ordersWithTokenBuyAmount of
+      [(oi, amt)] -> fillPartialOrder' porefs oi amt (Just $ selectRefPocd refPocds overallPocVersion) (fromIntegral $ valueAssetClass takerFee (poiAskedAsset oi))
+      _ -> fillMultiplePartialOrders' porefs ordersWithTokenBuyAmount (Just refPocds) takerFee
   pure
     FillOrderTransactionDetails
       { fotdTransaction = unsignedTx txBody,

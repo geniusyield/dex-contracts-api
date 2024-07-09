@@ -330,6 +330,13 @@ components:
       - asks
       type: object
     OrderInfo:
+      description: Order details given as part of order-book (bid and ask). Note that
+        "price_in_datum" is the price given in datum whereas "price" is the rounded
+        price in terms of currency asset per commodity asset. I.e., for a sell order,
+        "price" is rounded value of "price_in_datum" whereas for buy order, "price"
+        is rounded value of reciprocal of "price_in_datum". Likewise, "offer_amount_in_datum"
+        is the amount given in datum whereas "offer_amount" is the rounded value in
+        terms of commodity asset.
       properties:
         end:
           description: This is the posix time in ISO8601 format.
@@ -342,6 +349,8 @@ components:
           example: '0.125'
           format: float
           type: string
+        offer_amount_in_datum:
+          $ref: '#/components/schemas/GYNatural'
         output_reference:
           $ref: '#/components/schemas/GYTxOutRef'
         owner_address:
@@ -352,18 +361,25 @@ components:
           example: '0.125'
           format: float
           type: string
+        price_in_datum:
+          $ref: '#/components/schemas/Rational'
         start:
           description: This is the posix time in ISO8601 format.
           example: 1970-01-01T00:00:00Z
           format: ISO8601
           type: string
+        version:
+          $ref: '#/components/schemas/POCVersion'
       required:
       - offer_amount
+      - offer_amount_in_datum
       - price
+      - price_in_datum
       - owner_address
       - owner_key_hash
       - output_reference
       - nft_token
+      - version
       type: object
     OrderInfoDetailed:
       properties:
@@ -414,6 +430,13 @@ components:
       - output_reference
       - nft_token
       type: object
+    POCVersion:
+      description: Version of the family of partial order contracts
+      enum:
+      - POCVersion1
+      - POCVersion1_1
+      example: POCVersion1
+      type: string
     PlaceOrderParameters:
       description: Place order request parameters.
       properties:
@@ -489,6 +512,16 @@ components:
       enum:
       - PodOrderNotFound
       type: string
+    Rational:
+      properties:
+        denominator:
+          type: integer
+        numerator:
+          type: integer
+      required:
+      - numerator
+      - denominator
+      type: object
     Settings:
       description: Genius Yield Server settings.
       properties:
