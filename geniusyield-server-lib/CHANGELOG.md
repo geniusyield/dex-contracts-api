@@ -1,5 +1,10 @@
 # Revision history for geniusyield-server-lib
 
+## 0.8.0 -- 2024-07-09
+
+* Updates `/v0/orders/fill` and `/v0/orders/tx/build-fill` endpoint to internally call `fillPartialOrder'` instead of `fillMultiplePartialOrders'` when single order is being filled.
+* Updates `/v0/order-books/{market-id}` endpoint to also return for `offer_amount_in_datum`, `price_in_datum` and `version`.
+
 ## 0.7.0 -- 2024-06-26
 
 * Updates `fotdTakerOfferedPercentFeeAmount` field of response of `/v0/orders/fill` and `/v0/orders/tx/build-fill` to now return bag of tokens in which taker fee is charged. These two endpoints now also supports filling of payment tokens where not all of them belong to same pair.
