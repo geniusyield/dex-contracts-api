@@ -28,6 +28,8 @@ components:
         bot.
       properties:
         order_references:
+          items:
+            $ref: '#/components/schemas/GYTxOutRef'
           minItems: 1
           type: array
       required:
@@ -44,6 +46,13 @@ components:
           - '100'
       properties:
         order_references_with_amount:
+          items:
+            items:
+            - $ref: '#/components/schemas/GYTxOutRef'
+            - $ref: '#/components/schemas/GYNatural'
+            maxItems: 2
+            minItems: 2
+            type: array
           minItems: 1
           type: array
       required:
@@ -80,6 +89,8 @@ components:
       description: Cancel order request parameters.
       properties:
         addresses:
+          items:
+            $ref: '#/components/schemas/GYAddressBech32'
           minItems: 1
           type: array
         change_address:
@@ -87,6 +98,8 @@ components:
         collateral:
           $ref: '#/components/schemas/GYTxOutRef'
         order_references:
+          items:
+            $ref: '#/components/schemas/GYTxOutRef'
           minItems: 1
           type: array
       required:
@@ -127,6 +140,8 @@ components:
           - '100'
       properties:
         addresses:
+          items:
+            $ref: '#/components/schemas/GYAddressBech32'
           minItems: 1
           type: array
         change_address:
@@ -134,6 +149,13 @@ components:
         collateral:
           $ref: '#/components/schemas/GYTxOutRef'
         order_references_with_amount:
+          items:
+            items:
+            - $ref: '#/components/schemas/GYTxOutRef'
+            - $ref: '#/components/schemas/GYNatural'
+            maxItems: 2
+            minItems: 2
+            type: array
           minItems: 1
           type: array
       required:
@@ -313,8 +335,12 @@ components:
     OrderBookInfo:
       properties:
         asks:
+          items:
+            $ref: '#/components/schemas/OrderInfo'
           type: array
         bids:
+          items:
+            $ref: '#/components/schemas/OrderInfo'
           type: array
         market_pair_id:
           $ref: '#/components/schemas/OrderAssetPair'
@@ -441,6 +467,8 @@ components:
       description: Place order request parameters.
       properties:
         addresses:
+          items:
+            $ref: '#/components/schemas/GYAddressBech32'
           minItems: 1
           type: array
         change_address:
