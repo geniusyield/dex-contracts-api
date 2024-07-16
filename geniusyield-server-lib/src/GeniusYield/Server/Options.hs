@@ -17,12 +17,12 @@ newtype ServeCommand = ServeCommand (Maybe FilePath)
 
 parseCommand ∷ Parser Command
 parseCommand =
-  subparser $
-    mconcat
+  subparser
+    $ mconcat
       [ command
           "serve"
-          ( info (Serve <$> parseServeCommand <**> helper) $
-              progDesc "Serve endpoints"
+          ( info (Serve <$> parseServeCommand <**> helper)
+              $ progDesc "Serve endpoints"
           )
       ]
 

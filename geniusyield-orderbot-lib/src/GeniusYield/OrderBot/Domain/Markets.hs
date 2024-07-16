@@ -70,17 +70,17 @@ instance Swagger.ToParamSchema OrderAssetPair where
   toParamSchema _ =
     mempty
       & Swagger.type_
-        ?~ Swagger.SwaggerString
+      ?~ Swagger.SwaggerString
 
 instance Swagger.ToSchema OrderAssetPair where
   declareNamedSchema p =
-    pure $
-      Swagger.named "OrderAssetPair" $
-        Swagger.paramSchemaToSchema p
-          & Swagger.example
-            ?~ toJSON ("f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53" ∷ String)
-          & Swagger.description
-            ?~ "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name."
+    pure
+      $ Swagger.named "OrderAssetPair"
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.example
+      ?~ toJSON ("f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53" ∷ String)
+        & Swagger.description
+      ?~ "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name."
 
 {- | Two order asset pairs are considered "equivalent" (but not strictly equal, as in 'Eq'),
      if they contain the same 2 assets irrespective of order.

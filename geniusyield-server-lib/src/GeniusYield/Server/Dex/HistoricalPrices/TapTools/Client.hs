@@ -80,13 +80,13 @@ instance Swagger.ToParamSchema TapToolsInterval where
 
 instance Swagger.ToSchema TapToolsInterval where
   declareNamedSchema p =
-    pure $
-      Swagger.NamedSchema (Just "TapToolsInterval") $
-        Swagger.paramSchemaToSchema p
-          & Swagger.example
-            ?~ toJSON TTI1M
-          & Swagger.description
-            ?~ "The time interval"
+    pure
+      $ Swagger.NamedSchema (Just "TapToolsInterval")
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.example
+      ?~ toJSON TTI1M
+        & Swagger.description
+      ?~ "The time interval"
 
 type TapToolsOHLCVPrefix ∷ Symbol
 type TapToolsOHLCVPrefix = "tapToolsOHLCV"

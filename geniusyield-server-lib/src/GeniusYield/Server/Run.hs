@@ -87,9 +87,9 @@ runServer mfp = do
             ctxNetworkId = nid,
             ctxDexInfo =
               if
-                  | nid == GYMainnet → dexInfoDefaultMainnet
-                  | nid == GYTestnetPreprod → dexInfoDefaultPreprod
-                  | otherwise → error "Only mainnet & preprod network are supported",
+                | nid == GYMainnet → dexInfoDefaultMainnet
+                | nid == GYTestnetPreprod → dexInfoDefaultPreprod
+                | otherwise → error "Only mainnet & preprod network are supported",
             ctxMaestroProvider = MaestroProvider menv,
             ctxTapToolsProvider = mtenv,
             ctxSigningKey = optionalSigningKey,
@@ -97,13 +97,20 @@ runServer mfp = do
             ctxStakeAddress = scStakeAddress serverConfig
           }
 
-    logInfoS $
-      "Starting GeniusYield server on port " +| scPort serverConfig |+ "\nCore config:\n" +| indentF 4 (fromString $ show coreCfg) |+ ""
-    Warp.runSettings settings . reqLoggerMiddleware . errLoggerMiddleware . errorJsonWrapMiddleware $
-      let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t → apiKeyFromText t) :. EmptyContext
-       in serveWithContext mainAPI context
-            $ hoistServerWithContext
-              mainAPI
-              (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
-              (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
-            $ mainServer ctx
+    logInfoS
+      $ "Starting GeniusYield server on port "
+      +| scPort serverConfig
+      |+ "\nCore config:\n"
+      +| indentF 4 (fromString $ show coreCfg)
+      |+ ""
+    Warp.runSettings settings
+      . reqLoggerMiddleware
+      . errLoggerMiddleware
+      . errorJsonWrapMiddleware
+      $ let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t → apiKeyFromText t) :. EmptyContext
+         in serveWithContext mainAPI context
+              $ hoistServerWithContext
+                mainAPI
+                (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
+                (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
+              $ mainServer ctx

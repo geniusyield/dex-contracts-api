@@ -453,9 +453,9 @@ getPartialOrderVersion' ∷ GYDexApiQueryMonad m a ⇒ (Maybe GYPaymentCredentia
 getPartialOrderVersion' (p1 :!: p1_1) (addr :!: oref) = do
   let pc = addressToPaymentCredential addr
   if
-      | p1 == pc → pure POCVersion1
-      | p1_1 == pc → pure POCVersion1_1
-      | otherwise → throwAppError $ PodOrderDoesntBelongToScript oref
+    | p1 == pc → pure POCVersion1
+    | p1_1 == pc → pure POCVersion1_1
+    | otherwise → throwAppError $ PodOrderDoesntBelongToScript oref
 
 getPartialOrderInfo
   ∷ GYDexApiQueryMonad m a

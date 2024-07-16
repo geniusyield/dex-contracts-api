@@ -43,9 +43,12 @@ Example of responses which are not in JSON: Servant body parse error, url not fo
 errorJsonWrapMiddleware ∷ Wai.Middleware
 errorJsonWrapMiddleware app req respond = app req $ \res → do
   let (status, headers, body) = Wai.responseToStream res
-  if lookup "Content-Type" headers /= Just "application/json" -- Don't overwrite responses which are already json!
-    && statusCode status >= 400
-    && statusCode status < 600
+  if lookup "Content-Type" headers
+    /= Just "application/json" -- Don't overwrite responses which are already json!
+    && statusCode status
+    >= 400
+    && statusCode status
+    < 600
     then do
       lbs ←
         if statusCode status == 404
@@ -58,8 +61,10 @@ errorJsonWrapMiddleware app req respond = app req $ \res → do
 errorLoggerMiddleware ∷ (LT.Text → IO ()) → Wai.Middleware
 errorLoggerMiddleware errorLogger app req respond = app req $ \res → do
   let (status, _headers, body) = Wai.responseToStream res
-  when (statusCode status >= 400 && statusCode status < 600) $
-    sinkStreamingBody body >>= errorLogger . lazyDecodeUtf8Lenient
+  when (statusCode status >= 400 && statusCode status < 600)
+    $ sinkStreamingBody body
+    >>= errorLogger
+    . lazyDecodeUtf8Lenient
   respond res
 
 {- | Reinterpret exceptions raised by the server (mostly contract exceptions) into 'GYApiError's.
@@ -131,23 +136,23 @@ exceptionHandler =
         GYConversionException convErr → someBackendError $ tShow convErr
         GYQueryUTxOException txErr → someBackendError $ tShow txErr
         GYNoSuitableCollateralException minAmt addr →
-          someBackendError $
-            "No suitable collateral of at least "
-              <> tShow minAmt
-              <> " was found at the address "
-              <> tShow addr
+          someBackendError
+            $ "No suitable collateral of at least "
+            <> tShow minAmt
+            <> " was found at the address "
+            <> tShow addr
         GYSlotOverflowException slot advAmt →
-          someBackendError $
-            "Slot value "
-              <> tShow slot
-              <> " overflows when advanced by "
-              <> tShow advAmt
+          someBackendError
+            $ "Slot value "
+            <> tShow slot
+            <> " overflows when advanced by "
+            <> tShow advAmt
         GYTimeUnderflowException sysStart time →
-          someBackendError $
-            "Timestamp "
-              <> tShow time
-              <> " is before known system start "
-              <> tShow sysStart
+          someBackendError
+            $ "Timestamp "
+            <> tShow time
+            <> " is before known system start "
+            <> tShow sysStart
         GYQueryDatumException qdErr → someBackendError $ tShow qdErr
         GYDatumMismatch actualDatum scriptWitness → someBackendError $ "Actual datum in UTxO is: " <> tShow actualDatum <> ", but witness has wrong corresponding datum information: " <> tShow scriptWitness
         GYApplicationException e → toApiError e,
