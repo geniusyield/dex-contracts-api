@@ -1,6 +1,6 @@
 # Revision history for geniusyield-server-lib
 
-## 0.8.1 -- 2024-07-16
+## 0.9.0 -- 2024-07-16
 
 * Updates to latest commit of Atlas. Note that this update now requires GHC version to be 9.6.5.
 * Includes a fix for generated Open API specification where some of the schema objects were not represented appropriately.
