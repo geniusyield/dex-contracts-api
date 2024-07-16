@@ -44,8 +44,10 @@ instance Swagger.ToSchema POCVersion where
     pure $
       Swagger.named "POCVersion" $
         Swagger.paramSchemaToSchema p
-          & Swagger.example ?~ Aeson.toJSON POCVersion1
-          & Swagger.description ?~ "Version of the family of partial order contracts"
+          & Swagger.example
+          ?~ Aeson.toJSON POCVersion1
+            & Swagger.description
+          ?~ "Version of the family of partial order contracts"
 
 data SingPOCVersion (v ∷ POCVersion) where
   SingPOCVersion1 ∷ SingPOCVersion 'POCVersion1
