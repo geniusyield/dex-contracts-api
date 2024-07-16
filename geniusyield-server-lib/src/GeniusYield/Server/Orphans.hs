@@ -16,28 +16,30 @@ import Servant.OpenApi
 instance Swagger.ToSchema Rational where
   declareNamedSchema _ = do
     integerSchema ← Swagger.declareSchemaRef @Integer Proxy
-    return $
-      Swagger.named "Rational" $
-        mempty
-          & Swagger.type_ ?~ Swagger.SwaggerObject
-          & Swagger.properties
-            .~ IOHM.fromList
-              [ ("numerator", integerSchema),
-                ("denominator", integerSchema)
-              ]
-          & Swagger.required .~ ["numerator", "denominator"]
+    return
+      $ Swagger.named "Rational"
+      $ mempty
+      & Swagger.type_
+      ?~ Swagger.SwaggerObject
+        & Swagger.properties
+      .~ IOHM.fromList
+        [ ("numerator", integerSchema),
+          ("denominator", integerSchema)
+        ]
+        & Swagger.required
+      .~ ["numerator", "denominator"]
 
 instance HasOpenApi api ⇒ HasOpenApi (APIKeyAuthProtect :> api) where
   toOpenApi _ =
     toOpenApi (Proxy ∷ Proxy api)
       & (components . securitySchemes)
-        .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
-      & allOperations
+      .~ SecurityDefinitions (IOHM.fromList [(apiKeyHeaderText, apiKeySecurityScheme)])
+        & allOperations
         . security
-        .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
-      & allOperations
+      .~ [SecurityRequirement (IOHM.singleton apiKeyHeaderText [])]
+        & allOperations
         . responses
-        %~ addCommonResponses
+      %~ addCommonResponses
    where
     apiKeySecurityScheme ∷ SecurityScheme
     apiKeySecurityScheme =

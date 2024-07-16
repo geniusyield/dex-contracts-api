@@ -28,8 +28,9 @@ gcpReqLogger =
     let statCode = statusCode stat
         method = requestMethod req
         rawLog =
-          toLogStr . Aeson.encode $
-            Aeson.object
+          toLogStr
+            . Aeson.encode
+            $ Aeson.object
               [ "severity" .= Txt.pack (if statCode >= 500 then "ERROR" else "INFO"),
                 -- Only log response body for user-error and server-error responses.
                 "message" .= if statCode >= 400 then lazyDecodeUtf8Lenient $ toLazyByteString resp else "",

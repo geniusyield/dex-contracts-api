@@ -96,13 +96,13 @@ instance Swagger.ToParamSchema MaestroOrder where
 
 instance Swagger.ToSchema MaestroOrder where
   declareNamedSchema p =
-    pure $
-      Swagger.NamedSchema (Just "MaestroOrder") $
-        Swagger.paramSchemaToSchema p
-          & Swagger.example
-            ?~ toJSON (MaestroOrder Ascending)
-          & Swagger.description
-            ?~ "Order of the results"
+    pure
+      $ Swagger.NamedSchema (Just "MaestroOrder")
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.example
+      ?~ toJSON (MaestroOrder Ascending)
+        & Swagger.description
+      ?~ "Order of the results"
 
 newtype MaestroResolution = MaestroResolution {unMaestroResolution ∷ Resolution}
   deriving stock (Show)
@@ -113,13 +113,13 @@ instance Swagger.ToParamSchema MaestroResolution where
 
 instance Swagger.ToSchema MaestroResolution where
   declareNamedSchema p =
-    pure $
-      Swagger.NamedSchema (Just "MaestroResolution") $
-        Swagger.paramSchemaToSchema p
-          & Swagger.example
-            ?~ toJSON (MaestroResolution Res1m)
-          & Swagger.description
-            ?~ "Resolution of the data"
+    pure
+      $ Swagger.NamedSchema (Just "MaestroResolution")
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.example
+      ?~ toJSON (MaestroResolution Res1m)
+        & Swagger.description
+      ?~ "Resolution of the data"
 
 newtype MaestroDex = MaestroDex {unMaestroDex ∷ Dex}
   deriving stock (Show)
@@ -130,13 +130,13 @@ instance Swagger.ToParamSchema MaestroDex where
 
 instance Swagger.ToSchema MaestroDex where
   declareNamedSchema p =
-    pure $
-      Swagger.NamedSchema (Just "MaestroDex") $
-        Swagger.paramSchemaToSchema p
-          & Swagger.example
-            ?~ toJSON (MaestroDex GeniusYield)
-          & Swagger.description
-            ?~ "DEX to fetch data from"
+    pure
+      $ Swagger.NamedSchema (Just "MaestroDex")
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.example
+      ?~ toJSON (MaestroDex GeniusYield)
+        & Swagger.description
+      ?~ "DEX to fetch data from"
 
 type MaestroPriceHistoryAPI =
   Summary "Get price history using Maestro."

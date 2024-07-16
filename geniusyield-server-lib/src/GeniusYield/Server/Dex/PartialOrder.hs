@@ -200,11 +200,11 @@ newtype ChangeAddress = ChangeAddress GYAddressBech32
 instance Swagger.ToSchema ChangeAddress where
   declareNamedSchema _ = do
     addrBech32Schema ← Swagger.declareSchema (Proxy @GYAddressBech32)
-    return $
-      Swagger.named "ChangeAddress" $
-        addrBech32Schema
-          & Swagger.description
-            %~ (\mt → mt <> Just " This is used as a change address by our balancer to send left over funds from selected inputs. If not provided, first address from given addresses list is used instead.")
+    return
+      $ Swagger.named "ChangeAddress"
+      $ addrBech32Schema
+      & Swagger.description
+      %~ (\mt → mt <> Just " This is used as a change address by our balancer to send left over funds from selected inputs. If not provided, first address from given addresses list is used instead.")
 
 type PlaceOrderReqPrefix ∷ Symbol
 type PlaceOrderReqPrefix = "pop"
@@ -434,11 +434,12 @@ handlePlaceOrder ctx@Ctx {..} pops@PlaceOrderParameters {..} = do
       pocVersion = POCVersion1_1
   SomeRefPocd (RefPocd (cfgRef :!: pocd)) ← runQuery ctx $ fetchPartialOrderConfig pocVersion porefs
   let unitPrice =
-        rationalFromGHC $
-          toInteger popPriceAmount % toInteger popOfferAmount
+        rationalFromGHC
+          $ toInteger popPriceAmount
+          % toInteger popOfferAmount
   (nftAC, txBody) ←
-    runSkeletonF ctx (NonEmpty.toList popAddresses') changeAddr popCollateral $
-      placePartialOrder''
+    runSkeletonF ctx (NonEmpty.toList popAddresses') changeAddr popCollateral
+      $ placePartialOrder''
         porefs
         changeAddr
         (naturalToGHC popOfferAmount, popOfferToken)
@@ -522,8 +523,9 @@ handleOrdersDetails ctx@Ctx {..} acs = do
   let porefs = dexPORefs ctxDexInfo
   os ← forM acs $ \ac → do
     logDebug ctx $ "Getting order details for NFT token: " +|| ac ||+ ""
-    runQuery ctx $
-      fmap poiToOrderInfoDetailed <$> orderByNft porefs ac
+    runQuery ctx
+      $ fmap poiToOrderInfoDetailed
+      <$> orderByNft porefs ac
   pure $ catMaybes os
 
 handleFillOrders ∷ Ctx → FillOrderParameters → IO FillOrderTransactionDetails

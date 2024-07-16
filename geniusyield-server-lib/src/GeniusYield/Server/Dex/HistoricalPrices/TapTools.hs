@@ -21,11 +21,11 @@ newtype TapToolsNumIntervals = TapToolsNumIntervals {unTapToolsNumIntervals ∷ 
 -- Since this is a query parameter, our schema description wouldn't be registered for in swagger specification :(. Following OpenAPI 3.0 would allow for it.
 instance Swagger.ToSchema TapToolsNumIntervals where
   declareNamedSchema p =
-    pure $
-      Swagger.named "TapToolsNumIntervals" $
-        Swagger.paramSchemaToSchema p
-          & Swagger.description
-            ?~ "The number of intervals to return, e.g. if you want 180 days of data in 1d intervals, then pass 180 here."
+    pure
+      $ Swagger.named "TapToolsNumIntervals"
+      $ Swagger.paramSchemaToSchema p
+      & Swagger.description
+      ?~ "The number of intervals to return, e.g. if you want 180 days of data in 1d intervals, then pass 180 here."
 
 type TapToolsPriceHistoryAPI =
   Summary "Get price history using TapTools."
