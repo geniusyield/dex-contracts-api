@@ -46,7 +46,7 @@ data MnemonicWalletDetails = MnemonicWalletDetails
     addrIx ∷ !(Maybe Word32)
   }
   deriving stock (Generic)
-  deriving (FromJSON, ToJSON) via CustomJSON '[FieldLabelModifier '[CamelToSnake]] MnemonicWalletDetails
+  deriving anyclass (FromJSON, ToJSON)
 
 data ServerConfig = ServerConfig
   { scCoreProvider ∷ !GYCoreProviderInfo,
