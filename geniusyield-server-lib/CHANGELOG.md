@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.10.0 -- 2024-08-05
+
+* Fix the JSON/YAML configuration parser to require `addrIx`, `accIx` instead of `addr_ix`, `acc_ix` respectively.
+
 ## 0.9.0 -- 2024-07-16
 
 * Updates to latest commit of Atlas. Note that this update now requires GHC version to be 9.6.5.
