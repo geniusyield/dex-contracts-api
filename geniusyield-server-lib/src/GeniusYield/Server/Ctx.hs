@@ -113,5 +113,5 @@ runQueryWithReader ctx a q = do
       providers = ctxProviders ctx
   runGYTxQueryMonadIO nid providers $ runReaderT q a
 
-runGYTxMonadNodeF :: forall t v. Traversable t => GYCoinSelectionStrategy -> GYNetworkId -> GYProviders -> [GYAddress] -> GYAddress -> Maybe (GYTxOutRef, Bool) -> GYTxBuilderMonadIO (t (GYTxSkeleton v)) -> IO (t GYTxBody)
+runGYTxMonadNodeF ∷ ∀ t v. Traversable t ⇒ GYCoinSelectionStrategy → GYNetworkId → GYProviders → [GYAddress] → GYAddress → Maybe (GYTxOutRef, Bool) → GYTxBuilderMonadIO (t (GYTxSkeleton v)) → IO (t GYTxBody)
 runGYTxMonadNodeF strat nid providers addrs change collateral act = runGYTxBuilderMonadIO nid providers addrs change collateral $ act >>= traverse (buildTxBodyWithStrategy strat)
