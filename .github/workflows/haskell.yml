@@ -48,7 +48,8 @@ jobs:
             procps \
             tmux \
             xz-utils \
-            zlib1g-dev
+            zlib1g-dev \
+            postgresql
     - name: Validate code (run pre-commit hooks)
       uses: pre-commit/action@v3.0.0
       with:
