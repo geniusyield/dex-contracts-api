@@ -13,10 +13,10 @@ module GeniusYield.Api.Dex.Types (
 
 import Control.Monad.Reader (MonadReader)
 import GeniusYield.Scripts.Dex (HasPartialOrderConfigAddr, HasPartialOrderNftScript, HasPartialOrderScript)
-import GeniusYield.TxBuilder.Class (GYTxMonad, GYTxQueryMonad)
+import GeniusYield.TxBuilder.Class (GYTxQueryMonad, GYTxUserQueryMonad)
 
 type HasDexScripts a = (HasPartialOrderConfigAddr a, HasPartialOrderScript a, HasPartialOrderNftScript a)
 
 type GYDexApiQueryMonad m a = (HasDexScripts a, MonadReader a m, GYTxQueryMonad m)
 
-type GYDexApiMonad m a = (GYDexApiQueryMonad m a, GYTxMonad m)
+type GYDexApiMonad m a = (GYDexApiQueryMonad m a, GYTxUserQueryMonad m)
