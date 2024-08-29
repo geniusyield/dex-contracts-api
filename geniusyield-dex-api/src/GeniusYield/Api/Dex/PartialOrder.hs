@@ -409,13 +409,11 @@ partialOrdersHavingAsset pors hasAsset = do
       datumsV1_1 = utxosDatumsPureWithOriginalDatum utxosWithDatumsV1_1
   m1 ←
     iwither
-      ( \oref vod → makePartialOrderInfo' policyIdV1 oref vod POCVersion1
-      )
+      (\oref vod → makePartialOrderInfo' policyIdV1 oref vod POCVersion1)
       datumsV1
   m1_1 ←
     iwither
-      ( \oref vod → makePartialOrderInfo' policyIdV1_1 oref vod POCVersion1_1
-      )
+      (\oref vod → makePartialOrderInfo' policyIdV1_1 oref vod POCVersion1_1)
       datumsV1_1
   pure $! m1 <> m1_1
 
