@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.10.1 -- 2024-08-29
+
+* Updated Atlas & Maestro SDK version to not make use Maestro's recently deprecated protocol parameters & era summaries endpoint.
+
 ## 0.10.0 -- 2024-08-05
 
 * Fix the JSON/YAML configuration parser to require `addrIx`, `accIx` instead of `addr_ix`, `acc_ix` respectively.

@@ -1,6 +1,6 @@
 cabal-version:   3.6
 name:            geniusyield-server-lib
-version:         0.10.0
+version:         0.10.1
 synopsis:        GeniusYield server library
 description:     Library for GeniusYield server.
 license:         Apache-2.0
