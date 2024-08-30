@@ -1,6 +1,10 @@
 # Revision history for geniusyield-dex-api
 
-## 0.4.0.0 -- 2024-27-06
+## 0.5.0.0 -- 2024-08-30
+
+* Update to Atlas v0.6.0.
+
+## 0.4.0.0 -- 2024-06-27
 
 * Updates definition of `fillMultiplePartialOrders'` to call `buildWithFeeOutput` even in case more than one order is being filled.
 

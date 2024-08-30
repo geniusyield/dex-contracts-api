@@ -51,7 +51,7 @@ runSkeletonI
   -- ^ User's change address.
   → Maybe GYTxOutRef
   -- ^ User's collateral.
-  → ReaderT DEXInfo GYTxMonadNode (GYTxSkeleton v)
+  → ReaderT DEXInfo GYTxBuilderMonadIO (GYTxSkeleton v)
   → IO GYTxBody
 runSkeletonI = coerce (runSkeletonF @Identity)
 
@@ -65,7 +65,7 @@ runSkeletonWithStrategyI
   -- ^ User's change address.
   → Maybe GYTxOutRef
   -- ^ User's collateral.
-  → ReaderT DEXInfo GYTxMonadNode (GYTxSkeleton v)
+  → ReaderT DEXInfo GYTxBuilderMonadIO (GYTxSkeleton v)
   → IO GYTxBody
 runSkeletonWithStrategyI cstrat = coerce (runSkeletonWithStrategyF @Identity cstrat)
 
@@ -78,7 +78,7 @@ runSkeletonF
   -- ^ User's change address.
   → Maybe GYTxOutRef
   -- ^ User's collateral.
-  → ReaderT DEXInfo GYTxMonadNode (t (GYTxSkeleton v))
+  → ReaderT DEXInfo GYTxBuilderMonadIO (t (GYTxSkeleton v))
   → IO (t GYTxBody)
 runSkeletonF = runSkeletonWithStrategyF GYRandomImproveMultiAsset
 
@@ -92,7 +92,7 @@ runSkeletonWithStrategyF
   -- ^ User's change address.
   → Maybe GYTxOutRef
   -- ^ User's collateral.
-  → ReaderT DEXInfo GYTxMonadNode (t (GYTxSkeleton v))
+  → ReaderT DEXInfo GYTxBuilderMonadIO (t (GYTxSkeleton v))
   → IO (t GYTxBody)
 runSkeletonWithStrategyF cstrat ctx addrs addr mcollateral skeleton = do
   let nid = ctxNetworkId ctx
@@ -104,11 +104,14 @@ runSkeletonWithStrategyF cstrat ctx addrs addr mcollateral skeleton = do
 
   runGYTxMonadNodeF cstrat nid providers (addr : addrs) addr mcollateral' $ runReaderT skeleton di
 
-runQuery ∷ Ctx → ReaderT DEXInfo GYTxQueryMonadNode a → IO a
+runQuery ∷ Ctx → ReaderT DEXInfo GYTxQueryMonadIO a → IO a
 runQuery ctx = runQueryWithReader ctx (ctxDexInfo ctx)
 
-runQueryWithReader ∷ Ctx → a → ReaderT a GYTxQueryMonadNode b → IO b
+runQueryWithReader ∷ Ctx → a → ReaderT a GYTxQueryMonadIO b → IO b
 runQueryWithReader ctx a q = do
   let nid = ctxNetworkId ctx
       providers = ctxProviders ctx
-  runGYTxQueryMonadNode nid providers $ runReaderT q a
+  runGYTxQueryMonadIO nid providers $ runReaderT q a
+
+runGYTxMonadNodeF ∷ ∀ t v. Traversable t ⇒ GYCoinSelectionStrategy → GYNetworkId → GYProviders → [GYAddress] → GYAddress → Maybe (GYTxOutRef, Bool) → GYTxBuilderMonadIO (t (GYTxSkeleton v)) → IO (t GYTxBody)
+runGYTxMonadNodeF strat nid providers addrs change collateral act = runGYTxBuilderMonadIO nid providers addrs change collateral $ act >>= traverse (buildTxBodyWithStrategy strat)

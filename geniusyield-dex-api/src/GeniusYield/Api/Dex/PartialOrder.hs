@@ -65,7 +65,6 @@ module GeniusYield.Api.Dex.PartialOrder (
   preferentiallySelectLatestPocd,
 ) where
 
-import Control.Monad.Except (ExceptT (..), liftEither, runExceptT)
 import Control.Monad.Reader (ask)
 import Data.Bifunctor (Bifunctor)
 import Data.Foldable (foldlM)
@@ -410,17 +409,11 @@ partialOrdersHavingAsset pors hasAsset = do
       datumsV1_1 = utxosDatumsPureWithOriginalDatum utxosWithDatumsV1_1
   m1 ←
     iwither
-      ( \oref vod →
-          either (const Nothing) Just
-            <$> runExceptT (makePartialOrderInfo policyIdV1 oref vod POCVersion1)
-      )
+      (\oref vod → makePartialOrderInfo' policyIdV1 oref vod POCVersion1)
       datumsV1
   m1_1 ←
     iwither
-      ( \oref vod →
-          either (const Nothing) Just
-            <$> runExceptT (makePartialOrderInfo policyIdV1_1 oref vod POCVersion1_1)
-      )
+      (\oref vod → makePartialOrderInfo' policyIdV1_1 oref vod POCVersion1_1)
       datumsV1_1
   pure $! m1 <> m1_1
 
@@ -468,8 +461,7 @@ getPartialOrderInfo pors orderRef = do
   pocVersion ← getPartialOrderVersion pors (utxoAddress utxo :!: utxoRef utxo)
   vod ← utxoDatumPureWithOriginalDatum' utxoWithDatum
   policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
-
-  runExceptT (makePartialOrderInfo policyId orderRef vod pocVersion) >>= liftEither
+  makePartialOrderInfo policyId orderRef vod pocVersion
 
 getPartialOrdersInfos
   ∷ GYDexApiQueryMonad m a
@@ -481,11 +473,11 @@ getPartialOrdersInfos pors orderRefs = do
   ps ← applyToBoth addressToPaymentCredential <$> partialOrderAddrTuple pors
   let vod = utxosDatumsPureWithOriginalDatum utxosWithDatums
   when (Map.size vod /= length orderRefs) $ throwAppError $ PodNotAllOrderRefsPresent $ Set.fromList orderRefs `Set.difference` Map.keysSet vod
-  let makePartialOrderInfo' oref v@(addr, _, _, _) = do
+  let makePartialOrderInfo'' oref v@(addr, _, _, _) = do
         pocVersion ← getPartialOrderVersion' ps (addr :!: oref)
         policyId ← withSomePORef (selectPor pors pocVersion) partialOrderNftPolicyId
         makePartialOrderInfo policyId oref v pocVersion
-  runExceptT (Map.traverseWithKey makePartialOrderInfo' vod) >>= liftEither
+  Map.traverseWithKey makePartialOrderInfo'' vod
 
 getPartialOrdersInfos' ∷ GYDexApiQueryMonad m a ⇒ PORefs → [(GYTxOutRef, Natural)] → m [(PartialOrderInfo, Natural)]
 getPartialOrdersInfos' por ordersWithTokenBuyAmount = do
@@ -494,13 +486,22 @@ getPartialOrdersInfos' por ordersWithTokenBuyAmount = do
   -- Even though we use `dropMissing`, `getPartialOrdersInfos` verify that all entries are present.
   pure $ Map.elems $ Map.merge Map.dropMissing Map.dropMissing (Map.zipWithMatched (\_ poi amt → (poi, amt))) orders ordersWithTokenBuyAmount'
 
+makePartialOrderInfo'
+  ∷ GYDexApiQueryMonad m a
+  ⇒ GYMintingPolicyId
+  → GYTxOutRef
+  → (GYAddress, GYValue, PartialOrderDatum, GYDatum)
+  → POCVersion
+  → m (Maybe PartialOrderInfo)
+makePartialOrderInfo' policyId orderRef tuple pocVersion = catchError (Just <$> makePartialOrderInfo policyId orderRef tuple pocVersion) $ \(_ ∷ GYTxMonadException) → pure Nothing
+
 makePartialOrderInfo
   ∷ GYDexApiQueryMonad m a
   ⇒ GYMintingPolicyId
   → GYTxOutRef
   → (GYAddress, GYValue, PartialOrderDatum, GYDatum)
   → POCVersion
-  → ExceptT GYTxMonadException m PartialOrderInfo
+  → m PartialOrderInfo
 makePartialOrderInfo policyId orderRef (utxoAddr, v, PartialOrderDatum {..}, origDatum) pocVersion = do
   addr ← addressFromPlutus' podOwnerAddr
 
