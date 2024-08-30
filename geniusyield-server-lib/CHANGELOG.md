@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.11.0 -- 2024-08-30
+
+* Update to Atlas v0.6.0.
+
 ## 0.10.1 -- 2024-08-29
 
 * Updated Atlas & Maestro SDK version to not make use Maestro's recently deprecated protocol parameters & era summaries endpoint.
