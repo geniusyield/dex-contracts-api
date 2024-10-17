@@ -6,12 +6,17 @@ module GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client (
   TapToolsOHLCVAPI,
   tapToolsClientEnv,
   tapToolsOHLCV,
+  tapToolsPrices,
+  PricesResponse,
   TapToolsException,
   handleTapToolsError,
 ) where
 
 import Control.Lens ((?~))
 import Data.Aeson (ToJSON (..))
+import Data.Aeson qualified as Aeson
+import Data.Aeson.Types qualified as Aeson
+import Data.Map.Strict qualified as Map
 import Data.Swagger qualified as Swagger
 import Data.Time.Clock.POSIX
 import Deriving.Aeson
@@ -19,7 +24,7 @@ import GHC.TypeLits (Symbol, symbolVal)
 import GeniusYield.Server.Ctx (TapToolsApiKey, TapToolsEnv (tteApiKey, tteClientEnv))
 import GeniusYield.Server.Utils (commonEnumParamSchemaRecipe, hideServantClientErrorHeader)
 import GeniusYield.Swagger.Utils
-import GeniusYield.Types (GYAssetClass)
+import GeniusYield.Types (GYAssetClass, makeAssetClass)
 import Maestro.Types.Common (LowerFirst)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
@@ -46,6 +51,25 @@ instance ToHttpApiData TapToolsUnit where
   toUrlPiece (TapToolsUnit ac) = removeDot $ toUrlPiece ac
    where
     removeDot = Text.filter (/= '.')
+
+instance Aeson.ToJSON TapToolsUnit where
+  toJSON = Aeson.toJSON . toUrlPiece
+
+instance Aeson.ToJSONKey TapToolsUnit where
+  toJSONKey = Aeson.toJSONKeyText toUrlPiece
+
+instance FromHttpApiData TapToolsUnit where
+  parseUrlPiece t =
+    let (pid, tn) = Text.splitAt 56 t
+     in bimap Text.pack TapToolsUnit $ makeAssetClass pid tn
+
+instance Aeson.FromJSON TapToolsUnit where
+  parseJSON = Aeson.withText "TapToolsUnit" $ \t → case parseUrlPiece t of
+    Left e → fail $ show e
+    Right ttu → pure ttu
+
+instance Aeson.FromJSONKey TapToolsUnit where
+  fromJSONKey = Aeson.FromJSONKeyTextParser (either (fail . show) pure . parseUrlPiece)
 
 data TapToolsInterval = TTI3m | TTI5m | TTI15m | TTI30m | TTI1h | TTI2h | TTI4h | TTI12h | TTI1d | TTI3d | TTI1w | TTI1M
   deriving stock (Eq, Ord, Enum, Bounded, Data, Typeable, Generic)
@@ -80,13 +104,13 @@ instance Swagger.ToParamSchema TapToolsInterval where
 
 instance Swagger.ToSchema TapToolsInterval where
   declareNamedSchema p =
-    pure
-      $ Swagger.NamedSchema (Just "TapToolsInterval")
-      $ Swagger.paramSchemaToSchema p
-      & Swagger.example
-      ?~ toJSON TTI1M
-        & Swagger.description
-      ?~ "The time interval"
+    pure $
+      Swagger.NamedSchema (Just "TapToolsInterval") $
+        Swagger.paramSchemaToSchema p
+          & Swagger.example
+          ?~ toJSON TTI1M
+            & Swagger.description
+          ?~ "The time interval"
 
 type TapToolsOHLCVPrefix ∷ Symbol
 type TapToolsOHLCVPrefix = "tapToolsOHLCV"
@@ -111,22 +135,34 @@ instance Swagger.ToSchema TapToolsOHLCV where
           & addSwaggerDescription "Get a specific token's trended (open, high, low, close, volume) price data."
           & addSwaggerExample (toJSON $ TapToolsOHLCV {tapToolsOHLCVTime = 1_715_007_300, tapToolsOHLCVOpen = open, tapToolsOHLCVHigh = open, tapToolsOHLCVLow = open, tapToolsOHLCVClose = open, tapToolsOHLCVVolume = 120})
 
+type PricesResponse = Map.Map TapToolsUnit Double
+
 type TapToolsApiKeyHeaderName ∷ Symbol
 type TapToolsApiKeyHeaderName = "x-api-key"
 
 type TapToolsAPI =
-  Header' '[Required] TapToolsApiKeyHeaderName TapToolsApiKey :> TapToolsOHLCVAPI
+  Header' '[Required] TapToolsApiKeyHeaderName TapToolsApiKey
+    :> "token"
+    :> (TapToolsOHLCVAPI :<|> TapToolsPricesAPI)
 
 type TapToolsOHLCVAPI =
-  "token"
-    :> "ohlcv"
+  "ohlcv"
     :> QueryParam "unit" TapToolsUnit
     :> QueryParam' '[Required, Strict] "interval" TapToolsInterval
     :> QueryParam "numIntervals" Natural
     :> Get '[JSON] [TapToolsOHLCV]
 
-_tapToolsOHLCV ∷ TapToolsApiKey → Maybe TapToolsUnit → TapToolsInterval → Maybe Natural → ClientM [TapToolsOHLCV]
-_tapToolsOHLCV = client (Proxy @TapToolsAPI)
+type TapToolsPricesAPI = "prices" :> ReqBody '[JSON] [TapToolsUnit] :> Post '[JSON] PricesResponse
+
+data TapToolsClient = TapToolsClient
+  { tapToolsOHLCVClient ∷ Maybe TapToolsUnit → TapToolsInterval → Maybe Natural → ClientM [TapToolsOHLCV],
+    tapToolsPricesClient ∷ [TapToolsUnit] → ClientM PricesResponse
+  }
+
+mkTapToolsClient ∷ TapToolsApiKey → TapToolsClient
+mkTapToolsClient apiKey =
+  let tapToolsOHLCVClient :<|> tapToolsPricesClient = client (Proxy @TapToolsAPI) apiKey
+   in TapToolsClient {..}
 
 tapToolsBaseUrl ∷ String
 tapToolsBaseUrl = "https://openapi.taptools.io/api/v1"
@@ -151,4 +187,7 @@ handleTapToolsError ∷ Text → Either ClientError a → IO a
 handleTapToolsError locationInfo = either (throwIO . TapToolsApiError locationInfo . hideServantClientErrorHeader (fromString $ symbolVal (Proxy @TapToolsApiKeyHeaderName))) pure
 
 tapToolsOHLCV ∷ TapToolsEnv → Maybe TapToolsUnit → TapToolsInterval → Maybe Natural → IO [TapToolsOHLCV]
-tapToolsOHLCV env@(tteApiKey → apiKey) ttu tti mttni = _tapToolsOHLCV apiKey ttu tti mttni & runTapToolsClient env >>= handleTapToolsError "tapToolsOHLCV"
+tapToolsOHLCV env@(tteApiKey → apiKey) ttu tti mttni = mkTapToolsClient apiKey & tapToolsOHLCVClient & (\f → f ttu tti mttni) & runTapToolsClient env >>= handleTapToolsError "tapToolsOHLCV"
+
+tapToolsPrices ∷ TapToolsEnv → [TapToolsUnit] → IO PricesResponse
+tapToolsPrices env@(tteApiKey → apiKey) ttus = mkTapToolsClient apiKey & tapToolsPricesClient & (\f → f ttus) & runTapToolsClient env >>= handleTapToolsError "tapToolsPrices"
