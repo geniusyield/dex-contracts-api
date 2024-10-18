@@ -81,7 +81,7 @@ RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 7D1E8AFD1D4A16D71FA
 # ghcup:
 ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 ENV BOOTSTRAP_HASKELL_GHC_VERSION=9.6.5
-ENV BOOTSTRAP_HASKELL_CABAL_VERSION=3.10.2.0
+ENV BOOTSTRAP_HASKELL_CABAL_VERSION=3.12.1.0
 RUN bash -c "curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh"
 ENV PATH=${PATH}:/root/.local/bin
 ENV PATH=${PATH}:/root/.ghcup/bin
