@@ -1,8 +1,9 @@
 # Revision history for geniusyield-server-lib
 
-## 0.11.1 -- 2024-10-28
+## 0.11.1 -- 2024-10-30
 
 * Adds support of [`prices`](https://openapi.taptools.io/#tag/Market-Tokens/paths/~1token~1prices/post) TapTools endpoint.
+* In case project is being built from an environment which lacks access to corresponding `.git` directory, "UNKNOWN_REVISION" is used for `revision` field when querying for settings of the server.
 
 ## 0.11.0 -- 2024-08-30
 
