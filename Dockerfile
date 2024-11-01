@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bullseye-slim as build
 
 ENV LANG C.UTF-8
 
@@ -50,7 +50,7 @@ RUN git clone https://github.com/bitcoin-core/secp256k1 && \
     cd secp256k1 && \
     git checkout ac83be33d0956faf6b7f61a60ab524ef7d6a473a && \
     ./autogen.sh && \
-    ./configure --prefix=/usr --enable-module-schnorrsig --enable-experimental && \
+    ./configure --prefix=/usr/local --enable-module-schnorrsig --enable-experimental && \
     make && \
     make install
 
@@ -101,8 +101,33 @@ RUN git init && \
     git commit -m "Dummy commit"
 RUN cabal update
 RUN cabal build all --enable-tests --enable-benchmarks
+RUN cp $(cabal list-bin geniusyield-server) /DEX/geniusyield-server
 
 # =============================[ SERVER ]================================
+FROM debian:bullseye-slim
+
+ENV LANG C.UTF-8
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgmp10 \
+    libpq5 \
+    libssl1.1 \
+    libsystemd0 \
+    libtinfo6 \
+    procps && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /usr/local/lib /usr/local/lib
+COPY --from=build /usr/local/bin/yq /usr/local/bin/yq
+COPY --from=build /DEX/start.sh /DEX/start.sh
+COPY --from=build /DEX/geniusyield-server /usr/local/bin/geniusyield-server
+COPY --from=build /DEX/web /DEX/web
+
+ENV LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+
+WORKDIR /DEX
+
 LABEL org.opencontainers.image.source="https://github.com/geniusyield/dex-contracts-api"
 
 ENTRYPOINT ["/bin/bash", "./start.sh"]
