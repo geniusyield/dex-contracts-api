@@ -15,7 +15,7 @@ import Data.Yaml qualified as Yaml
 import Deriving.Aeson
 import GHC.IO.Exception (userError)
 import GeniusYield.GYConfig (Confidential, GYCoreConfig (..), GYCoreProviderInfo)
-import GeniusYield.Types
+import GeniusYield.Types hiding (Port)
 import Maestro.Types.Common (LowerFirst)
 import Network.Wai.Handler.Warp (Port)
 import RIO
