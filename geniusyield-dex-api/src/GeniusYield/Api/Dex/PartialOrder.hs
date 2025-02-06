@@ -76,13 +76,43 @@ import Data.Set qualified as Set
 import Data.Strict.Tuple (Pair (..), (:!:))
 import Data.Swagger qualified as Swagger
 import Data.Text qualified as Text
-import GeniusYield.Api.Dex.PartialOrderConfig (PORef (..), PORefs (..), RefPocd (..), RefPocds, SomePORef (..), SomeRefPocd (..), fetchPartialOrderConfig, fetchPartialOrderConfigs, selectPor, selectRefPocd, selectV1RefPocd, selectV1_1RefPocd, withSomePORef)
-import GeniusYield.Api.Dex.Types (GYDexApiMonad, GYDexApiQueryMonad, HasDexScripts)
+import GeniusYield.Api.Dex.PartialOrderConfig (
+  PORef (..),
+  PORefs (..),
+  RefPocd (..),
+  RefPocds,
+  SomePORef (..),
+  SomeRefPocd (..),
+  fetchPartialOrderConfig,
+  fetchPartialOrderConfigs,
+  selectPor,
+  selectRefPocd,
+  selectV1RefPocd,
+  selectV1_1RefPocd,
+  withSomePORef,
+ )
+import GeniusYield.Api.Dex.Types (
+  GYDexApiMonad,
+  GYDexApiQueryMonad,
+  HasDexScripts,
+ )
 import GeniusYield.HTTP.Errors
 import GeniusYield.Imports
-import GeniusYield.Scripts.Dex.Nft (gyExpectedTokenName, mkNftRedeemer)
-import GeniusYield.Scripts.Dex.PartialOrder (PartialOrderAction (..), PartialOrderContainedFee (..), PartialOrderDatum (..), PartialOrderFeeOutput (..), partialOrderValidator)
-import GeniusYield.Scripts.Dex.PartialOrderConfig (PartialOrderConfigInfo, PartialOrderConfigInfoF (..))
+import GeniusYield.Scripts.Dex.Nft (
+  gyExpectedTokenName,
+  mkNftRedeemer,
+ )
+import GeniusYield.Scripts.Dex.PartialOrder (
+  PartialOrderAction (..),
+  PartialOrderContainedFee (..),
+  PartialOrderDatum (..),
+  PartialOrderFeeOutput (..),
+  partialOrderValidator,
+ )
+import GeniusYield.Scripts.Dex.PartialOrderConfig (
+  PartialOrderConfigInfo,
+  PartialOrderConfigInfoF (..),
+ )
 import GeniusYield.Scripts.Dex.PartialOrderNft (partialOrderNftMintingPolicy)
 import GeniusYield.Scripts.Dex.Version
 import GeniusYield.TxBuilder
@@ -301,7 +331,7 @@ partialOrderInfoToIn a pocVersion pors PartialOrderInfo {..} oa =
           gyTxInWitness =
             GYTxInWitnessScript
               (GYInReference porValRef $ validatorToScript $ partialOrderValidator a pocVersion porRefNft)
-              poiRawDatum
+              (Just poiRawDatum)
               $ redeemerFromPlutusData oa
         }
 

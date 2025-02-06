@@ -16,6 +16,7 @@ import Data.Aeson.Key qualified as K
 import Data.Kind (Type)
 import Data.List (sortBy)
 import Data.OpenApi
+import Data.OpenApi qualified as OpenApi
 import Data.Strict qualified as Strict
 import Data.Strict.Tuple
 import Data.Swagger qualified as Swagger
@@ -218,7 +219,7 @@ geniusYieldAPIOpenApi ∷ OpenApi
 geniusYieldAPIOpenApi =
   toOpenApi geniusYieldAPI
     & info
-    . title
+    . OpenApi.title
     .~ "GeniusYield DEX Server API"
       & info
       . version
@@ -237,17 +238,17 @@ geniusYieldAPIOpenApi =
           ?~ "GeniusYield Technical Support"
        )
       & info
-      . description
+      . OpenApi.description
     ?~ "API to interact with GeniusYield DEX."
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("tx" +> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & description ?~ "Endpoints related to accessing markets information"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & description ?~ "Endpoints related to interacting with orders"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & description ?~ "Endpoint to get server settings such as network, version, and revision"]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & description ?~ "Endpoint to get trading fees of DEX."]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & description ?~ "Endpoint to fetch asset details."]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-books" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & description ?~ "Endpoint to fetch order book."]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> HistoricalPricesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & description ?~ "Endpoints to fetch historical prices."]
-      & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & description ?~ "Endpoint to fetch token balances."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("tx" +> TxAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Transaction" & OpenApi.description ?~ "Endpoints related to transaction hex such as submitting a transaction"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("markets" +> MarketsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Markets" & OpenApi.description ?~ "Endpoints related to accessing markets information"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("orders" +> OrdersAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Orders" & OpenApi.description ?~ "Endpoints related to interacting with orders"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("settings" +> SettingsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Settings" & OpenApi.description ?~ "Endpoint to get server settings such as network, version, and revision"]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("trading-fees" +> TradingFeesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Trading Fees" & OpenApi.description ?~ "Endpoint to get trading fees of DEX."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("assets" +> AssetsAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Assets" & OpenApi.description ?~ "Endpoint to fetch asset details."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("order-books" +> OrderBookAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Order Book" & OpenApi.description ?~ "Endpoint to fetch order book."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("historical-prices" +> HistoricalPricesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Historical Prices" & OpenApi.description ?~ "Endpoints to fetch historical prices."]
+      & applyTagsFor (subOperations (Proxy ∷ Proxy ("balances" +> BalancesAPI)) (Proxy ∷ Proxy GeniusYieldAPI)) ["Balances" & OpenApi.description ?~ "Endpoint to fetch token balances."]
 
 geniusYieldServer ∷ Ctx → ServerT GeniusYieldAPI IO
 geniusYieldServer ctx =
