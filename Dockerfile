@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim as build
+FROM debian:bookworm-slim as build
 
 ENV LANG C.UTF-8
 
@@ -104,7 +104,7 @@ RUN cabal build all --enable-tests --enable-benchmarks
 RUN cp $(cabal list-bin geniusyield-server) /DEX/geniusyield-server
 
 # =============================[ SERVER ]================================
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV LANG C.UTF-8
 
@@ -112,7 +112,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libgmp10 \
     libpq5 \
-    libssl1.1 \
+    libssl3 \
     libsystemd0 \
     libtinfo6 \
     procps && \
