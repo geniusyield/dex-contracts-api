@@ -1,5 +1,9 @@
 # Revision history for geniusyield-dex-api
 
+## 0.5.1.0 -- 2024-02-14
+
+* Update to Atlas v0.11.1.
+
 ## 0.5.0.0 -- 2024-08-30
 
 * Update to Atlas v0.6.0.
