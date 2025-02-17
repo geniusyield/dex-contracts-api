@@ -1,5 +1,9 @@
 # Revision history for geniusyield-server-lib
 
+## 0.11.2 -- 2024-02-14
+
+* Update to Atlas v0.11.1.
+
 ## 0.11.1 -- 2024-10-30
 
 * Adds support of [`prices`](https://openapi.taptools.io/#tag/Market-Tokens/paths/~1token~1prices/post) TapTools endpoint.

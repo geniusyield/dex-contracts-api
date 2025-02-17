@@ -4,7 +4,7 @@ name:            geniusyield-dex-api
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:         0.5.0.0
+version:         0.5.1.0
 synopsis:        API code to interact with GeniusYield DEX.
 description:
   API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.

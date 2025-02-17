@@ -36,8 +36,8 @@ source-repository-package
 source-repository-package
   type: git
   location: https://github.com/geniusyield/atlas
-  tag: c5a8b212074e9c09f4c9b88c1cb5977cd4b64e3e
-  --sha256: sha256-YzKt2G2jAJ2W2tG2MC3vDMOhQ3grs/oYjt9V86eIcfE=
+  tag: v0.11.1
+  --sha256: sha256-leT3lll0Fms4fjPuRqUBSRqjl28ARI+vIs1Xn14VO98=
 
 -------- Begin contents from @atlas@'s @cabal.project@ file. --------
 
