@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: BSL-1.1
+// Copyright              : Copyright (c) 2025 GYELD GmbH
+// License                : Business Source License 1.1
+// Licensed Work          : GeniusYield Onchain Scripts
+// Change License         : GPL v2.0 or later (after Change Date)
+// See LICENSE file for full terms
+
 use aiken/collection/dict
 use aiken/collection/list
 use aiken/collection/pairs

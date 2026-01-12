@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: BSL-1.1
+// Copyright              : Copyright (c) 2025 GYELD GmbH
+// License                : Business Source License 1.1
+// Licensed Work          : GeniusYield Onchain Scripts
+// Change License         : GPL v2.0 or later (after Change Date)
+// See LICENSE file for full terms
+
 //// Defines type for rational number.
 
 /// Rational number. Note that there are no checks performed to ensure that denominator is non-zero & positive. Order creation logic is expected to ensure this. Such invariants is the reason that validator should only consider those orders which have the required NFT.
