@@ -32,29 +32,29 @@ type TxAPI =
       :> ReqBody '[JSON] GYTx
       :> Post '[JSON] GYTxId
 
-handleTxApi ∷ Ctx → ServerT TxAPI IO
+handleTxApi :: Ctx -> ServerT TxAPI IO
 handleTxApi ctx =
   handleTxSign ctx
     :<|> handleTxSignAndSubmit ctx
     :<|> handleTxSubmit ctx
 
-throwNoSigningKeyError ∷ IO a
+throwNoSigningKeyError :: IO a
 throwNoSigningKeyError = throwIO $ err500 {errBody = "No signing key configured."}
 
-handleTxSign ∷ Ctx → GYTx → IO GYTx
+handleTxSign :: Ctx -> GYTx -> IO GYTx
 handleTxSign ctx@Ctx {..} tx = do
   logInfo ctx $ "Signing transaction: " +| txToHex tx |+ ""
   case ctxSigningKey of
-    Just sk → pure $ signGYTx' tx [somePaymentSigningKeyToSomeSigningKey $ Strict.fst sk]
-    Nothing → throwNoSigningKeyError
+    Just sk -> pure $ signGYTx' tx [somePaymentSigningKeyToSomeSigningKey $ Strict.fst sk]
+    Nothing -> throwNoSigningKeyError
 
-handleTxSignAndSubmit ∷ Ctx → GYTx → IO GYTxId
+handleTxSignAndSubmit :: Ctx -> GYTx -> IO GYTxId
 handleTxSignAndSubmit ctx tx = do
   logInfo ctx $ "Signing and submitting transaction: " +| txToHex tx |+ ""
-  signedTx ← handleTxSign ctx tx
+  signedTx <- handleTxSign ctx tx
   handleTxSubmit ctx signedTx
 
-handleTxSubmit ∷ Ctx → GYTx → IO GYTxId
+handleTxSubmit :: Ctx -> GYTx -> IO GYTxId
 handleTxSubmit ctx@Ctx {..} tx = do
   logInfo ctx $ "Submitting transaction: " +| txToHex tx |+ ""
   gySubmitTx ctxProviders tx

@@ -26,3 +26,8 @@ cabal.project.local~
 secrets/
 *.env
 .vscode
+*.swp
+tags
+TAGS
+*.local
+*.local.yml

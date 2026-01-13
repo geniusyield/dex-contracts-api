@@ -1,95 +1,220 @@
-cabal-version:   3.6
-name:            geniusyield-dex-api
-
--- PVP summary:     +-+------- breaking API changes
---                  | | +----- non-breaking API additions
---                  | | | +--- code changes with no API change
-version:         0.5.1.0
-synopsis:        API code to interact with GeniusYield DEX.
-description:
-  API code to interact with GeniusYield DEX. Learn more about GeniusYield by visiting https://www.geniusyield.co/.
-
-license:         Apache-2.0
-license-file:    LICENSE
-author:          GeniusYield
-maintainer:      support@geniusyield.co
-copyright:       2023 GYELD GMBH
-build-type:      Simple
-category:        Blockchain, Cardano, Validator
-extra-doc-files:
-  CHANGELOG.md
-  README.md
-
-tested-with:     GHC ==9.6.5
-
-source-repository head
-  type:     git
-  location: https://github.com/geniusyield/dex-contracts-api
+cabal-version: 3.4
+name:          geniusyield-dex-api
+version:       0.1.0.0
+author:        Lars Bruenjes
+maintainer:    lars.bruenjes@geniusyield.co
+build-type:    Simple
+copyright:     © 2021 Lars Bruenjes
+data-dir:      geniusyield-onchain/compiled
+data-files:    DEX.NFT
+             , DEX.PartialOrder
+             , DEX.PartialOrderConfig
+             , DEX.PartialOrderConfigTracing
+             , DEX.PartialOrderConfigV1AppliedMainnet
+             , DEX.PartialOrderConfigV1AppliedPreprod
+             , DEX.PartialOrderNFT
+             , DEX.PartialOrderNFTTracing
+             , DEX.PartialOrderNFTV1_1
+             , DEX.PartialOrderNFTV1_1Tracing
+             , DEX.PartialOrderTracing
+             , DEX.TwoWayOrderConfig
+             , DEX.TwoWayOrder.json
+             , SignedMint
+             , Staking.Stake
+             , Staking.Stake.Old
+             , TokenSale.Order
+             , TokenSale.SalePhaseToken
 
 common common
-  default-language:   GHC2021
+  default-language:   Haskell2010
   default-extensions:
+    BangPatterns
     DataKinds
     DeriveAnyClass
+    DeriveDataTypeable
+    DeriveGeneric
+    DeriveTraversable
     DerivingStrategies
     DerivingVia
+    EmptyCase
+    FlexibleContexts
+    FlexibleInstances
     GADTs
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
     LambdaCase
+    MultiParamTypeClasses
     MultiWayIf
+    NamedFieldPuns
+    NumericUnderscores
     OverloadedStrings
+    PatternSynonyms
+    RankNTypes
     RecordWildCards
     RoleAnnotations
-    TemplateHaskell
+    ScopedTypeVariables
+    StandaloneDeriving
+    StandaloneKindSignatures
+    TupleSections
+    TypeApplications
     TypeFamilies
+    TypeOperators
     UndecidableInstances
-    UnicodeSyntax
     ViewPatterns
 
-  ghc-options:        -Wall -Wincomplete-uni-patterns -Wunused-packages
+  ghc-options:
+    -Wall -Wincomplete-uni-patterns -Wno-unticked-promoted-constructors -Werror
 
-  -- Speed-ups GHCi considerably.
+  -- speed-ups GHCi considerably
   ghc-options:        -fno-show-valid-hole-fits
+  ghc-options:        -Wunused-packages
+  ghc-options:        -Wno-unused-packages
+
+  if flag(useceilingforv1_1)
+    cpp-options: -DUSE_CEILING_FOR_V1_1
+
+common plutus-ghc-options
+  -- so unfoldings are present even when compiled without optmizations
+  ghc-options:
+    -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+    -Wno-partial-type-signatures
+
+  -- expose all unfoldings, so plutustx compiler can do its job
+  ghc-options:
+    -fexpose-all-unfoldings -fobject-code -fplugin-opt
+    PlutusTx.Plugin:defer-errors
+
+  -- set target plutus-core version
+  ghc-options: -fplugin-opt PlutusTx.Plugin:target-version=1.0.0
+
+flag useCeilingForV1_1
+  description:
+    Use ceiling instead of floor for V1_1 family of DEX contracts when determining the percent maker/taker fees. Purpose of this flag is to verify whether the changes are compatible with earlier off-chain code.
+
+  default:     False
 
 library
   import:          common
   hs-source-dirs:  src
+  autogen-modules: Paths_geniusyield_dex_api
+  other-modules:   Paths_geniusyield_dex_api
   exposed-modules:
-    GeniusYield.Api.Dex.Constants
-    GeniusYield.Api.Dex.PartialOrder
-    GeniusYield.Api.Dex.PartialOrderConfig
-    GeniusYield.Api.Dex.Types
+    -- GeniusYield.Api.Cache
+    GeniusYield.Api.DEX.Exceptions
+    -- GeniusYield.Api.DEX.Option
+    GeniusYield.Api.DEX.Constants
+    GeniusYield.Api.DEX.PartialOrder
+    GeniusYield.Api.DEX.PartialOrderConfig
+    GeniusYield.Scripts.DEX.PartialOrderConfig.OnChain
+    GeniusYield.Api.DEX.TwoWayOrder
+    GeniusYield.Api.DEX.TwoWayOrder.Simple
+    GeniusYield.Api.DEX.TwoWayOrderConfig
+    GeniusYield.Api.DEX.Utils
+    -- GeniusYield.Api.HotKeyRewards
+    -- GeniusYield.Api.HotKeyRewards.IO
+    -- GeniusYield.Api.HotKeyRewards.Operations
+    -- GeniusYield.Api.HotKeyRewards.Test
+    -- GeniusYield.Api.HotKeyRewards.Types
+    -- GeniusYield.Api.MerkleRewards
+    -- GeniusYield.Api.MerkleRewards.IO
+    -- GeniusYield.Api.MerkleRewards.Operations
+    -- GeniusYield.Api.MerkleRewards.Test
+    -- GeniusYield.Api.MerkleRewards.Types
+    -- GeniusYield.Api.OneWay
+    GeniusYield.Api.Oracle
+    GeniusYield.Api.Oracle.Handle
+    GeniusYield.Api.Oracle.Providers
+    GeniusYield.Api.Oracle.Http
+    -- GeniusYield.Api.Staking.Stake
+    -- GeniusYield.Api.TokenSale
+    -- GeniusYield.Api.TokenSale.ChainAnalysis
+    -- GeniusYield.Api.TokenSale.Distribution
+    -- GeniusYield.Api.TokenSale.IO
+    -- GeniusYield.Api.TokenSale.Operations
+    -- GeniusYield.Api.TokenSale.Types
+    -- GeniusYield.Api.TokenSale.Utils
+    GeniusYield.Api.Types
+    GeniusYield.Api.Utils
+    -- GeniusYield.Api.Vesting
+    -- GeniusYield.Api.Vesting.IO
+    -- GeniusYield.Api.Vesting.Operations
+    -- GeniusYield.Api.Vesting.Types
+    GeniusYield.Config
+    GeniusYield.Config.DEX
+    -- GeniusYield.Config.ISPO
+    -- GeniusYield.Config.Rewards
+    -- GeniusYield.Config.TokenSale
+    GeniusYield.Config.Utils
+    GeniusYield.Crypto
     GeniusYield.Scripts
-    GeniusYield.Scripts.Common
-    GeniusYield.Scripts.Dex
-    GeniusYield.Scripts.Dex.Data
-    GeniusYield.Scripts.Dex.Nft
-    GeniusYield.Scripts.Dex.PartialOrder
-    GeniusYield.Scripts.Dex.PartialOrderConfig
-    GeniusYield.Scripts.Dex.PartialOrderConfig.Internal
-    GeniusYield.Scripts.Dex.PartialOrderNft
-    GeniusYield.Scripts.Dex.Version
+    GeniusYield.Scripts.DEX
+    GeniusYield.Scripts.DEX.NFT
+    -- GeniusYield.Scripts.DEX.Option
+    GeniusYield.Scripts.DEX.PartialOrder
+    GeniusYield.Scripts.DEX.PartialOrderConfig
+    GeniusYield.Scripts.DEX.PartialOrderNFT
+    GeniusYield.Scripts.BlueprintTH
+    GeniusYield.Scripts.DEX.TwoWayOrder
+    GeniusYield.Scripts.DEX.TwoWayOrder.Utils
+    GeniusYield.Scripts.DEX.TwoWayOrderConfig
+    GeniusYield.Scripts.DEX.Version
+    GeniusYield.Scripts.Internal
+    GeniusYield.TxBuilder.Upgrade
+    -- GeniusYield.Scripts.MerkleRewards
+    -- GeniusYield.Scripts.MerkleRewards.Hashable
+    -- GeniusYield.Scripts.MerkleRewards.MerkleTree
+    -- GeniusYield.Scripts.OneWay
+    -- GeniusYield.Scripts.SignedMint
+    -- GeniusYield.Scripts.Staking
+    -- GeniusYield.Scripts.Staking.Stake
+    -- GeniusYield.Scripts.TokenSale
+    -- GeniusYield.Scripts.Vesting
 
   build-depends:
     , aeson
-    , base          ^>=4.18.2.0
-    , containers
-    , data-default
-    , http-types
-    , lens
-    , mtl
-    , some
-    , strict
-    , swagger2
-    , text
-
-  -- Dependencies whose version is fixed by @cabal.project@ file.
-  build-depends:
     , atlas-cardano
-    , geniusyield-common
-    , ply-core
-
-  -- Cardano libraries which are not on hackage. Their version is pinned in @cabal.project@ file or derived from other related dependencies.
-  build-depends:
+    , base ^>=4.18.2.0
+    , base16-bytestring
+    , bytestring
+    , cardano-api
+    , cardano-crypto-class
+    , cassava
+    , containers
+    , cryptonite
+    , data-default
+    , deriving-aeson
+    , directory
+    , filepath
+    , geniusyield-core-common
+    -- , geniusyield:geniusyield-onchain-plutustx
+    , hedis
+    , http-api-data
+    , http-client
+    , http-client-tls
+    , http-conduit
+    , http-types
+    , insert-ordered-containers
+    , lens
+    , memory
+    , serialise
+    , mtl
+    , maestro-sdk
     , plutus-core
     , plutus-ledger-api
     , plutus-tx
+    , ply-core
+    , postgresql-simple
+    , random
+    , some
+    , split
+    , strict
+    , servant
+    , servant-client
+    , swagger2
+    , stringsearch
+    , text
+    , template-haskell
+    , time
+
+  -- GHC thinks there is unboxed sums in the code?
+  ghc-options:     -fobject-code

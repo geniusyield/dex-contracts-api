@@ -14,7 +14,7 @@ import Servant
 
 type AssetsAPI = Summary "Get assets information" :> Description ("Get information for a specific asset. " `AppendSymbol` CommonMaestroKeyRequirementText) :> Capture "asset" GYAssetClass :> Get '[JSON] AssetDetails
 
-handleAssetsApi ∷ Ctx → GYAssetClass → IO AssetDetails
+handleAssetsApi :: Ctx -> GYAssetClass -> IO AssetDetails
 handleAssetsApi ctx@Ctx {..} ac = do
   logInfo ctx $ "Fetching details of asset: " +|| ac ||+ ""
   getAssetDetails ctxMaestroProvider ac

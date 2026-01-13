@@ -39,26 +39,26 @@ data UserWallet = MnemonicWallet !MnemonicWalletDetails | KeyPathWallet !FilePat
 
 data MnemonicWalletDetails = MnemonicWalletDetails
   { -- | Mnemonic (seed phrase).
-    mnemonic ∷ !Mnemonic,
+    mnemonic :: !Mnemonic,
     -- | Account index.
-    accIx ∷ !(Maybe Word32),
+    accIx :: !(Maybe Word32),
     -- | Payment address index.
-    addrIx ∷ !(Maybe Word32)
+    addrIx :: !(Maybe Word32)
   }
   deriving stock (Generic)
   deriving anyclass (FromJSON, ToJSON)
 
 data ServerConfig = ServerConfig
-  { scCoreProvider ∷ !GYCoreProviderInfo,
-    scNetworkId ∷ !GYNetworkId,
-    scLogging ∷ ![GYLogScribeConfig],
-    scMaestroToken ∷ !(Confidential Text),
-    scPort ∷ !Port,
-    scWallet ∷ !(Maybe UserWallet),
-    scServerApiKey ∷ !(Confidential Text),
-    scTapToolsApiKey ∷ !(Maybe (Confidential Text)),
-    scCollateral ∷ !(Maybe GYTxOutRef),
-    scStakeAddress ∷ !(Maybe GYStakeAddressBech32)
+  { scCoreProvider :: !GYCoreProviderInfo,
+    scNetworkId :: !GYNetworkId,
+    scLogging :: ![GYLogScribeConfig],
+    scMaestroToken :: !(Confidential Text),
+    scPort :: !Port,
+    scWallet :: !(Maybe UserWallet),
+    scServerApiKey :: !(Confidential Text),
+    scTapToolsApiKey :: !(Maybe (Confidential Text)),
+    scCollateral :: !(Maybe GYTxOutRef),
+    scStakeAddress :: !(Maybe GYStakeAddressBech32)
   }
   deriving stock (Generic)
   deriving
@@ -68,32 +68,32 @@ data ServerConfig = ServerConfig
 instance FromEnv ServerConfig where
   fromEnv _ = forceFromJsonOrYaml <$> env "SERVER_CONFIG"
    where
-    forceFromJsonOrYaml ∷ FromJSON a ⇒ String → a
+    forceFromJsonOrYaml :: FromJSON a => String -> a
     forceFromJsonOrYaml s =
       let bs = fromString s
           parseResults = eitherDecodeStrict bs :| [first show $ Yaml.decodeEither' bs]
        in go parseResults
      where
       go (x :| []) = case x of
-        Left e → error e
-        Right a → a
+        Left e -> error e
+        Right a -> a
       go (x :| y : ys) = case x of
-        Left _ → go (y :| ys)
-        Right a → a
+        Left _ -> go (y :| ys)
+        Right a -> a
 
-eitherDecodeFileStrictJsonOrYaml ∷ FromJSON a ⇒ FilePath → IO (Either String a)
+eitherDecodeFileStrictJsonOrYaml :: FromJSON a => FilePath -> IO (Either String a)
 eitherDecodeFileStrictJsonOrYaml fp =
   case takeExtension fp of
-    ".json" → eitherDecodeFileStrict fp
-    ".yaml" → first show <$> Yaml.decodeFileEither fp
-    _ → throwIO $ userError "Only .json or .yaml extensions are supported for configuration."
+    ".json" -> eitherDecodeFileStrict fp
+    ".yaml" -> first show <$> Yaml.decodeFileEither fp
+    _ -> throwIO $ userError "Only .json or .yaml extensions are supported for configuration."
 
-serverConfigOptionalFPIO ∷ Maybe FilePath → IO ServerConfig
+serverConfigOptionalFPIO :: Maybe FilePath -> IO ServerConfig
 serverConfigOptionalFPIO mfp = do
-  e ← maybe decodeEnv eitherDecodeFileStrictJsonOrYaml mfp
+  e <- maybe decodeEnv eitherDecodeFileStrictJsonOrYaml mfp
   either (throwIO . userError) return e
 
-coreConfigFromServerConfig ∷ ServerConfig → GYCoreConfig
+coreConfigFromServerConfig :: ServerConfig -> GYCoreConfig
 coreConfigFromServerConfig ServerConfig {..} =
   GYCoreConfig
     { cfgCoreProvider = scCoreProvider,
@@ -102,23 +102,23 @@ coreConfigFromServerConfig ServerConfig {..} =
       cfgLogTiming = Nothing
     }
 
-optionalSigningKeyFromServerConfig ∷ ServerConfig → IO (Maybe (Pair GYSomePaymentSigningKey GYAddress))
+optionalSigningKeyFromServerConfig :: ServerConfig -> IO (Maybe (Pair GYSomePaymentSigningKey GYAddress))
 optionalSigningKeyFromServerConfig ServerConfig {..} = do
   case scWallet of
-    Nothing → pure Nothing
-    Just (MnemonicWallet MnemonicWalletDetails {..}) →
+    Nothing -> pure Nothing
+    Just (MnemonicWallet MnemonicWalletDetails {..}) ->
       let wk' = walletKeysFromMnemonicIndexed mnemonic (fromMaybe 0 accIx) (fromMaybe 0 addrIx)
        in pure $ case wk' of
-            Left _ → Nothing
-            Right wk → Just (AGYExtendedPaymentSigningKey (walletKeysToExtendedPaymentSigningKey wk) :!: walletKeysToAddress wk scNetworkId)
-    Just (KeyPathWallet fp) → do
-      skey ← readSomePaymentSigningKey fp
+            Left _ -> Nothing
+            Right wk -> Just (AGYExtendedPaymentSigningKey (walletKeysToExtendedPaymentSigningKey wk) :!: walletKeysToAddress wk scNetworkId)
+    Just (KeyPathWallet fp) -> do
+      skey <- readSomePaymentSigningKey fp
       pure $ Just (skey :!: addressFromSomePaymentSigningKey scNetworkId skey)
  where
-  addressFromSomePaymentSigningKey ∷ GYNetworkId → GYSomePaymentSigningKey → GYAddress
+  addressFromSomePaymentSigningKey :: GYNetworkId -> GYSomePaymentSigningKey -> GYAddress
   addressFromSomePaymentSigningKey nid skey =
     let pkh =
           case skey of
-            AGYPaymentSigningKey skey' → paymentKeyHash . paymentVerificationKey $ skey'
-            AGYExtendedPaymentSigningKey skey' → extendedPaymentSigningKeyToApi skey' & Api.getVerificationKey & Api.verificationKeyHash & unsafeCoerce & paymentKeyHashFromApi -- Usage of `unsafeCoerce` here as Atlas's key hash types need an overhaul since it is not powerful enough to cater for all the relevant cases.
+            AGYPaymentSigningKey skey' -> paymentKeyHash . paymentVerificationKey $ skey'
+            AGYExtendedPaymentSigningKey skey' -> extendedPaymentSigningKeyToApi skey' & Api.getVerificationKey & Api.verificationKeyHash & unsafeCoerce & paymentKeyHashFromApi -- Usage of `unsafeCoerce` here as Atlas's key hash types need an overhaul since it is not powerful enough to cater for all the relevant cases.
      in addressFromPaymentKeyHash nid pkh

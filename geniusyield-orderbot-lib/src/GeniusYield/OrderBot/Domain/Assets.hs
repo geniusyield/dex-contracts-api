@@ -42,15 +42,15 @@ instance Swagger.ToSchema AssetDecimals where
   declareNamedSchema =
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions
       & addSwaggerDescription "Decimals of an asset."
-      & addSwaggerExample (toJSON (6 ∷ AssetDecimals))
+      & addSwaggerExample (toJSON (6 :: AssetDecimals))
 
-type AssetDetailsPrefix ∷ Symbol
+type AssetDetailsPrefix :: Symbol
 type AssetDetailsPrefix = "ad"
 
 data AssetDetails = AssetDetails
-  { adAsset ∷ !GYAssetClass,
-    adAssetTicker ∷ !(Maybe AssetTicker),
-    adAssetDecimals ∷ !(Maybe AssetDecimals)
+  { adAsset :: !GYAssetClass,
+    adAssetTicker :: !(Maybe AssetTicker),
+    adAssetDecimals :: !(Maybe AssetDecimals)
   }
   deriving stock (Show, Eq, Generic)
   deriving
@@ -64,7 +64,7 @@ instance Swagger.ToSchema AssetDetails where
     Swagger.genericDeclareNamedSchema Swagger.defaultSchemaOptions {Swagger.fieldLabelModifier = dropSymbolAndCamelToSnake @AssetDetailsPrefix}
       & addSwaggerDescription "Asset details."
 
-adaAssetDetails ∷ AssetDetails
+adaAssetDetails :: AssetDetails
 adaAssetDetails =
   AssetDetails
     { adAssetTicker = Just $ AssetTicker "ADA",
@@ -73,4 +73,4 @@ adaAssetDetails =
     }
 
 class HasAssets a where
-  getAssetDetails ∷ a → GYAssetClass → IO AssetDetails
+  getAssetDetails :: a -> GYAssetClass -> IO AssetDetails

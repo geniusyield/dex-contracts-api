@@ -100,7 +100,7 @@ RUN git init && \
     git add . && \
     git commit -m "Dummy commit"
 RUN cabal update
-RUN cabal build all --enable-tests --enable-benchmarks
+RUN cabal build all --enable-tests --enable-benchmarks -j1
 RUN cp $(cabal list-bin geniusyield-server) /DEX/geniusyield-server
 
 # =============================[ SERVER ]================================

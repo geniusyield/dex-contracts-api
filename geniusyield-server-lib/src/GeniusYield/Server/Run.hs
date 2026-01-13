@@ -3,7 +3,6 @@ module GeniusYield.Server.Run (
 ) where
 
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
--- import Data.Aeson.Encode.Pretty (encodePretty)
 import Data.Strict qualified as Strict
 import Data.Version (showVersion)
 import Data.Yaml.Pretty qualified as Yaml
@@ -18,11 +17,7 @@ import GeniusYield.Server.Auth
 import GeniusYield.Server.Config (ServerConfig (..), coreConfigFromServerConfig, optionalSigningKeyFromServerConfig, serverConfigOptionalFPIO)
 import GeniusYield.Server.Constants (gitHash)
 import GeniusYield.Server.Ctx
--- import RIO.ByteString.Lazy qualified as BL
-
--- import Servant.PY (requests, writePythonForAPI)
-
-import GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client (tapToolsClientEnv)
+import GeniusYield.Server.DEX.HistoricalPrices.TapTools.Client (tapToolsClientEnv)
 import GeniusYield.Server.ErrorMiddleware
 import GeniusYield.Server.RequestLoggerMiddleware (gcpReqLogger)
 import GeniusYield.Server.Utils
@@ -38,30 +33,32 @@ import Servant.Server.Experimental.Auth (AuthHandler)
 import Servant.Server.Internal.ServerError (responseServerError)
 import System.TimeManager (TimeoutThread (..))
 
-runServer ∷ Maybe FilePath → IO ()
+runServer :: Maybe FilePath -> IO ()
 runServer mfp = do
-  serverConfig ← serverConfigOptionalFPIO mfp
-  menv ← networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t → t) (scNetworkId serverConfig)
-  mtenv ←
+  dexInfoDefaultMainnet' <- dexInfoDefaultMainnet
+  dexInfoDefaultPreprod' <- dexInfoDefaultMainnet
+  serverConfig <- serverConfigOptionalFPIO mfp
+  menv <- networkIdToMaestroEnv (case scMaestroToken serverConfig of Confidential t -> t) (scNetworkId serverConfig)
+  mtenv <-
     case scTapToolsApiKey serverConfig of
-      Nothing → pure Nothing
-      Just (Confidential apiKey) → do
-        tce ← tapToolsClientEnv
+      Nothing -> pure Nothing
+      Just (Confidential apiKey) -> do
+        tce <- tapToolsClientEnv
         pure $ Just $ TapToolsEnv {tteClientEnv = tce, tteApiKey = apiKey}
-  optionalSigningKey ← optionalSigningKeyFromServerConfig serverConfig
+  optionalSigningKey <- optionalSigningKeyFromServerConfig serverConfig
   let nid = scNetworkId serverConfig
       coreCfg = coreConfigFromServerConfig serverConfig
   -- writePythonForAPI (Proxy @MainAPI) requests "web/swagger/api.py"
-  withCfgProviders coreCfg "server" $ \providers → do
+  withCfgProviders coreCfg "server" $ \providers -> do
     let logInfoS = gyLogInfo providers mempty
         logErrorS = gyLogError providers mempty
     logInfoS $ "GeniusYield server version: " +| showVersion PackageInfo.version |+ "\nCommit used: " +| gitHash |+ "\nOptional collateral configuration: " +|| scCollateral serverConfig ||+ "\nAddress of optional wallet: " +|| fmap Strict.snd optionalSigningKey ||+ "\nOptional stake address: " +|| scStakeAddress serverConfig ||+ ""
     -- BL.writeFile "web/swagger/api.json" (encodePretty geniusYieldAPISwagger)
     B.writeFile "web/openapi/api.yaml" (Yaml.encodePretty Yaml.defConfig geniusYieldAPIOpenApi)
-    reqLoggerMiddleware ← gcpReqLogger
+    reqLoggerMiddleware <- gcpReqLogger
     let
       -- These are only meant to catch fatal exceptions, application thrown exceptions should be caught beforehand.
-      onException ∷ req → SomeException → IO ()
+      onException :: req -> SomeException -> IO ()
       onException _req exc =
         displayException exc
           & if isMatchedException exceptionsToIgnore exc
@@ -73,7 +70,7 @@ runServer mfp = do
         -- https://magnus.therning.org/2021-07-03-the-timeout-manager-exception.html
         -- https://www.rfc-editor.org/rfc/rfc5246#page-29
         exceptionsToIgnore = Proxy @TimeoutThread :>> Proxy @Warp.InvalidRequest :>> ENil
-      onExceptionResponse ∷ SomeException → Wai.Response
+      onExceptionResponse :: SomeException -> Wai.Response
       onExceptionResponse _ = responseServerError . apiErrorToServerError $ someBackendError "Internal Server Error"
       settings =
         Warp.defaultSettings
@@ -87,9 +84,9 @@ runServer mfp = do
             ctxNetworkId = nid,
             ctxDexInfo =
               if
-                | nid == GYMainnet → dexInfoDefaultMainnet
-                | nid == GYTestnetPreprod → dexInfoDefaultPreprod
-                | otherwise → error "Only mainnet & preprod network are supported",
+                | nid == GYMainnet -> dexInfoDefaultMainnet'
+                | nid == GYTestnetPreprod -> dexInfoDefaultPreprod'
+                | otherwise -> error "Only mainnet & preprod network are supported",
             ctxMaestroProvider = MaestroProvider menv,
             ctxTapToolsProvider = mtenv,
             ctxSigningKey = optionalSigningKey,
@@ -107,10 +104,10 @@ runServer mfp = do
       . reqLoggerMiddleware
       . errLoggerMiddleware
       . errorJsonWrapMiddleware
-      $ let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t → apiKeyFromText t) :. EmptyContext
+      $ let context = apiKeyAuthHandler (case scServerApiKey serverConfig of Confidential t -> apiKeyFromText t) :. EmptyContext
          in serveWithContext mainAPI context
               $ hoistServerWithContext
                 mainAPI
-                (Proxy ∷ Proxy '[AuthHandler Wai.Request ()])
-                (\ioAct → Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
+                (Proxy :: Proxy '[AuthHandler Wai.Request ()])
+                (\ioAct -> Handler . ExceptT $ first (apiErrorToServerError . exceptionHandler) <$> try ioAct)
               $ mainServer ctx

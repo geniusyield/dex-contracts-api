@@ -38,7 +38,7 @@ in-style: right-align
 single-constraint-parens: never
 
 # Output Unicode syntax (choices: detect, always, or never)
-unicode: always
+unicode: never
 
 # Give the programmer more choice on where to insert blank lines
 respectful: false

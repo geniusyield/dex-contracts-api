@@ -25,8 +25,8 @@ For each unique asset pair (see: 'mkAssetPair'), one asset is chosen as the "com
 is chosen as the "currency" - this makes it simpler to perform order matching.
 -}
 data OrderAssetPair = OAssetPair
-  { currencyAsset ∷ !GYAssetClass,
-    commodityAsset ∷ !GYAssetClass
+  { currencyAsset :: !GYAssetClass,
+    commodityAsset :: !GYAssetClass
   }
   deriving stock (Eq, Ord, Show)
 
@@ -35,10 +35,10 @@ instance ToJSON OrderAssetPair where
     Aeson.String $ toUrlPiece oap
 
 instance FromJSON OrderAssetPair where
-  parseJSON = Aeson.withText "OrderAssetPair" $ \t →
+  parseJSON = Aeson.withText "OrderAssetPair" $ \t ->
     case parseUrlPiece t of
-      Left e → fail $ Text.unpack e
-      Right oap → pure oap
+      Left e -> fail $ Text.unpack e
+      Right oap -> pure oap
 
 -- >>> toUrlPiece $ OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYLovelace}
 -- "_"
@@ -61,9 +61,9 @@ instance ToHttpApiData OrderAssetPair where
 -- Right (OAssetPair {currencyAsset = GYLovelace, commodityAsset = GYLovelace})
 instance FromHttpApiData OrderAssetPair where
   parseUrlPiece t = do
-    let (cur, com) = (\com' → if Text.null com' then com' else Text.drop 1 com') <$> Text.breakOn "_" t
-    curAsset ← parseUrlPiece cur
-    comAsset ← parseUrlPiece com
+    let (cur, com) = (\com' -> if Text.null com' then com' else Text.drop 1 com') <$> Text.breakOn "_" t
+    curAsset <- parseUrlPiece cur
+    comAsset <- parseUrlPiece com
     pure $ OAssetPair curAsset comAsset
 
 instance Swagger.ToParamSchema OrderAssetPair where
@@ -78,7 +78,7 @@ instance Swagger.ToSchema OrderAssetPair where
       $ Swagger.named "OrderAssetPair"
       $ Swagger.paramSchemaToSchema p
       & Swagger.example
-      ?~ toJSON ("f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53" ∷ String)
+      ?~ toJSON ("f43a62fdc3965df486de8a0d32fe800963589c41b38946602a0dc535.41474958_dda5fdb1002f7389b33e036b6afee82a8189becb6cba852e8b79b4fb.0014df1047454e53" :: String)
         & Swagger.description
       ?~ "Market pair identifier. It's an underscore delimited concatenation of offered and asked asset's \"token detail\". A token detail is given by dot delimited concatenation of policy id and token name."
 
@@ -87,10 +87,10 @@ instance Swagger.ToSchema OrderAssetPair where
      i.e {currencyAsset = A, commodityAsset = B} and
          {currencyAsset = B, commodityAsset = A} are equivalent.
 -}
-equivalentAssetPair ∷ OrderAssetPair → OrderAssetPair → Bool
+equivalentAssetPair :: OrderAssetPair -> OrderAssetPair -> Bool
 equivalentAssetPair oap oap' = oap == oap' || oap == mkEquivalentAssetPair oap'
 
-mkEquivalentAssetPair ∷ OrderAssetPair → OrderAssetPair
+mkEquivalentAssetPair :: OrderAssetPair -> OrderAssetPair
 mkEquivalentAssetPair oap =
   OAssetPair
     { commodityAsset = currencyAsset oap,
@@ -98,11 +98,11 @@ mkEquivalentAssetPair oap =
     }
 
 mkOrderAssetPair
-  ∷ GYAssetClass
+  :: GYAssetClass
   -- ^ Asset class of the currency asset in the order.
-  → GYAssetClass
+  -> GYAssetClass
   -- ^ Asset class of the commodity asset in the order.
-  → OrderAssetPair
+  -> OrderAssetPair
 mkOrderAssetPair curAsset comAsset =
   OAssetPair
     { currencyAsset = curAsset,
@@ -110,4 +110,4 @@ mkOrderAssetPair curAsset comAsset =
     }
 
 class HasMarkets a where
-  getMarkets ∷ a → IO [OrderAssetPair]
+  getMarkets :: a -> IO [OrderAssetPair]

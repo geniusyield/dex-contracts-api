@@ -29,43 +29,43 @@ import RIO.Text qualified as Text
 import Servant.Client qualified as Servant
 import Servant.Client.Core qualified as Servant
 
-logDebug ∷ HasCallStack ⇒ Ctx → String → IO ()
+logDebug :: HasCallStack => Ctx -> String -> IO ()
 logDebug ctx = gyLogDebug (ctxProviders ctx) mempty
 
-logInfo ∷ HasCallStack ⇒ Ctx → String → IO ()
+logInfo :: HasCallStack => Ctx -> String -> IO ()
 logInfo ctx = gyLogInfo (ctxProviders ctx) mempty
 
-type ExceptionTypes ∷ [Type] → Type
+type ExceptionTypes :: [Type] -> Type
 data ExceptionTypes es where
-  ENil ∷ ExceptionTypes '[]
-  (:>>) ∷ Exception e ⇒ Proxy e → ExceptionTypes es → ExceptionTypes (e ': es)
+  ENil :: ExceptionTypes '[]
+  (:>>) :: Exception e => Proxy e -> ExceptionTypes es -> ExceptionTypes (e ': es)
 
 infixr 5 :>>
 
-isMatchedException ∷ ExceptionTypes es → SomeException → Bool
+isMatchedException :: ExceptionTypes es -> SomeException -> Bool
 isMatchedException ENil _ = False
 isMatchedException (etype :>> etypes) se = isJust (f etype) || isMatchedException etypes se
  where
-  f ∷ ∀ e. Exception e ⇒ Proxy e → Maybe e
+  f :: forall e. Exception e => Proxy e -> Maybe e
   f _ = fromException @e se
 
-bytestringToString ∷ ByteString → String
+bytestringToString :: ByteString -> String
 bytestringToString = RIO.decodeUtf8Lenient >>> Text.unpack
 
-hideServantClientErrorHeader ∷ Http.HeaderName → Servant.ClientError → Servant.ClientError
+hideServantClientErrorHeader :: Http.HeaderName -> Servant.ClientError -> Servant.ClientError
 hideServantClientErrorHeader headerName clientError = case clientError of
-  Servant.FailureResponse reqF res → Servant.FailureResponse reqF {Servant.requestHeaders = renameHeader <$> Servant.requestHeaders reqF} res
-  Servant.ConnectionError se → case fromException @Http.HttpException se of
-    Just he → case he of
-      Http.HttpExceptionRequest req content → Servant.ConnectionError $ SomeException $ Http.HttpExceptionRequest req {Http.requestHeaders = renameHeader <$> Http.requestHeaders req} content
-      _anyOther → clientError
-    Nothing → clientError
-  _anyOther → clientError
+  Servant.FailureResponse reqF res -> Servant.FailureResponse reqF {Servant.requestHeaders = renameHeader <$> Servant.requestHeaders reqF} res
+  Servant.ConnectionError se -> case fromException @Http.HttpException se of
+    Just he -> case he of
+      Http.HttpExceptionRequest req content -> Servant.ConnectionError $ SomeException $ Http.HttpExceptionRequest req {Http.requestHeaders = renameHeader <$> Http.requestHeaders req} content
+      _anyOther -> clientError
+    Nothing -> clientError
+  _anyOther -> clientError
  where
   renameHeader (h, v) = if h == headerName then (h, "hidden") else (h, v)
 
-commonEnumParamSchemaRecipe ∷ ∀ a (t ∷ Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) ⇒ Proxy a → Swagger.ParamSchema t
-commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound ∷ a) .. maxBound]
+commonEnumParamSchemaRecipe :: forall a (t :: Swagger.SwaggerKind Type). (Bounded a, Enum a, ToJSON a) => Proxy a -> Swagger.ParamSchema t
+commonEnumParamSchemaRecipe _ = mempty & Swagger.type_ ?~ Swagger.SwaggerString & Swagger.enum_ ?~ fmap toJSON [(minBound :: a) .. maxBound]
 
-type CommonMaestroKeyRequirementText ∷ Symbol
+type CommonMaestroKeyRequirementText :: Symbol
 type CommonMaestroKeyRequirementText = "\"maestroToken\" field in the configuration is required for this operation."

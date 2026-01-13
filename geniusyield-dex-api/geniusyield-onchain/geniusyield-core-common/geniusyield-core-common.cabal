@@ -1,0 +1,49 @@
+cabal-version: 3.0
+name:          geniusyield-core-common
+version:       0.1.0.0
+synopsis:      Common code shared between GeniusYield onchain and offchain
+author:        Lars Bruenjes
+maintainer:    lars.bruenjes@geniusyield.co
+build-type:    Simple
+copyright:     © 2022 Lars Bruenjes
+
+flag new-ledger-namespace
+  description: Use the new plutus-ledger-api namespace (0a8b1ad)
+  manual:      True
+  default:     True
+
+library
+  default-language: Haskell2010
+  default-extensions:
+    DeriveAnyClass
+    DeriveGeneric
+    ImportQualifiedPost
+    NumericUnderscores
+    ViewPatterns
+
+  ghc-options:      -Wall
+  hs-source-dirs:   src
+  exposed-modules:
+    GeniusYield.OnChain.Core.Common.Crypto
+    GeniusYield.OnChain.Core.Common.DEX.PartialOrder
+    GeniusYield.OnChain.Core.Common.DEX.TwoWayOrder
+    GeniusYield.OnChain.Core.Common.Scripts
+    GeniusYield.OnChain.Core.Common.Staking.Stake
+    GeniusYield.OnChain.Core.Common.TokenSale
+    GeniusYield.OnChain.Core.Common.Utils
+  other-modules:
+    GeniusYield.OnChain.Core.Common.LedgerExports.Common
+    GeniusYield.OnChain.Core.Common.LedgerExports.V1
+    GeniusYield.OnChain.Core.Common.LedgerExports.V2
+
+  build-depends:
+    , aeson
+    , base               <5
+    , bytestring
+    , plutus-core
+    , plutus-ledger-api
+    , plutus-tx
+    , text
+
+  if flag(new-ledger-namespace)
+    cpp-options: -DNEW_LEDGER_NAMESPACE

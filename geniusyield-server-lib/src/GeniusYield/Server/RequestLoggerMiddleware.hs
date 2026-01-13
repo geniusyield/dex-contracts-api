@@ -15,7 +15,7 @@ import RIO.Time (UTCTime, defaultTimeLocale, parseTimeOrError)
 import System.Log.FastLogger
 
 -- See https://cloud.google.com/logging/docs/structured-logging. This Haskell code defines a middleware for logging HTTP requests in a Google Cloud Platform (GCP) compatible format.
-gcpReqLogger ∷ IO Middleware
+gcpReqLogger :: IO Middleware
 gcpReqLogger =
   mkRequestLogger
     defaultRequestLoggerSettings
@@ -23,7 +23,7 @@ gcpReqLogger =
         destination = Handle stderr
       }
  where
-  formatter ∷ OutputFormatterWithDetails
+  formatter :: OutputFormatterWithDetails
   formatter zonedDate req stat _ latency reqBodyChunks resp =
     let statCode = statusCode stat
         method = requestMethod req
@@ -47,5 +47,5 @@ gcpReqLogger =
      in rawLog <> "\n" -- Manually adding new line as there doesn't seem to be one in the GCP logs when being monitored through google cloud.
 
 -- Why does wai use ZonedDate from fast-logger + unix-time?
-zonedDateToSensibleTime ∷ ByteString → UTCTime
+zonedDateToSensibleTime :: ByteString -> UTCTime
 zonedDateToSensibleTime = parseTimeOrError False defaultTimeLocale (bytestringToString simpleTimeFormat) . bytestringToString

@@ -15,7 +15,7 @@ newtype Command = Serve ServeCommand
 
 newtype ServeCommand = ServeCommand (Maybe FilePath)
 
-parseCommand ∷ Parser Command
+parseCommand :: Parser Command
 parseCommand =
   subparser
     $ mconcat
@@ -26,7 +26,7 @@ parseCommand =
           )
       ]
 
-parseServeCommand ∷ Parser ServeCommand
+parseServeCommand :: Parser ServeCommand
 parseServeCommand =
   ServeCommand
     <$> optional
@@ -38,8 +38,8 @@ parseServeCommand =
           )
       )
 
-runCommand ∷ Command → IO ()
+runCommand :: Command -> IO ()
 runCommand (Serve serveCommand) = runServeCommand serveCommand
 
-runServeCommand ∷ ServeCommand → IO ()
+runServeCommand :: ServeCommand -> IO ()
 runServeCommand (ServeCommand mcfp) = runServer mcfp

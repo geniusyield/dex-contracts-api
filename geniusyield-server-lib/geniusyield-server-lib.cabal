@@ -17,9 +17,9 @@ extra-doc-files:
 
 tested-with:     GHC ==9.6.5
 
-source-repository head
-  type:     git
-  location: https://github.com/geniusyield/dex-contracts-api.git
+-- source-repository head
+--   type:     git
+--   location: https://github.com/geniusyield/dex-contracts-api.git
 
 common common
   default-language:   GHC2021
@@ -57,11 +57,11 @@ library
     GeniusYield.Server.Config
     GeniusYield.Server.Constants
     GeniusYield.Server.Ctx
-    GeniusYield.Server.Dex.HistoricalPrices.Maestro
-    GeniusYield.Server.Dex.HistoricalPrices.TapTools
-    GeniusYield.Server.Dex.HistoricalPrices.TapTools.Client
-    GeniusYield.Server.Dex.Markets
-    GeniusYield.Server.Dex.PartialOrder
+    GeniusYield.Server.DEX.HistoricalPrices.Maestro
+    GeniusYield.Server.DEX.HistoricalPrices.TapTools
+    GeniusYield.Server.DEX.HistoricalPrices.TapTools.Client
+    GeniusYield.Server.DEX.Markets
+    GeniusYield.Server.DEX.PartialOrder
     GeniusYield.Server.ErrorMiddleware
     GeniusYield.Server.Options
     GeniusYield.Server.Orphans
