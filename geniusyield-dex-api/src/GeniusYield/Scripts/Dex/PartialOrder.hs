@@ -118,7 +118,7 @@ data PartialOrderAction
 
 PlutusTx.makeIsDataIndexed ''PartialOrderAction [('PartialCancel, 0), ('PartialFill, 1), ('CompleteFill, 2)]
 
-partialOrderValidator ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a) ⇒ a → POCVersion → GYAssetClass → GYValidator 'PlutusV2
+partialOrderValidator ∷ (HasPartialOrderScript a, HasPartialOrderConfigAddr a) ⇒ a → POCVersion → GYAssetClass → GYScript 'PlutusV2
 partialOrderValidator a pocVersion ac =
   validatorFromPly $
     getPartialOrderValidator a
@@ -130,5 +130,5 @@ partialOrderValidatorHash
   ⇒ a
   → POCVersion
   → GYAssetClass
-  → GYValidatorHash
+  → GYScriptHash
 partialOrderValidatorHash a pocVersion = validatorHash . partialOrderValidator a pocVersion

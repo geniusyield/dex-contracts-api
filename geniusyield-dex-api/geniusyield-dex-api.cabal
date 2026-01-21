@@ -90,6 +90,5 @@ library
 
   -- Cardano libraries which are not on hackage. Their version is pinned in @cabal.project@ file or derived from other related dependencies.
   build-depends:
-    , plutus-core
     , plutus-ledger-api
     , plutus-tx

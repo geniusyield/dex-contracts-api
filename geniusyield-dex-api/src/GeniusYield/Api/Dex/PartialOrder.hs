@@ -388,7 +388,7 @@ partialOrderNftPolicy
   ∷ ∀ v m a
    . (GYDexApiQueryMonad m a, SingPOCVersionI v)
   ⇒ PORef v
-  → m (GYMintingPolicy 'PlutusV2)
+  → m (GYScript 'PlutusV2)
   -- ^ The minting policy of the partial order NFT.
 partialOrderNftPolicy por = do
   a ← ask
@@ -399,7 +399,7 @@ partialOrderNftPolicy'
    . (SingPOCVersionI v, HasDexScripts a)
   ⇒ a
   → PORef v
-  → GYMintingPolicy 'PlutusV2
+  → GYScript 'PlutusV2
   -- ^ The minting policy of the partial order NFT.
 partialOrderNftPolicy' a PORef {..} = partialOrderNftMintingPolicy a (fromSingPOCVersion $ singPOCVersion @v) porRefNft
 

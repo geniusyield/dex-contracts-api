@@ -19,7 +19,7 @@ import Ply (
  )
 import Ply qualified
 
-validatorFromPly ∷ ∀ v. SingPlutusVersionI v ⇒ TypedScript 'ValidatorRole '[] → GYValidator v
+validatorFromPly ∷ ∀ v. SingPlutusVersionI v ⇒ TypedScript 'ValidatorRole '[] → GYScript v
 validatorFromPly ts = case ver' of
   SingPlutusV1 →
     if ver == Ply.ScriptV1
@@ -29,12 +29,16 @@ validatorFromPly ts = case ver' of
     if ver == Ply.ScriptV2
       then validatorFromSerialisedScript @'PlutusV2 $ toSerialisedValidator ts
       else error "validatorFromPly: Invalid script version"
+  SingPlutusV3 →
+    if ver == Ply.ScriptV3
+      then validatorFromSerialisedScript @'PlutusV3 $ toSerialisedValidator ts
+      else error "validatorFromPly: Invalid script version"
  where
   ver = Ply.getPlutusVersion ts
   ver' = singPlutusVersion @v
   toSerialisedValidator (TypedScript _ s) = serialiseUPLC s
 
-mintingPolicyFromPly ∷ ∀ v. SingPlutusVersionI v ⇒ TypedScript 'MintingPolicyRole '[] → GYMintingPolicy v
+mintingPolicyFromPly ∷ ∀ v. SingPlutusVersionI v ⇒ TypedScript 'MintingPolicyRole '[] → GYScript v
 mintingPolicyFromPly ts = case ver' of
   SingPlutusV1 →
     if ver == Ply.ScriptV1
@@ -43,6 +47,10 @@ mintingPolicyFromPly ts = case ver' of
   SingPlutusV2 →
     if ver == Ply.ScriptV2
       then mintingPolicyFromSerialisedScript @'PlutusV2 $ toSerialisedMintingPolicy ts
+      else error "mintingPolicyFromPly: Invalid script version"
+  SingPlutusV3 →
+    if ver == Ply.ScriptV3
+      then mintingPolicyFromSerialisedScript @'PlutusV3 $ toSerialisedMintingPolicy ts
       else error "mintingPolicyFromPly: Invalid script version"
  where
   ver = Ply.getPlutusVersion ts

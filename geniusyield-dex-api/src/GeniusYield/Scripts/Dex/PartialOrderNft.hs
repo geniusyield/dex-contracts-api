@@ -19,12 +19,11 @@ import GeniusYield.Scripts.Dex.PartialOrderConfig (HasPartialOrderConfigAddr (ge
 import GeniusYield.Scripts.Dex.Version (POCVersion)
 import GeniusYield.Types (
   GYAssetClass,
-  GYMintingPolicy,
   PlutusVersion (PlutusV2),
   addressToPlutus,
   assetClassToPlutus,
   scriptPlutusHash,
-  validatorToScript,
+  validatorToScript, GYScript,
  )
 import PlutusLedgerApi.V1 (Address, ScriptHash)
 import PlutusLedgerApi.V1.Value (AssetClass)
@@ -38,7 +37,7 @@ partialOrderNftMintingPolicy
   ⇒ a
   → POCVersion
   → GYAssetClass
-  → GYMintingPolicy 'PlutusV2
+  → GYScript 'PlutusV2
 partialOrderNftMintingPolicy a pocVersion ac =
   mintingPolicyFromPly $
     getPartialOrderNftPolicy a pocVersion
